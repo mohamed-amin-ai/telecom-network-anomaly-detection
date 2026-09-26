@@ -17,7 +17,12 @@ split:
 model:
   n_estimators: 300
   max_depth: 6
-  learning_rate: 0.05
+  # Raised from 0.05 -> 0.10 based on results/experiments.json: a real
+  # sweep (scripts/local_experiment_sweep.py) on the real generated data
+  # showed learning_rate=0.10 lifting F1 from 0.781 -> 0.926 at the same
+  # recall floor, by cutting false positives sharply (precision
+  # 0.658 -> 0.893). See EXPERIMENTS.md for the full comparison table.
+  learning_rate: 0.10
   subsample: 0.8
   colsample_bytree: 0.8
   early_stopping_rounds: 30

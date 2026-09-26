@@ -1,0 +1,152 @@
+{
+  "generated_by": "scripts/local_experiment_sweep.py",
+  "note": "Real metrics from a real hyperparameter sweep on real generated/engineered data, using HistGradientBoostingClassifier as an xgboost stand-in (xgboost unavailable \u2014 see module docstring). Not the production model artifact.",
+  "dataset": {
+    "total_rows": 17241,
+    "train_rows": 13792,
+    "test_rows": 3449,
+    "n_features": 68,
+    "train_anomaly_rate": 0.0117,
+    "test_anomaly_rate": 0.0075
+  },
+  "runs": [
+    {
+      "run_name": "baseline",
+      "params": {
+        "max_depth": 6,
+        "learning_rate": 0.05,
+        "max_iter": 300,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.0272,
+        "recall": 0.9615,
+        "precision": 0.6579,
+        "f1": 0.7812,
+        "true_positives": 25,
+        "false_positives": 13,
+        "true_negatives": 3410,
+        "false_negatives": 1,
+        "train_seconds": 0.91,
+        "n_iter_actual": 182
+      }
+    },
+    {
+      "run_name": "shallow_trees",
+      "params": {
+        "max_depth": 3,
+        "learning_rate": 0.05,
+        "max_iter": 300,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.0586,
+        "recall": 0.9615,
+        "precision": 0.3731,
+        "f1": 0.5376,
+        "true_positives": 25,
+        "false_positives": 42,
+        "true_negatives": 3381,
+        "false_negatives": 1,
+        "train_seconds": 0.83,
+        "n_iter_actual": 300
+      }
+    },
+    {
+      "run_name": "deep_trees",
+      "params": {
+        "max_depth": 10,
+        "learning_rate": 0.05,
+        "max_iter": 300,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.0632,
+        "recall": 0.9615,
+        "precision": 0.2717,
+        "f1": 0.4237,
+        "true_positives": 25,
+        "false_positives": 67,
+        "true_negatives": 3356,
+        "false_negatives": 1,
+        "train_seconds": 0.47,
+        "n_iter_actual": 66
+      }
+    },
+    {
+      "run_name": "high_lr",
+      "params": {
+        "max_depth": 6,
+        "learning_rate": 0.1,
+        "max_iter": 300,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.0128,
+        "recall": 0.9615,
+        "precision": 0.8929,
+        "f1": 0.9259,
+        "true_positives": 25,
+        "false_positives": 3,
+        "true_negatives": 3420,
+        "false_negatives": 1,
+        "train_seconds": 0.77,
+        "n_iter_actual": 154
+      }
+    },
+    {
+      "run_name": "low_lr",
+      "params": {
+        "max_depth": 6,
+        "learning_rate": 0.02,
+        "max_iter": 300,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.1347,
+        "recall": 0.9615,
+        "precision": 0.6944,
+        "f1": 0.8065,
+        "true_positives": 25,
+        "false_positives": 11,
+        "true_negatives": 3412,
+        "false_negatives": 1,
+        "train_seconds": 1.32,
+        "n_iter_actual": 300
+      }
+    },
+    {
+      "run_name": "fewer_rounds",
+      "params": {
+        "max_depth": 6,
+        "learning_rate": 0.05,
+        "max_iter": 100,
+        "scale_pos_weight": 84.66,
+        "min_recall_floor": 0.93,
+        "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
+      },
+      "metrics": {
+        "threshold": 0.1567,
+        "recall": 0.9615,
+        "precision": 0.7143,
+        "f1": 0.8197,
+        "true_positives": 25,
+        "false_positives": 10,
+        "true_negatives": 3413,
+        "false_negatives": 1,
+        "train_seconds": 0.5,
+        "n_iter_actual": 100
+      }
+    }
+  ]
+}
