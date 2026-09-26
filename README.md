@@ -151,6 +151,14 @@ git checkout <commit>
 dvc checkout   # restores data/model files to match that commit's dvc.lock
 ```
 
+**Real experiment results:** see [`EXPERIMENTS.md`](EXPERIMENTS.md) for a
+hyperparameter sweep run against the real generated data
+(`scripts/local_experiment_sweep.py`), including a genuine data-driven
+change to `params.yaml` (`learning_rate: 0.05 → 0.10`) and a real
+discrepancy caught between the documented ~5% anomaly rate and the
+actual ~1% the generator produces. `scripts/replay_experiments_to_mlflow.py`
+loads those same real numbers into MLflow once it's installed.
+
 ---
 
 ## Feature Engineering

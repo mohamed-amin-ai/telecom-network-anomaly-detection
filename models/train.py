@@ -28,74 +28,18 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import xgboost as xgb
-import yaml
 import mlflow
 import mlflow.xgboost
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    precision_recall_curve,
-)
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 import joblib
 
 # Allow imports from parent dir
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
-
-DATA_DIR   = Path(__file__).parent.parent / "data"
-MODEL_DIR  = Path(__file__).parent
-PARAMS_PATH = Path(__file__).parent.parent / "params.yaml"
-
-
-def load_params() -> dict:
-    with open(PARAMS_PATH) as f:
-        return yaml.safe_load(f)
-
-
-def load_data():
-    feat_path = DATA_DIR / "features.csv"
-    if not feat_path.exists():
-        raise FileNotFoundError(
-            "features.csv not found. Run: python data/features.py"
-        )
-    df = pd.read_csv(feat_path, parse_dates=["timestamp"])
-    return df
-
-
-def time_split(df: pd.DataFrame, ratio: float):
-    """Split by time, not randomly — critical for time-series models."""
-    df = df.sort_values("timestamp").reset_index(drop=True)
-    split_idx = int(len(df) * ratio)
-    return df.iloc[:split_idx], df.iloc[split_idx:]
-
-
-def tune_threshold(y_true, y_prob, min_recall: float):
-    """
-    Find the highest threshold where recall >= min_recall.
-
-    In anomaly detection, missing a real fault (false negative) is far more
-    costly than a false alarm (false positive). So we optimize for recall
-    first, then tighten precision as much as possible without dropping below
-    the recall floor.
-    """
-    precisions, recalls, thresholds = precision_recall_curve(y_true, y_prob)
-    recalls    = recalls[:-1]
-    precisions = precisions[:-1]
-
-    valid = thresholds[recalls >= min_recall]
-    if len(valid) == 0:
-        best_idx = np.argmax(recalls)
-    else:
-        best_idx = np.where(thresholds == valid[-1])[0][0]
-
-    f1 = 2 * precisions[best_idx] * recalls[best_idx] / (
-        precisions[best_idx] + recalls[best_idx] + 1e-8
-    )
-    return thresholds[best_idx], recalls[best_idx], precisions[best_idx], f1
+from models.common import DATA_DIR, MODEL_DIR, load_params, load_data, time_split, tune_threshold
 
 
 def main():
