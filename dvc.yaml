@@ -1,0 +1,38 @@
+stages:
+  generate_data:
+    cmd: python data/generate_data.py
+    deps:
+      - data/generate_data.py
+    params:
+      - data.seed
+      - data.cells
+      - data.periods_days
+      - data.freq_minutes
+    outs:
+      - data/raw_kpis.csv
+
+  features:
+    cmd: python data/features.py
+    deps:
+      - data/features.py
+      - data/raw_kpis.csv
+    outs:
+      - data/features.csv
+
+  train:
+    cmd: python models/train.py
+    deps:
+      - models/train.py
+      - data/features.csv
+    params:
+      - split.train_ratio
+      - model
+      - threshold.min_recall
+    outs:
+      - models/model.json
+      - models/scaler.pkl
+      - models/feature_importance.csv:
+          cache: false
+    metrics:
+      - models/metadata.json:
+          cache: false

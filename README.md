@@ -12,7 +12,7 @@ Telecom networks generate thousands of KPI readings per minute across hundreds o
 
 ## Solution
 
-A supervised XGBoost classifier trained on time-series KPI features, served via FastAPI for real-time inference.
+A supervised XGBoost classifier trained on time-series KPI features, served via FastAPI for real-time inference. The pipeline is versioned end-to-end with DVC (data + model artifacts) and MLflow (experiments + model registry).
 
 ### KPIs monitored
 | KPI | Unit | What it signals |
@@ -30,17 +30,21 @@ A supervised XGBoost classifier trained on time-series KPI features, served via 
 ```
 telecom_anomaly/
 ├── data/
-│   ├── generate_data.py   # Synthetic KPI dataset generator
+│   ├── generate_data.py   # Synthetic KPI dataset generator (params.yaml-driven)
 │   ├── features.py        # Time-series feature engineering
-│   └── raw_kpis.csv       # Generated after running generate_data.py
+│   └── raw_kpis.csv       # DVC-tracked output, not committed to git
 ├── models/
-│   ├── train.py           # XGBoost training + threshold tuning
-│   ├── model.json         # Saved model (generated after training)
-│   ├── scaler.pkl         # Feature scaler (generated after training)
-│   └── metadata.json      # Threshold + metrics (generated after training)
+│   ├── train.py           # XGBoost training + threshold tuning + MLflow logging
+│   ├── model.json         # DVC-tracked output
+│   ├── scaler.pkl         # DVC-tracked output
+│   └── metadata.json      # DVC-tracked output (also an MLflow artifact)
 ├── api/
-│   └── main.py            # FastAPI inference service
+│   ├── main.py             # FastAPI inference service
+│   └── live_features.py    # Rolling per-cell feature computation for /predict
+├── params.yaml             # Single source of truth for pipeline hyperparameters
+├── dvc.yaml                # DVC pipeline: generate_data → features → train
 ├── requirements.txt
+├── Makefile                # One-line commands for common workflows
 └── README.md
 ```
 
@@ -53,27 +57,26 @@ telecom_anomaly/
 pip install -r requirements.txt
 ```
 
-### 2. Generate synthetic data
+### 2. Run the full pipeline (DVC)
 ```bash
-python data/generate_data.py
+dvc repro
 ```
+This runs `generate_data.py → features.py → train.py` in order, skipping any stage whose inputs/params haven't changed since the last run. Each `train.py` run also logs to MLflow (see below).
 
-### 3. Engineer features
+Prefer to run steps manually instead? `make pipeline` (or the individual scripts) works the same way without DVC's caching.
+
+### 3. Inspect experiments
 ```bash
-python data/features.py
+mlflow ui --port 5000
 ```
+Open [http://localhost:5000](http://localhost:5000) to compare runs, params, and metrics, and to see the model registered under `telecom-anomaly-xgb` in the Model Registry.
 
-### 4. Train the model
-```bash
-python models/train.py
-```
-
-### 5. Start the API
+### 4. Start the API
 ```bash
 uvicorn api.main:app --reload --port 8000
 ```
 
-### 6. Make a prediction
+### 5. Make a prediction
 
 A brand-new cell has no history yet, so the **first call for any `cell_id` intentionally returns 425 Too Early** — the API won't guess with a mostly-empty feature vector:
 
@@ -90,9 +93,9 @@ curl -X POST http://localhost:8000/predict \
   }'
 ```
 
-Send ~20 more readings for the same `cell_id`, in chronological order, and the API starts returning real predictions once it has enough history to compute the time-series features (see [How `/predict` builds its feature vector](#api-endpoints) further down). If you already have pre-computed features on hand, pass them directly via the `features` field instead and skip the warm-up.
+Send ~20 more readings for the same `cell_id`, in chronological order, and the API starts returning real predictions once it has enough history to compute the time-series features. If you already have pre-computed features on hand, pass them directly via the `features` field instead and skip the warm-up.
 
-### 7. View interactive API docs
+### 6. View interactive API docs
 Open: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
@@ -107,16 +110,46 @@ docker compose up --build
 
 The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above.
 
-Or with plain Docker, no compose:
-
-```bash
-docker build -t telecom-anomaly-detection .
-docker run -p 8000:8000 telecom-anomaly-detection
-```
-
 Notes:
 - Runs as a non-root user, with a container `HEALTHCHECK` against `/health`.
-- The trained model artifacts (`models/model.json`, `scaler.pkl`, `metadata.json`) are baked into the image at build time — rebuild the image after retraining.
+- The trained model artifacts (`models/model.json`, `scaler.pkl`, `metadata.json`) must exist locally before building the image (run `dvc repro` or `dvc pull` first) — they're baked into the image at build time. Rebuild after retraining.
+
+---
+
+## MLOps Stack (in progress, built phase by phase)
+
+| Phase | Tooling | Status |
+|---|---|---|
+| 1 | **MLflow** (experiment tracking + model registry), **DVC** (data/model versioning) | ✅ this phase |
+| 2 | CI/CD (GitHub Actions: lint, test, `dvc repro`, build & push image) | planned |
+| 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | planned |
+| 4 | **Evidently** (data/prediction drift detection) | planned |
+| 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | planned |
+| 6 | **ONNX** + **Triton** (portable, high-throughput serving) | planned |
+
+### Phase 1 — MLflow + DVC
+
+**Why both, not just one?**
+- **DVC** versions *files* — the raw CSV, the engineered feature set, the trained model binary, the scaler — the same way git versions code, so any commit can be checked out alongside the exact data/model it was trained with (`dvc.lock` pins hashes).
+- **MLflow** versions *experiments* — every training run's hyperparameters, metrics, and the resulting model, queryable and comparable, with a registry for promoting a specific run's model to `Staging`/`Production`.
+
+**Configuring a DVC remote** (so `dvc push`/`dvc pull` actually sync artifacts somewhere — without this, DVC only caches locally):
+```bash
+dvc remote add -d storage s3://your-bucket/telecom-anomaly-dvc
+# or: dvc remote add -d storage gs://your-bucket/telecom-anomaly-dvc
+dvc push
+```
+
+**Configuring MLflow tracking** (defaults to a local `./mlruns` folder if unset — fine for solo experimentation, but point at a real tracking server for team use):
+```bash
+export MLFLOW_TRACKING_URI=http://your-mlflow-server:5000
+```
+
+**Reproducing a specific past state:**
+```bash
+git checkout <commit>
+dvc checkout   # restores data/model files to match that commit's dvc.lock
+```
 
 ---
 
@@ -159,8 +192,10 @@ Total: **68 features** across 5 KPIs.
 | Max depth | 6 |
 | Learning rate | 0.05 |
 | Class imbalance | Handled via `scale_pos_weight` |
-| Threshold | Tuned on validation set to maximize F1 |
+| Threshold | Tuned on validation set to maximize F1 subject to a recall floor |
 | Train/test split | Time-based 80/20 (no shuffle) |
+
+All of the above now live in `params.yaml`, not hardcoded in `train.py` — change a value there and `dvc repro` knows to retrain.
 
 ### Why XGBoost?
 - Handles tabular time-series features well out of the box
@@ -193,10 +228,10 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 | F1 Score | **0.851** |
 
 *Results on held-out test set (last 20% of time window, never seen during training).*
-*Threshold tuned to maximize recall subject to a 93% recall floor — missing a fault is more costly than a false alarm in NOC operations.*
+*Threshold tuned to maximize precision subject to a 93% recall floor — missing a fault is more costly than a false alarm in NOC operations.*
 
 ---
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC`

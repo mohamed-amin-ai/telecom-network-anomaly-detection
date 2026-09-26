@@ -14,3 +14,9 @@ data/features.csv
 .DS_Store
 README.md
 docker-compose.yml
+
+# Phase 1 tooling noise — none of this belongs in the runtime image
+.dvc/cache
+.dvc/tmp
+mlruns/
+mlartifacts/

@@ -1,0 +1,31 @@
+# params.yaml
+# ------------
+# Single source of truth for pipeline + training hyperparameters.
+# Read by data/generate_data.py (via env override), models/train.py, and
+# tracked as a DVC dependency so `dvc repro` reruns any stage whose
+# relevant params changed.
+
+data:
+  seed: 42
+  cells: ["CELL_001", "CELL_002", "CELL_003"]
+  periods_days: 60
+  freq_minutes: 15
+
+split:
+  train_ratio: 0.8   # time-based, first N% for training
+
+model:
+  n_estimators: 300
+  max_depth: 6
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  early_stopping_rounds: 30
+  random_state: 42
+
+threshold:
+  min_recall: 0.93   # production recall floor (missed fault > false alarm)
+
+mlflow:
+  experiment_name: "telecom-anomaly-detection"
+  registered_model_name: "telecom-anomaly-xgb"

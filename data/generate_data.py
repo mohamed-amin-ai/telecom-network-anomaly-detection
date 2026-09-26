@@ -19,15 +19,26 @@ Anomaly types injected:
 
 import numpy as np
 import pandas as pd
+import yaml
 from pathlib import Path
 
-SEED = 42
+PARAMS_PATH = Path(__file__).parent.parent / "params.yaml"
+
+
+def _load_params() -> dict:
+    with open(PARAMS_PATH) as f:
+        return yaml.safe_load(f)["data"]
+
+
+_params = _load_params()
+
+SEED = _params["seed"]
 rng = np.random.default_rng(SEED)
 
-CELLS = ["CELL_001", "CELL_002", "CELL_003"]
+CELLS = _params["cells"]
 START = "2024-01-01"
-PERIODS = 60 * 24 * 4          # 60 days × 96 intervals/day (15-min)
-FREQ = "15min"
+PERIODS = _params["periods_days"] * 24 * (60 // _params["freq_minutes"])  # intervals total
+FREQ = f"{_params['freq_minutes']}min"
 
 
 # ── Baseline KPI generators ────────────────────────────────────────────────

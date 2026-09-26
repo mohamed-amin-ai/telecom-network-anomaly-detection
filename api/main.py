@@ -11,22 +11,6 @@ Endpoints:
 
 Usage:
   uvicorn api.main:app --reload --port 8000
-
-Example request (single prediction):
-  curl -X POST http://localhost:8000/predict \\
-    -H "Content-Type: application/json" \\
-    -d '{
-      "cell_id": "CELL_001",
-      "latency_ms": 145.5,
-      "throughput_mbps": 12.3,
-      "packet_loss_pct": 8.7,
-      "sinr_db": 4.2,
-      "connected_users": 87,
-      "hour": 14,
-      "day_of_week": 2,
-      "is_weekend": 0,
-      "features": {}
-    }'
 """
 
 import json
@@ -84,42 +68,24 @@ app = FastAPI(
 # ── Schemas ────────────────────────────────────────────────────────────────
 
 class KPISnapshot(BaseModel):
-    """
-    A single reading from a cell tower at one point in time.
-    Include both the raw KPI values AND the pre-computed time-series
-    features (lags, rolling stats, z-scores, rate-of-change).
-
-    In production, the feature engineering pipeline (features.py) would
-    compute these automatically from the last 4h of readings per cell.
-    For direct API testing, pass features as a flat dict.
-    """
     cell_id: str = Field(..., example="CELL_001")
 
-    # Ordering for rolling/lag features. If omitted, server receive-time is
-    # used — fine for a live single-cell stream, but pass real timestamps
-    # if you're backfilling historical readings out of real-time order.
     timestamp: Optional[str] = Field(
         default=None,
         description="ISO-8601 timestamp of this reading. Defaults to now().",
         example="2026-07-18T14:00:00Z",
     )
 
-    # Raw KPIs (for logging / display)
     latency_ms:       float = Field(..., ge=0,   example=145.5)
     throughput_mbps:  float = Field(..., ge=0,   example=12.3)
     packet_loss_pct:  float = Field(..., ge=0, le=100, example=8.7)
     sinr_db:          float = Field(...,         example=4.2)
     connected_users:  int   = Field(..., ge=0,   example=87)
 
-    # Time features
-    # These are now derived from `timestamp` during feature computation.
-    # Kept optional here for display/logging convenience only — they are
-    # NOT used to build the model's feature vector anymore.
     hour:        Optional[int] = Field(default=None, ge=0, le=23, example=14)
     day_of_week: Optional[int] = Field(default=None, ge=0, le=6,  example=2)
     is_weekend:  Optional[int] = Field(default=None, ge=0, le=1,  example=0)
 
-    # Pre-computed engineered features (flat dict, keys = feature_cols)
     features: dict[str, float] = Field(
         default={},
         description="Pre-computed feature dict from features.py. If empty, "
@@ -162,22 +128,6 @@ class BatchResult(BaseModel):
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
-    """
-    Build the feature vector expected by the model.
-
-    Two supported paths:
-      1. Caller supplies pre-computed `features` (e.g. a backfill/offline
-         job that already ran data/features.py) — used directly.
-      2. Caller supplies raw KPIs only — the server maintains a rolling
-         per-cell history and computes the SAME 68 features training used,
-         via data/features.engineer_features(). This requires enough prior
-         readings for that cell; if there aren't enough yet, we raise a
-         425 rather than silently scoring on a mostly-zeroed vector.
-
-    Returns (feature_vector, source) where source is "precomputed" or
-    "live" — surfaced on the response so callers can tell which path
-    scored their request.
-    """
     if snapshot.features:
         try:
             vec = [snapshot.features[col] for col in FEATURE_COLS]
@@ -275,25 +225,11 @@ def model_info():
 
 @app.post("/predict", response_model=PredictionResult)
 def predict(snapshot: KPISnapshot):
-    """
-    Predict whether a single KPI snapshot represents a network anomaly.
-    Returns anomaly probability, boolean flag, and severity level.
-    """
     return run_inference(snapshot)
 
 
 @app.post("/predict/batch", response_model=BatchResult)
 def predict_batch(request: BatchRequest):
-    """
-    Predict anomalies for a batch of KPI snapshots (e.g. one cell's last hour).
-    Useful for bulk ingestion from a monitoring pipeline, and for backfilling
-    a cell's history in one call (snapshots are processed in list order, so
-    send them chronologically per cell).
-
-    Each item is scored independently — if an early snapshot in the batch
-    is a cold start (not enough history yet), that item reports its own
-    error rather than failing the entire batch.
-    """
     if len(request.snapshots) > 500:
         raise HTTPException(status_code=400, detail="Max batch size is 500.")
 
