@@ -55,6 +55,12 @@ class CellHistoryStore:
     def rows_available(self, cell_id: str) -> int:
         return len(self._history.get(cell_id, ()))
 
+    def tracked_cell_count(self) -> int:
+        """Number of distinct cell_ids with any buffered history at all
+        (regardless of whether they've cleared MIN_HISTORY_ROWS yet).
+        Used for the cells_tracked Prometheus gauge — see api/metrics.py."""
+        return len(self._history)
+
     def add_and_compute(self, cell_id: str, raw_row: dict) -> dict | None:
         """
         Append a new raw reading for this cell and compute its feature

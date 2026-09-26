@@ -12,3 +12,47 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    networks:
+      - anomaly-net
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: telecom-anomaly-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    depends_on:
+      - anomaly-api
+    networks:
+      - anomaly-net
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: telecom-anomaly-grafana
+    environment:
+      # Change this in any environment that isn't your own laptop —
+      # it's a demo default, not something to run in real production.
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    networks:
+      - anomaly-net
+
+networks:
+  anomaly-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

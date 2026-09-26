@@ -34,17 +34,32 @@ telecom_anomaly/
 │   ├── features.py        # Time-series feature engineering
 │   └── raw_kpis.csv       # DVC-tracked output, not committed to git
 ├── models/
-│   ├── train.py           # XGBoost training + threshold tuning + MLflow logging
-│   ├── model.json         # DVC-tracked output
-│   ├── scaler.pkl         # DVC-tracked output
-│   └── metadata.json      # DVC-tracked output (also an MLflow artifact)
+│   ├── common.py           # Shared split/threshold logic (no xgboost/mlflow dep)
+│   ├── train.py            # XGBoost training + threshold tuning + MLflow logging
+│   ├── model.json          # DVC-tracked output
+│   ├── scaler.pkl          # DVC-tracked output
+│   └── metadata.json       # DVC-tracked output (also an MLflow artifact)
 ├── api/
 │   ├── main.py             # FastAPI inference service
-│   └── live_features.py    # Rolling per-cell feature computation for /predict
+│   ├── live_features.py    # Rolling per-cell feature computation for /predict
+│   └── metrics.py          # Prometheus business metrics
+├── tests/                  # pytest suite — see Phase 2 section below
+├── scripts/
+│   ├── local_experiment_sweep.py       # offline hyperparameter sweep, see EXPERIMENTS.md
+│   ├── replay_experiments_to_mlflow.py # loads sweep results into real MLflow
+│   └── generate_traffic.py             # demo traffic generator for Grafana
+├── prometheus/prometheus.yml            # scrape config
+├── grafana/
+│   ├── provisioning/                    # auto-configured datasource + dashboard loader
+│   └── dashboards/telecom-anomaly-api.json
+├── .github/workflows/ci.yml             # lint -> test -> pipeline -> docker build/push
 ├── params.yaml             # Single source of truth for pipeline hyperparameters
 ├── dvc.yaml                # DVC pipeline: generate_data → features → train
 ├── requirements.txt
+├── requirements-dev.txt    # pytest, ruff, httpx — dev/CI only
+├── docker-compose.yml      # API + Prometheus + Grafana
 ├── Makefile                # One-line commands for common workflows
+├── EXPERIMENTS.md          # Real hyperparameter sweep results + findings
 └── README.md
 ```
 
@@ -102,17 +117,18 @@ Open: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## Running with Docker
 
-Build and run the API in a container instead of a local Python environment:
+Build and run the full stack — API + Prometheus + Grafana — in containers instead of a local Python environment:
 
 ```bash
 docker compose up --build
 ```
 
-The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above.
+The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above. Prometheus and Grafana come up alongside it automatically; see [Phase 3](#phase-3--prometheus--grafana) below for their URLs and what's on the dashboard.
 
 Notes:
 - Runs as a non-root user, with a container `HEALTHCHECK` against `/health`.
 - The trained model artifacts (`models/model.json`, `scaler.pkl`, `metadata.json`) must exist locally before building the image (run `dvc repro` or `dvc pull` first) — they're baked into the image at build time. Rebuild after retraining.
+- All three services share a Docker Compose network (`anomaly-net`); Prometheus finds the API via Docker's internal DNS (`anomaly-api:8000`), not `localhost`.
 
 ---
 
@@ -122,7 +138,7 @@ Notes:
 |---|---|---|
 | 1 | **MLflow** (experiment tracking + model registry), **DVC** (data/model versioning) | ✅ done |
 | 2 | **CI/CD** (GitHub Actions: lint, unit tests, real pipeline run, API integration tests, Docker build/push to GHCR) | ✅ done |
-| 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | planned |
+| 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | ✅ done |
 | 4 | **Evidently** (data/prediction drift detection) | planned |
 | 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | planned |
 | 6 | **ONNX** + **Triton** (portable, high-throughput serving) | planned |
@@ -196,6 +212,50 @@ was originally built in couldn't do, no network access). Once you run
 pipeline step in `ci.yml` for `dvc repro` to get caching (skip stages
 whose inputs/params haven't changed) instead of a full rerun every time.
 
+### Phase 3 — Prometheus + Grafana
+
+```bash
+docker compose up --build
+make observability-urls   # prints all four URLs below
+```
+
+| Service | URL | Notes |
+|---|---|---|
+| API | http://localhost:8000/docs | interactive Swagger UI |
+| API metrics (raw) | http://localhost:8000/metrics | what Prometheus scrapes |
+| Prometheus | http://localhost:9090 | query/explore raw metrics |
+| Grafana | http://localhost:3000 | login `admin` / `admin` — **change this if this ever runs anywhere but your own machine** |
+
+Grafana auto-provisions on first boot: the Prometheus datasource and a
+9-panel **"Telecom Anomaly Detection API"** dashboard are both already
+there, no manual setup. It'll be empty until some traffic hits the API —
+generate a batch of realistic + deliberately-anomalous requests to see
+it populate:
+
+```bash
+make demo-traffic   # or: python scripts/generate_traffic.py --requests 300
+```
+
+**What's actually instrumented** (`api/metrics.py`):
+- Standard HTTP metrics (request rate, latency percentiles, status codes)
+  via `prometheus-fastapi-instrumentator`, labeled by route.
+- `anomaly_predictions_total{severity}` — counts by normal/warning/critical.
+- `feature_source_total{source}` — precomputed vs live-computed features.
+- `anomaly_score` — a histogram of raw model probabilities, so you can see
+  the actual score distribution, not just the post-threshold decision.
+- `cold_start_responses_total` — how often callers hit the 425
+  insufficient-history response.
+- `cells_tracked` — gauge, size of the in-process history store.
+- `model_threshold_info` — gauge; a step change on this panel marks a
+  model redeploy with a newly tuned threshold.
+
+**Deliberately not labeled by `cell_id`** — see the docstring in
+`api/metrics.py`. The README describes "hundreds of cell towers" in a
+real deployment; a Prometheus label creates one time series per unique
+value per metric, so labeling by cell_id would mean hundreds of growing
+time series per metric. Severity and feature_source are small, fixed
+label sets — safe. Per-cell drill-down belongs in logs, not metrics.
+
 ---
 
 ## Feature Engineering
@@ -259,6 +319,7 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 |---|---|---|
 | GET | `/health` | Liveness check |
 | GET | `/model/info` | Model metrics and threshold |
+| GET | `/metrics` | Prometheus scrape endpoint (HTTP + business metrics) |
 | POST | `/predict` | Single snapshot prediction |
 | POST | `/predict/batch` | Batch of up to 500 snapshots |
 
@@ -279,4 +340,4 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana`

@@ -1,0 +1,26 @@
+# prometheus.yml
+# ---------------
+# Scrapes the anomaly-detection API's /metrics endpoint (exposed by
+# prometheus-fastapi-instrumentator + api/metrics.py's custom metrics).
+#
+# Service name "anomaly-api" resolves via Docker Compose's internal DNS —
+# this only works when Prometheus and the API are on the same compose
+# network (see docker-compose.yml). Running the API standalone
+# (uvicorn on the host, not in Docker), change the target below to
+# "host.docker.internal:8000" (Docker Desktop) or the host's actual IP.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "telecom-anomaly-api"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["anomaly-api:8000"]
+        labels:
+          service: "telecom-anomaly-api"
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

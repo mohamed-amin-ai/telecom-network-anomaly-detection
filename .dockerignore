@@ -20,3 +20,12 @@ docker-compose.yml
 .dvc/tmp
 mlruns/
 mlartifacts/
+
+# Phase 3 — not needed in the API image; Dockerfile only COPYs
+# api/, data/, models/ explicitly, but keep these out of the build
+# context anyway so `docker build` doesn't even send them to the daemon
+prometheus/
+grafana/
+tests/
+results/
+EXPERIMENTS.md
