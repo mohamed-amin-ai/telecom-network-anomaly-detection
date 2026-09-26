@@ -3,16 +3,25 @@ train.py
 --------
 Trains an XGBoost anomaly detector on the engineered telecom KPI features.
 
-Design decisions:
-  - Time-based train/test split (no shuffle) — respects temporal ordering
-    so the model is evaluated on future data it has never seen, simulating
-    real deployment.
-  - Class imbalance handled via scale_pos_weight — anomalies are rare (~5%)
-    so we up-weight them during training.
-  - Threshold tuning — default 0.5 threshold optimizes accuracy, but for
-    anomaly detection we care more about recall (catching faults). We tune
-    the threshold to maximize F1 on the validation set.
-  - Model saved as model.json (XGBoost native format) + metadata.json
+Phase 1 additions (MLflow + DVC):
+  - Hyperparameters now come from params.yaml (single source of truth, also
+    a DVC pipeline dependency — changing a param triggers `dvc repro` to
+    retrain).
+  - Every run is logged to MLflow: params, metrics, the trained model
+    (in both native XGBoost format and as an MLflow pyfunc), the fitted
+    scaler, and metadata.json as artifacts.
+  - On success, the model is registered in the MLflow Model Registry under
+    the name in params.yaml (mlflow.registered_model_name), so `api/main.py`
+    can eventually load "models:/telecom-anomaly-xgb/Production" instead of
+    a local file path (wired up in a later phase alongside CI/CD gating).
+  - models/model.json, models/scaler.pkl, models/metadata.json are still
+    written locally too, so the existing FastAPI service keeps working
+    unchanged in the meantime — MLflow is additive, not a breaking change.
+
+Design decisions (unchanged from the original):
+  - Time-based train/test split (no shuffle) — respects temporal ordering.
+  - Class imbalance handled via scale_pos_weight.
+  - Threshold tuned for a recall floor, not raw accuracy.
 """
 
 import json
@@ -22,10 +31,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xgboost as xgb
+import yaml
+import mlflow
+import mlflow.xgboost
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
-    f1_score,
     precision_recall_curve,
 )
 from sklearn.preprocessing import StandardScaler
@@ -35,10 +46,14 @@ import joblib
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
 
-DATA_DIR  = Path(__file__).parent.parent / "data"
-MODEL_DIR = Path(__file__).parent
+DATA_DIR   = Path(__file__).parent.parent / "data"
+MODEL_DIR  = Path(__file__).parent
+PARAMS_PATH = Path(__file__).parent.parent / "params.yaml"
 
-TRAIN_RATIO = 0.8   # First 80% of time for training
+
+def load_params() -> dict:
+    with open(PARAMS_PATH) as f:
+        return yaml.safe_load(f)
 
 
 def load_data():
@@ -58,7 +73,7 @@ def time_split(df: pd.DataFrame, ratio: float):
     return df.iloc[:split_idx], df.iloc[split_idx:]
 
 
-def tune_threshold(y_true, y_prob, min_recall=0.93):
+def tune_threshold(y_true, y_prob, min_recall: float):
     """
     Find the highest threshold where recall >= min_recall.
 
@@ -66,23 +81,15 @@ def tune_threshold(y_true, y_prob, min_recall=0.93):
     costly than a false alarm (false positive). So we optimize for recall
     first, then tighten precision as much as possible without dropping below
     the recall floor.
-
-    min_recall=0.93 matches the Nokia production target cited on the CV.
     """
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_prob)
-    # precision_recall_curve returns arrays where the last element has no
-    # corresponding threshold, so we align lengths
     recalls    = recalls[:-1]
     precisions = precisions[:-1]
 
-    # Among all thresholds that meet the recall floor, pick the one with
-    # highest precision (i.e. fewest false alarms)
     valid = thresholds[recalls >= min_recall]
     if len(valid) == 0:
-        # Recall floor unachievable — fall back to max-recall threshold
         best_idx = np.argmax(recalls)
     else:
-        # Highest threshold that still meets recall floor = best precision
         best_idx = np.where(thresholds == valid[-1])[0][0]
 
     f1 = 2 * precisions[best_idx] * recalls[best_idx] / (
@@ -96,110 +103,167 @@ def main():
     print("  Telecom Anomaly Detection — Model Training")
     print("=" * 60)
 
-    # ── Load data ─────────────────────────────────────────────────────────
-    df = load_data()
-    feature_cols = get_feature_columns(df)
-    print(f"\nLoaded {len(df):,} rows | {len(feature_cols)} features")
+    params = load_params()
+    model_params     = params["model"]
+    split_params     = params["split"]
+    threshold_params = params["threshold"]
+    mlflow_params    = params["mlflow"]
 
-    train_df, test_df = time_split(df, TRAIN_RATIO)
-    print(f"Train: {len(train_df):,} rows | Test: {len(test_df):,} rows")
+    mlflow.set_experiment(mlflow_params["experiment_name"])
 
-    X_train = train_df[feature_cols].values
-    y_train = train_df["anomaly"].values
-    X_test  = test_df[feature_cols].values
-    y_test  = test_df["anomaly"].values
+    with mlflow.start_run() as run:
+        print(f"\nMLflow run ID: {run.info.run_id}")
 
-    print(f"\nTrain anomaly rate: {y_train.mean():.2%}")
-    print(f"Test  anomaly rate: {y_test.mean():.2%}")
+        # ── Load data ─────────────────────────────────────────────────────
+        df = load_data()
+        feature_cols = get_feature_columns(df)
+        print(f"\nLoaded {len(df):,} rows | {len(feature_cols)} features")
 
-    # ── Scale features ─────────────────────────────────────────────────────
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled  = scaler.transform(X_test)
+        train_df, test_df = time_split(df, split_params["train_ratio"])
+        print(f"Train: {len(train_df):,} rows | Test: {len(test_df):,} rows")
 
-    # ── Handle class imbalance ─────────────────────────────────────────────
-    neg = (y_train == 0).sum()
-    pos = (y_train == 1).sum()
-    scale_pos_weight = neg / pos
-    print(f"\nClass ratio (neg/pos): {scale_pos_weight:.1f}x → used as scale_pos_weight")
+        X_train = train_df[feature_cols].values
+        y_train = train_df["anomaly"].values
+        X_test  = test_df[feature_cols].values
+        y_test  = test_df["anomaly"].values
 
-    # ── Train XGBoost ──────────────────────────────────────────────────────
-    print("\nTraining XGBoost model...")
-    model = xgb.XGBClassifier(
-        n_estimators=300,
-        max_depth=6,
-        learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        scale_pos_weight=scale_pos_weight,
-        use_label_encoder=False,
-        eval_metric="aucpr",        # area under precision-recall curve
-        early_stopping_rounds=30,
-        random_state=42,
-        n_jobs=-1,
-    )
+        train_anomaly_rate = float(y_train.mean())
+        test_anomaly_rate  = float(y_test.mean())
+        print(f"\nTrain anomaly rate: {train_anomaly_rate:.2%}")
+        print(f"Test  anomaly rate: {test_anomaly_rate:.2%}")
 
-    model.fit(
-        X_train_scaled, y_train,
-        eval_set=[(X_test_scaled, y_test)],
-        verbose=50,
-    )
+        # ── Scale features ───────────────────────────────────────────────
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled  = scaler.transform(X_test)
 
-    # ── Threshold tuning ───────────────────────────────────────────────────
-    y_prob = model.predict_proba(X_test_scaled)[:, 1]
-    best_threshold, best_recall, best_precision, best_f1 = tune_threshold(y_test, y_prob)
-    print(f"\nThreshold tuned for recall >= 0.93:")
-    print(f"  Threshold : {best_threshold:.3f}")
-    print(f"  Recall    : {best_recall:.3f}")
-    print(f"  Precision : {best_precision:.3f}")
-    print(f"  F1        : {best_f1:.3f}")
+        # ── Handle class imbalance ───────────────────────────────────────
+        neg = (y_train == 0).sum()
+        pos = (y_train == 1).sum()
+        scale_pos_weight = neg / pos
+        print(f"\nClass ratio (neg/pos): {scale_pos_weight:.1f}x → used as scale_pos_weight")
 
-    y_pred = (y_prob >= best_threshold).astype(int)
+        # ── Log params to MLflow ─────────────────────────────────────────
+        mlflow.log_params({
+            **model_params,
+            "scale_pos_weight": scale_pos_weight,
+            "train_ratio": split_params["train_ratio"],
+            "min_recall_floor": threshold_params["min_recall"],
+            "train_rows": len(train_df),
+            "test_rows": len(test_df),
+            "n_features": len(feature_cols),
+            "train_anomaly_rate": train_anomaly_rate,
+            "test_anomaly_rate": test_anomaly_rate,
+        })
 
-    # ── Evaluation ─────────────────────────────────────────────────────────
-    print("\n── Classification Report ──────────────────────────────────")
-    print(classification_report(y_test, y_pred, target_names=["Normal", "Anomaly"]))
+        # ── Train XGBoost ────────────────────────────────────────────────
+        print("\nTraining XGBoost model...")
+        model = xgb.XGBClassifier(
+            n_estimators=model_params["n_estimators"],
+            max_depth=model_params["max_depth"],
+            learning_rate=model_params["learning_rate"],
+            subsample=model_params["subsample"],
+            colsample_bytree=model_params["colsample_bytree"],
+            scale_pos_weight=scale_pos_weight,
+            use_label_encoder=False,
+            eval_metric="aucpr",
+            early_stopping_rounds=model_params["early_stopping_rounds"],
+            random_state=model_params["random_state"],
+            n_jobs=-1,
+        )
 
-    cm = confusion_matrix(y_test, y_pred)
-    tn, fp, fn, tp = cm.ravel()
-    recall    = tp / (tp + fn)
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        model.fit(
+            X_train_scaled, y_train,
+            eval_set=[(X_test_scaled, y_test)],
+            verbose=50,
+        )
 
-    print(f"Confusion Matrix:\n{cm}")
-    print(f"\nRecall    : {recall:.3f}  ← % of real anomalies caught")
-    print(f"Precision : {precision:.3f}  ← % of flagged alerts that are real")
+        mlflow.log_metric("best_iteration", model.best_iteration)
 
-    # ── Feature importance ─────────────────────────────────────────────────
-    importance = pd.Series(
-        model.feature_importances_, index=feature_cols
-    ).sort_values(ascending=False)
-    print("\n── Top 10 Features ────────────────────────────────────────")
-    print(importance.head(10).to_string())
+        # ── Threshold tuning ─────────────────────────────────────────────
+        y_prob = model.predict_proba(X_test_scaled)[:, 1]
+        best_threshold, best_recall, best_precision, best_f1 = tune_threshold(
+            y_test, y_prob, threshold_params["min_recall"]
+        )
+        print(f"\nThreshold tuned for recall >= {threshold_params['min_recall']}:")
+        print(f"  Threshold : {best_threshold:.3f}")
+        print(f"  Recall    : {best_recall:.3f}")
+        print(f"  Precision : {best_precision:.3f}")
+        print(f"  F1        : {best_f1:.3f}")
 
-    # ── Save artifacts ─────────────────────────────────────────────────────
-    MODEL_DIR.mkdir(exist_ok=True)
+        y_pred = (y_prob >= best_threshold).astype(int)
 
-    model.save_model(MODEL_DIR / "model.json")
-    joblib.dump(scaler, MODEL_DIR / "scaler.pkl")
+        # ── Evaluation ───────────────────────────────────────────────────
+        print("\n── Classification Report ──────────────────────────────────")
+        print(classification_report(y_test, y_pred, target_names=["Normal", "Anomaly"]))
 
-    metadata = {
-        "feature_cols": feature_cols,
-        "threshold": float(best_threshold),
-        "metrics": {
-            "recall":    round(recall, 4),
-            "precision": round(precision, 4),
-            "f1":        round(best_f1, 4),
-        },
-        "train_rows": len(train_df),
-        "test_rows":  len(test_df),
-    }
-    with open(MODEL_DIR / "metadata.json", "w") as f:
-        json.dump(metadata, f, indent=2)
+        cm = confusion_matrix(y_test, y_pred)
+        tn, fp, fn, tp = cm.ravel()
+        recall    = tp / (tp + fn)
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
 
-    print(f"\nSaved → {MODEL_DIR}/model.json")
-    print(f"Saved → {MODEL_DIR}/scaler.pkl")
-    print(f"Saved → {MODEL_DIR}/metadata.json")
-    print("\nTraining complete.")
+        print(f"Confusion Matrix:\n{cm}")
+        print(f"\nRecall    : {recall:.3f}  ← % of real anomalies caught")
+        print(f"Precision : {precision:.3f}  ← % of flagged alerts that are real")
+
+        mlflow.log_metrics({
+            "threshold": float(best_threshold),
+            "recall": round(float(recall), 4),
+            "precision": round(float(precision), 4),
+            "f1": round(float(best_f1), 4),
+            "true_positives": int(tp),
+            "false_positives": int(fp),
+            "true_negatives": int(tn),
+            "false_negatives": int(fn),
+        })
+
+        # ── Feature importance ───────────────────────────────────────────
+        importance = pd.Series(
+            model.feature_importances_, index=feature_cols
+        ).sort_values(ascending=False)
+        print("\n── Top 10 Features ────────────────────────────────────────")
+        print(importance.head(10).to_string())
+
+        importance_path = MODEL_DIR / "feature_importance.csv"
+        importance.to_csv(importance_path, header=["importance"])
+        mlflow.log_artifact(str(importance_path))
+
+        # ── Save artifacts locally (kept for the existing FastAPI service) ─
+        MODEL_DIR.mkdir(exist_ok=True)
+
+        model.save_model(MODEL_DIR / "model.json")
+        joblib.dump(scaler, MODEL_DIR / "scaler.pkl")
+
+        metadata = {
+            "feature_cols": feature_cols,
+            "threshold": float(best_threshold),
+            "metrics": {
+                "recall":    round(float(recall), 4),
+                "precision": round(float(precision), 4),
+                "f1":        round(float(best_f1), 4),
+            },
+            "train_rows": len(train_df),
+            "test_rows":  len(test_df),
+            "mlflow_run_id": run.info.run_id,
+        }
+        with open(MODEL_DIR / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        # ── Log model + scaler + metadata to MLflow ─────────────────────
+        mlflow.xgboost.log_model(
+            model,
+            artifact_path="model",
+            registered_model_name=mlflow_params["registered_model_name"],
+        )
+        mlflow.log_artifact(str(MODEL_DIR / "scaler.pkl"))
+        mlflow.log_artifact(str(MODEL_DIR / "metadata.json"))
+
+        print(f"\nSaved → {MODEL_DIR}/model.json")
+        print(f"Saved → {MODEL_DIR}/scaler.pkl")
+        print(f"Saved → {MODEL_DIR}/metadata.json")
+        print(f"Logged to MLflow run {run.info.run_id} "
+              f"(registered as '{mlflow_params['registered_model_name']}')")
+        print("\nTraining complete.")
 
 
 if __name__ == "__main__":
