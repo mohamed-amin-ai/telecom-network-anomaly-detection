@@ -25,6 +25,11 @@ models/feature_importance.csv
 mlruns/
 mlartifacts/
 
+# Phase 4 — production inference log (grows unbounded; not source data,
+# it's runtime output) and generated drift reports
+logs/
+monitoring/reports/
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb

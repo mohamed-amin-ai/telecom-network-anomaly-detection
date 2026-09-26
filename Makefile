@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -52,6 +52,9 @@ observability-urls:
 
 demo-traffic:
 	python scripts/generate_traffic.py --url http://localhost:8000 --requests 300
+
+drift-check:
+	python monitoring/drift_check.py
 
 clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__

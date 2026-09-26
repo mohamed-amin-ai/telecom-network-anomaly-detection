@@ -17,3 +17,10 @@ pyyaml>=6.0
 # Phase 3 — observability
 prometheus-fastapi-instrumentator>=7.0
 prometheus-client>=0.20
+
+# Phase 4 — drift detection. Pinned to 0.4.x's Report/metric_preset API
+# deliberately — Evidently has had significant breaking API changes
+# across major versions, and this was written without the ability to
+# install/verify it (no network in the build sandbox). See the banner
+# at the top of monitoring/drift_check.py before upgrading this pin.
+evidently==0.4.33

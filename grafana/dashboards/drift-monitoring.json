@@ -1,0 +1,111 @@
+{
+  "title": "Data Drift Monitoring",
+  "uid": "telecom-anomaly-drift",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-7d", "to": "now" },
+  "refresh": "1m",
+  "tags": ["telecom-anomaly", "mlops", "drift"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Dataset Drift Detected",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "data_drift_detected{job=\"drift_check\"}", "legendFormat": "drift", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "No drift" }, "1": { "text": "DRIFT DETECTED" } } }
+          ],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "Set by the most recent monitoring/drift_check.py run. See Phase 4 in README for how often this should run (Phase 5/Airflow will schedule it)."
+    },
+    {
+      "id": 2,
+      "title": "Share of Drifted Features",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "data_drift_share{job=\"drift_check\"}", "legendFormat": "share", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.1 },
+              { "color": "red", "value": 0.3 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Drifted / Total Columns",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "data_drift_columns_drifted{job=\"drift_check\"}", "legendFormat": "drifted", "refId": "A" },
+        { "expr": "data_drift_columns_total{job=\"drift_check\"}", "legendFormat": "total", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "title": "Last Check: Reference vs Current Rows",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "drift_check_reference_rows{job=\"drift_check\"}", "legendFormat": "reference", "refId": "A" },
+        { "expr": "drift_check_current_rows{job=\"drift_check\"}", "legendFormat": "current", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] },
+      "description": "If 'current' is small, treat the drift verdict with caution — see --min-current-rows in drift_check.py."
+    },
+    {
+      "id": 5,
+      "title": "Drift Share Over Time",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        { "expr": "data_drift_share{job=\"drift_check\"}", "legendFormat": "drift share", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "description": "A rising trend here, even before crossing the alerting threshold, is worth investigating — it's cheaper to catch drift early than after it's degraded model performance."
+    },
+    {
+      "id": 6,
+      "title": "Per-Column Drift Flags (most recent run)",
+      "type": "table",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 13 },
+      "targets": [
+        { "expr": "column_drift_detected{job=\"drift_check\"}", "format": "table", "instant": true, "refId": "A" }
+      ],
+      "description": "Bounded cardinality — one row per engineered feature (~68, fixed), not per cell_id. See api/metrics.py's docstring for why cell_id itself is never used as a label anywhere in this project."
+    }
+  ]
+}

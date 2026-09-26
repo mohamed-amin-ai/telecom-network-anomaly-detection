@@ -42,7 +42,12 @@ telecom_anomaly/
 ├── api/
 │   ├── main.py             # FastAPI inference service
 │   ├── live_features.py    # Rolling per-cell feature computation for /predict
-│   └── metrics.py          # Prometheus business metrics
+│   ├── metrics.py          # Prometheus business metrics
+│   └── inference_log.py    # Logs served feature vectors for drift detection
+├── monitoring/
+│   ├── drift_check.py       # Evidently drift detection, pushes to Pushgateway
+│   └── reports/             # Generated HTML reports + status JSON (gitignored)
+├── logs/                    # Inference log written by the running API (gitignored)
 ├── tests/                  # pytest suite — see Phase 2 section below
 ├── scripts/
 │   ├── local_experiment_sweep.py       # offline hyperparameter sweep, see EXPERIMENTS.md
@@ -123,7 +128,7 @@ Build and run the full stack — API + Prometheus + Grafana — in containers in
 docker compose up --build
 ```
 
-The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above. Prometheus and Grafana come up alongside it automatically; see [Phase 3](#phase-3--prometheus--grafana) below for their URLs and what's on the dashboard.
+The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above. Prometheus, Pushgateway, and Grafana come up alongside it automatically; see [Phase 3](#phase-3--prometheus--grafana) and [Phase 4](#phase-4--evidently-drift-detection) below for their URLs and what's on each dashboard.
 
 Notes:
 - Runs as a non-root user, with a container `HEALTHCHECK` against `/health`.
@@ -139,7 +144,7 @@ Notes:
 | 1 | **MLflow** (experiment tracking + model registry), **DVC** (data/model versioning) | ✅ done |
 | 2 | **CI/CD** (GitHub Actions: lint, unit tests, real pipeline run, API integration tests, Docker build/push to GHCR) | ✅ done |
 | 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | ✅ done |
-| 4 | **Evidently** (data/prediction drift detection) | planned |
+| 4 | **Evidently** (data/prediction drift detection) | ✅ done |
 | 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | planned |
 | 6 | **ONNX** + **Triton** (portable, high-throughput serving) | planned |
 
@@ -256,6 +261,60 @@ value per metric, so labeling by cell_id would mean hundreds of growing
 time series per metric. Severity and feature_source are small, fixed
 label sets — safe. Per-cell drill-down belongs in logs, not metrics.
 
+### Phase 4 — Evidently (drift detection)
+
+**Honest disclosure up front:** this was written without network access
+to install/verify `evidently` against the real library — its API has had
+significant breaking changes across versions. `monitoring/drift_check.py`
+pins `evidently==0.4.33` and parses its output defensively: if the
+result-dict shape doesn't match what the code expects, it fails loudly
+with an actionable error and a raw debug dump, rather than silently
+reporting wrong numbers. See that file's module docstring for the full
+explanation, and `.github/workflows/ci.yml`'s "Smoke-test the
+drift-detection pipeline" step — that's the first real, automatic
+validation this code gets, since GitHub Actions has network access this
+sandbox didn't.
+
+**What it does:** compares the feature distribution of real production
+traffic against the training distribution, using Evidently's
+`DataDriftPreset`.
+
+```
+data/features.csv (train split)  ──┐
+                                    ├─→ Evidently Report → HTML report
+logs/inference_log.csv (prod)   ──┘         │
+                                             └─→ Pushgateway → Prometheus → Grafana
+```
+
+- `api/inference_log.py` — every scored `/predict` request appends its
+  full engineered feature vector to `logs/inference_log.csv`
+  (best-effort; a logging failure never breaks the actual prediction
+  response). This didn't exist before Phase 4 — without it, there was no
+  record of what the model actually saw in production to compare against
+  training data.
+- `monitoring/drift_check.py` — loads the training split as reference,
+  the inference log as current, runs Evidently, saves an HTML report to
+  `monitoring/reports/`, and pushes a summary to a Prometheus Pushgateway
+  (`data_drift_detected`, `data_drift_share`, per-column
+  `column_drift_detected{column=...}` — bounded cardinality, ~68 fixed
+  feature names, unlike `cell_id`).
+- A second Grafana dashboard, **"Data Drift Monitoring"**, auto-provisions
+  alongside the Phase 3 one.
+
+Run it:
+```bash
+docker compose up --build
+make demo-traffic        # generates enough logged traffic to compare against
+make drift-check         # runs the real check, pushes to Prometheus
+```
+
+**Known limitation:** the inference log is a local CSV, appended to by
+however many API replicas are running, with no locking beyond a single
+in-process `threading.Lock` (documented in `inference_log.py`) — fine for
+one instance, not safe for multiple replicas writing concurrently. A real
+multi-replica deployment would ship these rows to a proper sink (Kafka,
+a feature store, cloud logging) instead.
+
 ---
 
 ## Feature Engineering
@@ -340,4 +399,4 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana` · `Evidently`
