@@ -6,6 +6,11 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    volumes:
+      # Inference log (api/inference_log.py) needs to survive container
+      # restarts and be readable by monitoring/drift_check.py running on
+      # the host — see Phase 4 in README.
+      - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health', timeout=2)"]
       interval: 30s
@@ -26,6 +31,20 @@ services:
     restart: unless-stopped
     depends_on:
       - anomaly-api
+      - pushgateway
+    networks:
+      - anomaly-net
+
+  # Batch/scheduled jobs (monitoring/drift_check.py today, Airflow-triggered
+  # in Phase 5) push metrics here rather than exposing their own /metrics
+  # endpoint, since they don't run continuously — Prometheus scrapes THIS,
+  # not the job itself. See prometheus/prometheus.yml's pushgateway job.
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: telecom-anomaly-pushgateway
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
     networks:
       - anomaly-net
 

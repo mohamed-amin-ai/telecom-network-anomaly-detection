@@ -31,6 +31,7 @@ from api.metrics import (
     record_cold_start,
     set_cells_tracked,
 )
+from api.inference_log import log_inference
 
 # ── Load model artifacts ───────────────────────────────────────────────────
 
@@ -203,6 +204,19 @@ def run_inference(snapshot: KPISnapshot) -> PredictionResult:
 
     record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob)
     set_cells_tracked(history_store.tracked_cell_count())
+
+    # Best-effort log of the exact (unscaled) feature vector the model saw
+    # — this is what monitoring/drift_check.py compares against training
+    # data. Reconstructed from X rather than threaded through
+    # build_feature_vector's return signature, to keep that function's
+    # contract unchanged for existing callers/tests.
+    log_inference(
+        cell_id=snapshot.cell_id,
+        feature_source=feature_source,
+        anomaly_score=prob,
+        features=dict(zip(FEATURE_COLS, X.flatten().tolist())),
+        feature_cols=FEATURE_COLS,
+    )
 
     return PredictionResult(
         cell_id=snapshot.cell_id,

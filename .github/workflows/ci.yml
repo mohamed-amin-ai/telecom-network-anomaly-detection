@@ -36,7 +36,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -65,6 +65,36 @@ jobs:
 
       - name: Run API integration tests
         run: pytest tests/test_api.py -v
+
+      - name: Smoke-test the drift-detection pipeline (Evidently)
+        # This is the ONLY place the evidently integration in
+        # monitoring/drift_check.py gets exercised against the real
+        # library before you run it yourself — it was written without
+        # network access to install/verify evidently (see that file's
+        # module docstring). If this step fails with the RuntimeError
+        # about CANDIDATE_KEYS, that's the API-shape mismatch the
+        # docstring warns about; check the uploaded debug-dump artifact
+        # below and update monitoring/drift_check.py's CANDIDATE_KEYS.
+        run: |
+          uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+          API_PID=$!
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8000/health && break
+            sleep 1
+          done
+          python scripts/generate_traffic.py --url http://localhost:8000 --requests 60 --sleep 0.02
+          kill $API_PID
+          python monitoring/drift_check.py --skip-push --min-current-rows 10
+
+      - name: Upload drift report + debug dump (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-check-output
+          path: |
+            monitoring/reports/
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload trained model artifacts
         uses: actions/upload-artifact@v4

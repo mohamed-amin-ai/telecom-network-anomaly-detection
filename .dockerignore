@@ -29,3 +29,8 @@ grafana/
 tests/
 results/
 EXPERIMENTS.md
+
+# Phase 4 — production inference log + drift reports; neither belongs
+# in the image (logs/ is a runtime volume mount, reports are generated)
+logs/
+monitoring/reports/

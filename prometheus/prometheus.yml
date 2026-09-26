@@ -21,6 +21,16 @@ scrape_configs:
         labels:
           service: "telecom-anomaly-api"
 
+  # Batch jobs (monitoring/drift_check.py) push here rather than being
+  # scraped directly, since they don't run continuously — see Phase 4
+  # in README. honor_labels lets the job's own "job" label (set via
+  # push_to_gateway(job="drift_check")) survive instead of being
+  # overwritten by Prometheus's default relabeling for this target.
+  - job_name: "pushgateway"
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
