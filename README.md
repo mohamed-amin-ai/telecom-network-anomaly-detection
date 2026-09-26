@@ -120,8 +120,8 @@ Notes:
 
 | Phase | Tooling | Status |
 |---|---|---|
-| 1 | **MLflow** (experiment tracking + model registry), **DVC** (data/model versioning) | ✅ this phase |
-| 2 | CI/CD (GitHub Actions: lint, test, `dvc repro`, build & push image) | planned |
+| 1 | **MLflow** (experiment tracking + model registry), **DVC** (data/model versioning) | ✅ done |
+| 2 | **CI/CD** (GitHub Actions: lint, unit tests, real pipeline run, API integration tests, Docker build/push to GHCR) | ✅ done |
 | 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | planned |
 | 4 | **Evidently** (data/prediction drift detection) | planned |
 | 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | planned |
@@ -158,6 +158,43 @@ change to `params.yaml` (`learning_rate: 0.05 → 0.10`) and a real
 discrepancy caught between the documented ~5% anomaly rate and the
 actual ~1% the generator produces. `scripts/replay_experiments_to_mlflow.py`
 loads those same real numbers into MLflow once it's installed.
+
+### Phase 2 — CI/CD
+
+`.github/workflows/ci.yml` runs on every push/PR to `main`, as four
+sequential jobs (each only runs if the previous one passes):
+
+1. **Lint** — `ruff check .`
+2. **Unit tests** — `tests/test_features.py` + `tests/test_common.py`.
+   These test the pure transformation/split/threshold logic directly, with
+   no trained model required, so they run on every PR immediately.
+3. **Real pipeline + integration tests** — runs
+   `generate_data.py → features.py → train.py` for real (with real
+   XGBoost, available in the Actions runner), producing a real trained
+   model, then runs `tests/test_api.py` against it, then uploads the
+   model artifacts as a workflow artifact.
+4. **Docker build & push** — only on a push to `main` (not on PRs). Builds
+   the image and pushes to `ghcr.io/<owner>/<repo>:latest` and
+   `:<commit-sha>`, authenticated with the Actions-provided
+   `GITHUB_TOKEN` — no personal access token is stored or required for
+   this workflow.
+
+Run the same checks locally before pushing:
+```bash
+make lint
+make test          # unit tests only, no model needed
+make pipeline       # generate_data.py -> features.py -> train.py
+make test-api       # needs the above to have run first
+```
+
+**Known gap (documented, not hidden):** CI currently runs the three
+pipeline scripts directly rather than `dvc repro`, because this repo
+doesn't have `dvc init` run yet (no `.dvc/` directory committed — that
+needs an actual DVC install to generate, which the environment this repo
+was originally built in couldn't do, no network access). Once you run
+`dvc init` and commit `.dvc/config` + `.dvc/.gitignore`, swap the
+pipeline step in `ci.yml` for `dvc repro` to get caching (skip stages
+whose inputs/params haven't changed) instead of a full rerun every time.
 
 ---
 

@@ -39,7 +39,7 @@ import joblib
 # Allow imports from parent dir
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
-from models.common import DATA_DIR, MODEL_DIR, load_params, load_data, time_split, tune_threshold
+from models.common import MODEL_DIR, load_params, load_data, time_split, tune_threshold
 
 
 def main():

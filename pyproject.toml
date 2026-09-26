@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+# Kept intentionally lean: correctness + obvious bugs, not a style rewrite
+# of an existing codebase. Widen this over time rather than all at once.
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # line length handled by line-length above, not as a hard error
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401"]  # test files sometimes import fixtures only for their side effects
