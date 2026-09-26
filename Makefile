@@ -44,5 +44,14 @@ docker-build:
 docker-up:
 	docker compose up --build
 
+observability-urls:
+	@echo "API:        http://localhost:8000/docs"
+	@echo "Metrics:    http://localhost:8000/metrics"
+	@echo "Prometheus: http://localhost:9090"
+	@echo "Grafana:    http://localhost:3000  (login: admin / admin)"
+
+demo-traffic:
+	python scripts/generate_traffic.py --url http://localhost:8000 --requests 300
+
 clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__

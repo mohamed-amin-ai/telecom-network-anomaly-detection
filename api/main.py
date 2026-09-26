@@ -24,6 +24,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from api.live_features import CellHistoryStore, make_raw_row, now_iso, MIN_HISTORY_ROWS
+from api.metrics import (
+    instrument_app,
+    set_model_info,
+    record_prediction,
+    record_cold_start,
+    set_cells_tracked,
+)
 
 # ── Load model artifacts ───────────────────────────────────────────────────
 
@@ -40,6 +47,8 @@ try:
 
     FEATURE_COLS = metadata["feature_cols"]
     THRESHOLD    = metadata["threshold"]
+
+    set_model_info(THRESHOLD)
 
 except FileNotFoundError:
     raise RuntimeError(
@@ -63,6 +72,8 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+instrument_app(app)
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────
@@ -153,6 +164,7 @@ def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
 
     if computed is None:
         rows_so_far = history_store.rows_available(snapshot.cell_id)
+        record_cold_start()
         raise HTTPException(
             status_code=425,  # Too Early
             detail=(
@@ -187,13 +199,17 @@ def run_inference(snapshot: KPISnapshot) -> PredictionResult:
     X_scaled = scaler.transform(X)
     prob = float(model.predict_proba(X_scaled)[0, 1])
     is_anomaly = prob >= THRESHOLD
+    severity = score_to_severity(prob, THRESHOLD)
+
+    record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob)
+    set_cells_tracked(history_store.tracked_cell_count())
 
     return PredictionResult(
         cell_id=snapshot.cell_id,
         anomaly=is_anomaly,
         anomaly_score=round(prob, 4),
         threshold=THRESHOLD,
-        severity=score_to_severity(prob, THRESHOLD),
+        severity=severity,
         feature_source=feature_source,
         raw_kpis={
             "latency_ms":      snapshot.latency_ms,

@@ -120,3 +120,29 @@ def test_predict_batch_reports_per_item_errors_not_whole_batch_failure(client):
     assert body["total"] == 1
     assert body["error_count"] == 1
     assert body["results"][0]["ok"] is False
+
+
+def test_metrics_endpoint_reflects_real_traffic(client):
+    """/metrics should be a working Prometheus scrape target, and the
+    counters wired up in api/metrics.py should actually move after real
+    requests — not just be present but frozen at zero."""
+    from api.main import FEATURE_COLS
+
+    # Trigger one precomputed-path prediction and one cold-start 425,
+    # each of which should move a different counter.
+    features = {col: 0.0 for col in FEATURE_COLS}
+    client.post("/predict", json=_snapshot("TEST_CELL_METRICS", features=features))
+    client.post("/predict", json=_snapshot("TEST_CELL_METRICS_COLD"))
+
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    body = resp.text
+
+    assert "anomaly_predictions_total" in body
+    assert "feature_source_total" in body
+    assert "anomaly_score_bucket" in body
+    assert "cold_start_responses_total" in body
+    assert "cells_tracked" in body
+    assert "model_threshold_info" in body
+    # Standard instrumentator HTTP metrics should also be present.
+    assert "http_requests_total" in body
