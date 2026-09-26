@@ -3,6 +3,20 @@
 install:
 	pip install -r requirements.txt
 
+install-dev:
+	pip install -r requirements.txt -r requirements-dev.txt
+
+lint:
+	ruff check .
+
+test:
+	pytest tests/test_features.py tests/test_common.py -v
+
+test-api:
+	pytest tests/test_api.py -v
+
+test-all: test test-api
+
 # Full data → features → train pipeline, DVC-tracked and skip-if-unchanged
 repro:
 	dvc repro

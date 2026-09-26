@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+
+  unit-tests:
+    name: Unit tests (no model artifacts needed)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      # Only the pure transformation/split/threshold logic — no trained
+      # model required, so this runs on every PR regardless of whether
+      # the pipeline below has been executed yet.
+      - run: pytest tests/test_features.py tests/test_common.py -v
+
+  pipeline-and-integration-tests:
+    name: Run real pipeline + API integration tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+
+      # Runs the actual pipeline end-to-end with real xgboost (available
+      # here, unlike the sandbox this repo was partly built in) so
+      # test_api.py has a real model.json/scaler.pkl/metadata.json to
+      # load. Using the scripts directly rather than `dvc repro` for now
+      # since this repo doesn't have `dvc init` run yet (no .dvc/ dir
+      # committed) — swap this step for `dvc repro` once that's done;
+      # see README's DVC section.
+      - name: Run data + feature + train pipeline
+        run: |
+          python data/generate_data.py
+          python data/features.py
+          python models/train.py
+
+      - name: Run API integration tests
+        run: pytest tests/test_api.py -v
+
+      - name: Upload trained model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifacts
+          path: |
+            models/model.json
+            models/scaler.pkl
+            models/metadata.json
+            models/feature_importance.csv
+          retention-days: 14
+
+  docker-build-and-push:
+    name: Build & push Docker image
+    needs: pipeline-and-integration-tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements.txt
+
+      # The Docker image bakes in models/{model.json,scaler.pkl,metadata.json}
+      # (see Dockerfile), so they must exist before `docker build` — rerun
+      # the real pipeline here rather than reuse the previous job's
+      # upload-artifact (keeps this job self-contained and reruns quickly
+      # since the dataset is small).
+      - name: Run data + feature + train pipeline
+        run: |
+          python data/generate_data.py
+          python data/features.py
+          python models/train.py
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # Built-in token scoped to this repo — no personal access
+          # token needed or stored anywhere for this workflow.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}

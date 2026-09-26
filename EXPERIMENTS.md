@@ -102,3 +102,38 @@ follow-up once real XGBoost + MLflow are available to run it properly
 (varying the recall floor changes the deployed alerting behavior, so it's
 a decision worth making with real production-model numbers, not the
 stand-in's).
+
+## Real finding #3: a flat KPI silently drops its row (found writing tests)
+
+While writing `tests/test_features.py`, an early version of the synthetic
+fixture derived `packet_loss_pct` from a per-cell `base` value
+(`base/100 + noise`, clipped to `[0, 5]`). For a cell with `base=1000`,
+that clip saturates every single row to the ceiling of `5.0` — zero
+variance for the whole cell.
+
+`engineer_features` computes z-score as
+`(series - roll_mean_4h) / roll_std_4h.replace(0, np.nan)` — the
+`replace(0, np.nan)` guards against divide-by-zero, but it means a KPI
+that's genuinely flat for a full 4h window gets `zscore = NaN` for every
+row in that window, and the final `dropna()` then drops those rows
+entirely. In the test, this deleted **100% of one cell's rows** — not a
+few warmup rows, all of them, for as long as the flat streak lasted.
+
+This was a bug in the test fixture, not in `features.py` — real telecom
+KPIs are essentially never perfectly flat for 4 hours. But it's a real
+latent behavior worth knowing: if a KPI's value did get stuck (e.g. a
+stuck sensor reporting the same reading repeatedly, a genuinely
+alert-worthy fault condition), the current code would silently drop that
+row from training data, and at serving time `live_features.py`'s
+`add_and_compute` would return `None` (empty `feat_df` after dropna) →
+the API would report `425 Too Early` / "not enough history" for a cell
+that actually has plenty of history — just degenerate variance. The
+error message would be misleading about the actual cause.
+
+**Not fixed here** (out of scope for a test-writing pass — it's a
+product decision, not a bug fix): options would be (a) treat `std==0` as
+`zscore=0` instead of `NaN` (a flat series is, definitionally, exactly at
+its own mean), or (b) keep it as `NaN` but have `live_features.py` surface
+a distinct error ("degenerate variance" vs "insufficient history") rather
+than conflating the two under the same 425. Flagging as a known
+limitation for Phase 2+ rather than silently patching it.
