@@ -34,3 +34,9 @@ EXPERIMENTS.md
 # in the image (logs/ is a runtime volume mount, reports are generated)
 logs/
 monitoring/reports/
+
+# Phase 5 — Airflow has its own image (Dockerfile.airflow); none of this
+# belongs in the API image's build context
+airflow/
+Dockerfile.airflow
+docker-compose.airflow.yml

@@ -22,6 +22,50 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
 
+  airflow-dag-validation:
+    name: Validate Airflow DAG parses (real DagBag, not just syntax)
+    needs: lint
+    runs-on: ubuntu-latest
+    # Only apache-airflow itself is needed here, not requirements.txt —
+    # DagBag parsing executes the DAG file's top-level code (the
+    # @dag/@task decorators wiring up the graph), not the task function
+    # bodies (those only run when a real scheduler executes them), so
+    # xgboost/mlflow/evidently aren't needed just to validate the graph.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: |
+          pip install "apache-airflow==2.10.4" \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.4/constraints-3.12.txt"
+      - name: Parse the DAG with a real DagBag
+        env:
+          AIRFLOW_HOME: /tmp/airflow_ci_home
+          AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+          AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "sqlite:////tmp/airflow_ci_home/airflow.db"
+        run: |
+          airflow db migrate
+          python -c "
+          from airflow.models import DagBag
+          bag = DagBag(dag_folder='airflow/dags', include_examples=False)
+          if bag.import_errors:
+              print('Import errors found:')
+              for path, err in bag.import_errors.items():
+                  print(f'{path}: {err}')
+              raise SystemExit(1)
+          assert 'telecom_anomaly_pipeline' in bag.dags, f'DAG not found; got: {list(bag.dags)}'
+          dag = bag.dags['telecom_anomaly_pipeline']
+          expected_tasks = {
+              'run_drift_check', 'decide_whether_to_retrain', 'skip_retrain',
+              'generate_data', 'engineer_features', 'train_model', 'promote_model',
+          }
+          actual_tasks = set(dag.task_ids)
+          assert actual_tasks == expected_tasks, f'Task mismatch: expected {expected_tasks}, got {actual_tasks}'
+          print(f'DAG parsed cleanly with {len(dag.task_ids)} tasks: {sorted(dag.task_ids)}')
+          "
+
   unit-tests:
     name: Unit tests (no model artifacts needed)
     needs: lint
@@ -36,7 +80,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -109,7 +153,7 @@ jobs:
 
   docker-build-and-push:
     name: Build & push Docker image
-    needs: pipeline-and-integration-tests
+    needs: [pipeline-and-integration-tests, airflow-dag-validation]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:

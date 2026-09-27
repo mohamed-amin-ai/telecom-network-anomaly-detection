@@ -71,6 +71,11 @@ services:
 networks:
   anomaly-net:
     driver: bridge
+    # Explicit fixed name (not left to Compose's implicit
+    # <project-name>_anomaly-net prefixing) so docker-compose.airflow.yml
+    # can reference it as an external network reliably, regardless of
+    # what folder this repo happens to be cloned into.
+    name: telecom-anomaly-net
 
 volumes:
   prometheus-data:

@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -55,6 +55,16 @@ demo-traffic:
 
 drift-check:
 	python monitoring/drift_check.py
+
+airflow-init:
+	docker compose -f docker-compose.airflow.yml build
+	docker compose -f docker-compose.airflow.yml run --rm airflow-init
+
+airflow-up:
+	docker compose -f docker-compose.yml -f docker-compose.airflow.yml up --build
+
+airflow-down:
+	docker compose -f docker-compose.yml -f docker-compose.airflow.yml down
 
 clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__

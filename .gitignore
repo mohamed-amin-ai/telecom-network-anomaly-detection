@@ -30,6 +30,10 @@ mlartifacts/
 logs/
 monitoring/reports/
 
+# Phase 5 — Airflow runtime state; airflow/dags/ IS tracked, this isn't
+airflow/logs/
+*.airflow.db
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb

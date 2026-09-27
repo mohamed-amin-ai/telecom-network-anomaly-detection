@@ -1,0 +1,27 @@
+# Dockerfile.airflow
+# -------------------
+# Extends the official Airflow image with this project's own pipeline
+# dependencies (xgboost, mlflow, evidently, pandas, ...) so DAG tasks can
+# `from data.features import ...` / `from models.train import main` etc.
+# directly, in-process — matching how every other script in this repo
+# already works, rather than re-implementing pipeline logic as Airflow
+# operators.
+#
+# Uses Airflow's own constraints file when installing extra requirements
+# — this is the officially recommended pattern
+# (https://airflow.apache.org/docs/apache-airflow/stable/installation/installing-from-pypi.html#constraints-files)
+# for adding packages on top of the base image without silently breaking
+# Airflow's own carefully pinned dependency set.
+#
+# Version/tag note: 2.10.4-python3.12 is believed correct (Airflow added
+# Python 3.12 support around the 2.9/2.10 line) but wasn't verified
+# against Docker Hub from this sandbox (no network). If this tag doesn't
+# exist, check https://hub.docker.com/r/apache/airflow/tags for the
+# closest available 2.10.x + python3.12 combination.
+FROM apache/airflow:2.10.4-python3.12
+
+COPY requirements.txt /requirements.txt
+
+USER airflow
+RUN pip install --no-cache-dir -r /requirements.txt \
+    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.4/constraints-3.12.txt"

@@ -36,6 +36,7 @@ telecom_anomaly/
 ├── models/
 │   ├── common.py           # Shared split/threshold logic (no xgboost/mlflow dep)
 │   ├── train.py            # XGBoost training + threshold tuning + MLflow logging
+│   ├── promote.py          # MLflow registry promotion (Phase 5's Airflow DAG)
 │   ├── model.json          # DVC-tracked output
 │   ├── scaler.pkl          # DVC-tracked output
 │   └── metadata.json       # DVC-tracked output (also an MLflow artifact)
@@ -47,6 +48,7 @@ telecom_anomaly/
 ├── monitoring/
 │   ├── drift_check.py       # Evidently drift detection, pushes to Pushgateway
 │   └── reports/             # Generated HTML reports + status JSON (gitignored)
+├── airflow/dags/telecom_anomaly_pipeline.py  # drift-check -> conditional retrain -> promote
 ├── logs/                    # Inference log written by the running API (gitignored)
 ├── tests/                  # pytest suite — see Phase 2 section below
 ├── scripts/
@@ -62,7 +64,9 @@ telecom_anomaly/
 ├── dvc.yaml                # DVC pipeline: generate_data → features → train
 ├── requirements.txt
 ├── requirements-dev.txt    # pytest, ruff, httpx — dev/CI only
-├── docker-compose.yml      # API + Prometheus + Grafana
+├── docker-compose.yml      # API + Prometheus + Grafana + Pushgateway
+├── docker-compose.airflow.yml  # Airflow (Postgres + webserver + scheduler)
+├── Dockerfile.airflow      # Airflow image with this project's deps installed
 ├── Makefile                # One-line commands for common workflows
 ├── EXPERIMENTS.md          # Real hyperparameter sweep results + findings
 └── README.md
@@ -145,7 +149,7 @@ Notes:
 | 2 | **CI/CD** (GitHub Actions: lint, unit tests, real pipeline run, API integration tests, Docker build/push to GHCR) | ✅ done |
 | 3 | **Prometheus** + **Grafana** (metrics, dashboards, alerting) | ✅ done |
 | 4 | **Evidently** (data/prediction drift detection) | ✅ done |
-| 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | planned |
+| 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | ✅ done |
 | 6 | **ONNX** + **Triton** (portable, high-throughput serving) | planned |
 
 ### Phase 1 — MLflow + DVC
@@ -315,6 +319,65 @@ one instance, not safe for multiple replicas writing concurrently. A real
 multi-replica deployment would ship these rows to a proper sink (Kafka,
 a feature store, cloud logging) instead.
 
+### Phase 5 — Airflow
+
+**Same honesty pattern as Phase 4:** Airflow isn't installable in the
+sandbox this was built in either, so the DAG's exact runtime behavior is
+unverified against a live scheduler — though confidence is higher than
+Evidently's case, since the TaskFlow API (`@dag`/`@task`) has been stable
+for years. `.github/workflows/ci.yml`'s `airflow-dag-validation` job
+actually installs real Airflow and parses this DAG with a real `DagBag`,
+asserting the exact task set — that's the first genuine verification
+this graph gets, and it's worth checking that job's result before
+trusting anything below.
+
+**What it does:** `airflow/dags/telecom_anomaly_pipeline.py`, scheduled
+`@daily`:
+
+```
+run_drift_check
+      │
+      ▼
+decide_whether_to_retrain (branch)
+   │                   │
+[drift]            [no drift]
+   ▼                   ▼
+generate_data      skip_retrain
+   ▼
+engineer_features
+   ▼
+train_model
+   ▼
+promote_model   (re-checks the recall floor independently —
+                 "drift happened" and "new model is good enough
+                 to serve" are two separate gates)
+```
+
+Only retrains when `monitoring/drift_check.py` (Phase 4, unchanged, just
+invoked as a task) actually detects drift — not on every scheduled tick
+regardless. `models/promote.py` holds the promotion decision as a pure,
+independently-unit-tested function (`should_promote`, 5 tests, all
+actually executed and passing here) separated from the MLflow
+registry I/O around it.
+
+Run it (needs the Phase 3 stack's network to exist first):
+```bash
+docker compose up --build              # anomaly-net + api + prometheus + grafana + pushgateway
+make airflow-init                       # one-time: create the Airflow metadata DB + admin user
+make airflow-up                         # webserver + scheduler, joins the same network
+```
+Open [http://localhost:8080](http://localhost:8080) (login `admin` / `admin` — same "change this off your laptop" caveat as Grafana).
+
+**Two things documented as real gaps, not silently glossed over:**
+- `generate_data` is deterministic (fixed seed) — rerunning it produces
+  byte-identical data. In this demo it stands in for "new production
+  data arrived"; a real deployment would pull from wherever labeled
+  production data actually lands instead of a synthetic generator.
+- Promoting a model to "Production" in the MLflow registry currently has
+  **no effect** on what `api/main.py` actually serves — it always loads
+  `models/model.json` directly off disk. Wiring the API to load from
+  (and reload on promotion from) the registry is real future work.
+
 ---
 
 ## Feature Engineering
@@ -399,4 +462,4 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana` · `Evidently`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana` · `Evidently` · `Airflow`
