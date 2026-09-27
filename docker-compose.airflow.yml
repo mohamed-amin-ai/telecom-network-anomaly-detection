@@ -1,0 +1,108 @@
+# docker-compose.airflow.yml
+# ---------------------------
+# Kept separate from docker-compose.yml on purpose: Airflow's own infra
+# (a metadata database, webserver, scheduler) is orthogonal to the
+# API/Prometheus/Grafana stack, and mixing them would mean everyone
+# pays Airflow's resource cost just to run the API. Run both together
+# with two -f flags if you want the DAG's drift_check task to actually
+# reach a live pushgateway:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.airflow.yml up --build
+#
+# First-time setup (creates the Airflow metadata DB + an admin user):
+#   docker compose -f docker-compose.airflow.yml run --rm airflow-init
+#
+# Then:
+#   docker compose -f docker-compose.yml -f docker-compose.airflow.yml up
+#   open http://localhost:8080  (login: admin / admin — see the same
+#   "change this for anything but your own laptop" note as Grafana's)
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: telecom-anomaly-airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-postgres-data:/var/lib/postgresql/data
+    networks:
+      - anomaly-net
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: telecom-anomaly-airflow-init
+    depends_on:
+      - postgres
+    environment: &airflow-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+      # Demo-only fixed key — generate a real one
+      # (`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`)
+      # for anything beyond your own laptop.
+      AIRFLOW__CORE__FERNET_KEY: "ZmDfcTF7t7CrqBhxCbEQu5Cw4pIQiJIZLdKZKtWEQhk="
+      AIRFLOW__WEBSERVER__SECRET_KEY: "demo-only-secret-key-change-me"
+      PYTHONPATH: /opt/project
+    volumes: &airflow-volumes
+      - ./airflow/dags:/opt/airflow/dags
+      - ./:/opt/project
+      - airflow-logs:/opt/airflow/logs
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username admin --password admin \
+          --firstname Admin --lastname User \
+          --role Admin --email admin@example.com || true
+    networks:
+      - anomaly-net
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: telecom-anomaly-airflow-webserver
+    depends_on:
+      - postgres
+    environment: *airflow-env
+    volumes: *airflow-volumes
+    ports:
+      - "8080:8080"
+    command: webserver
+    restart: unless-stopped
+    networks:
+      - anomaly-net
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: telecom-anomaly-airflow-scheduler
+    depends_on:
+      - postgres
+    environment: *airflow-env
+    volumes: *airflow-volumes
+    command: scheduler
+    restart: unless-stopped
+    networks:
+      - anomaly-net
+
+networks:
+  # No `external: true` here — when run together with docker-compose.yml
+  # via two -f flags (the documented, primary way), Compose merges both
+  # files into ONE project sharing this same network key, so it's created
+  # once by docker-compose.yml and simply referenced here. If you instead
+  # want to run this file standalone against an already-running separate
+  # anomaly-net stack, add `external: true` yourself.
+  anomaly-net: {}
+
+volumes:
+  airflow-postgres-data:
+  airflow-logs:
