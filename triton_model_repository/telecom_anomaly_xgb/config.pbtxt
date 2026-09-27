@@ -1,0 +1,53 @@
+# config.pbtxt
+# -------------
+# Triton model configuration for the ONNX Runtime backend.
+#
+# NAMING CAVEAT: the input name "input" matches what
+# models/convert_to_onnx.py explicitly requests via FloatTensorType — high
+# confidence. The output name "probabilities" below is a GUESS at what
+# onnxmltools' zipmap=False conversion produces; it was written without
+# being able to run the real conversion (no network in the build sandbox).
+#
+# The authoritative source of truth is convert_to_onnx.py's own printed
+# output at conversion time (it prints exactly this via
+# `session.get_outputs()` — see that script's "ONNX output(s)" log line).
+# If Triton refuses to load this model with a name-mismatch error, or the
+# HTTP inference response doesn't contain a "probabilities" key, open
+# that log output and replace the name below with whatever it actually
+# printed. Do not guess a second time — check the log.
+#
+# Also note: `dims: [2]` assumes convert_to_onnx.py's zipmap=False option
+# is still in effect (see that file's convert() function) — a plain
+# [N, 2] float tensor, not a sequence-of-maps. If that option is ever
+# removed, this whole config needs rethinking, not just a name edit.
+
+name: "telecom_anomaly_xgb"
+platform: "onnxruntime_onnx"
+max_batch_size: 64
+
+input [
+  {
+    name: "input"
+    data_type: TYPE_FP32
+    dims: [ 68 ]
+  }
+]
+
+output [
+  {
+    name: "probabilities"
+    data_type: TYPE_FP32
+    dims: [ 2 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_CPU
+  }
+]
+
+dynamic_batching {
+  max_queue_delay_microseconds: 5000
+}

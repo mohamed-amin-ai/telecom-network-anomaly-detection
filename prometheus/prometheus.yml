@@ -31,6 +31,15 @@ scrape_configs:
     static_configs:
       - targets: ["pushgateway:9091"]
 
+  # Triton natively exposes Prometheus-format metrics (request count,
+  # latency, queue time) with zero extra instrumentation code — only
+  # scraped successfully when the optional Phase 6 Triton stack
+  # (docker-compose.triton.yml) is actually running; a harmless
+  # "context deadline exceeded" target-down otherwise, not a config error.
+  - job_name: "triton"
+    static_configs:
+      - targets: ["triton:8002"]
+
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]

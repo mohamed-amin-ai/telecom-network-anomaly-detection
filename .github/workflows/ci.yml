@@ -80,7 +80,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -137,6 +137,27 @@ jobs:
           name: drift-check-output
           path: |
             monitoring/reports/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Convert to ONNX + validate parity (Phase 6)
+        # This is the ONLY place models/convert_to_onnx.py's onnxmltools
+        # integration gets exercised against the real library before you
+        # run it yourself — written without network access to verify
+        # onnxmltools/onnxruntime (see that file's module docstring). If
+        # this fails with the RuntimeError about a missing [N, 2] output,
+        # that's the output-naming mismatch the docstring warns about;
+        # check the printed "ONNX output(s)" line above the failure and
+        # update triton_model_repository/telecom_anomaly_xgb/config.pbtxt's
+        # output name to match.
+        run: python models/convert_to_onnx.py
+
+      - name: Upload ONNX model
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-model
+          path: models/model.onnx
           retention-days: 14
           if-no-files-found: ignore
 

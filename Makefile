@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -65,6 +65,22 @@ airflow-up:
 
 airflow-down:
 	docker compose -f docker-compose.yml -f docker-compose.airflow.yml down
+
+onnx-convert:
+	python models/convert_to_onnx.py
+
+triton-prep: onnx-convert
+	mkdir -p triton_model_repository/telecom_anomaly_xgb/1
+	cp models/model.onnx triton_model_repository/telecom_anomaly_xgb/1/model.onnx
+
+triton-up: triton-prep
+	docker compose -f docker-compose.yml -f docker-compose.triton.yml up --build
+
+triton-down:
+	docker compose -f docker-compose.yml -f docker-compose.triton.yml down
+
+query-triton:
+	python scripts/query_triton.py
 
 clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__

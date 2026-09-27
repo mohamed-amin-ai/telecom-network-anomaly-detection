@@ -24,3 +24,10 @@ prometheus-client>=0.20
 # install/verify it (no network in the build sandbox). See the banner
 # at the top of monitoring/drift_check.py before upgrading this pin.
 evidently==0.4.33
+
+# Phase 6 — ONNX conversion + runtime. See models/convert_to_onnx.py's
+# module docstring for the same "written without network access to
+# verify" caveat that applies to Evidently above.
+onnxmltools==1.12.0
+onnx==1.16.1
+onnxruntime==1.19.2
