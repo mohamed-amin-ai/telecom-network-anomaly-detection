@@ -40,3 +40,9 @@ monitoring/reports/
 airflow/
 Dockerfile.airflow
 docker-compose.airflow.yml
+
+# Phase 6 — Triton has its own container (official prebuilt image, no
+# Dockerfile of ours); none of this belongs in the API image either
+triton_model_repository/
+docker-compose.triton.yml
+models/model.onnx

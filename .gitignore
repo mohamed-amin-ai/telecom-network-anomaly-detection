@@ -34,6 +34,12 @@ monitoring/reports/
 airflow/logs/
 *.airflow.db
 
+# Phase 6 — generated ONNX artifact (regenerate via models/convert_to_onnx.py,
+# same reasoning as model.json above); config.pbtxt IS tracked, the model
+# binary in the Triton repo layout isn't
+models/model.onnx
+triton_model_repository/*/1/*.onnx
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb

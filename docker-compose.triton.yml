@@ -1,0 +1,45 @@
+# docker-compose.triton.yml
+# --------------------------
+# Kept separate from docker-compose.yml, same reasoning as
+# docker-compose.airflow.yml: this is a genuinely optional, heavier
+# serving path, not something every run of the API needs to pay for.
+# See README's Phase 6 section for the honest "should you actually use
+# this for a model this size" discussion before reaching for it.
+#
+# Requires models/model.onnx to already exist and be copied into place:
+#   make onnx-convert   # writes models/model.onnx, validates parity first
+#   make triton-prep    # copies it into triton_model_repository/.../1/
+#   make triton-up      # (or the two commands below)
+#
+#   docker compose -f docker-compose.yml -f docker-compose.triton.yml up --build
+#
+# Ports (chosen to not collide with the API's own 8000, Airflow's 8080,
+# etc.): 8003=HTTP inference, 8004=gRPC, 8005=Triton's own Prometheus
+# metrics (scraped by prometheus/prometheus.yml's "triton" job).
+
+services:
+  triton:
+    # Version note: written without network access to confirm this
+    # exact tag exists on NGC (nvcr.io) — check
+    # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver/tags
+    # if the pull fails, and use the closest available release.
+    image: nvcr.io/nvidia/tritonserver:24.09-py3
+    container_name: telecom-anomaly-triton
+    command: >
+      tritonserver
+      --model-repository=/models
+      --strict-model-config=false
+      --model-control-mode=explicit
+      --load-model=telecom_anomaly_xgb
+    volumes:
+      - ./triton_model_repository:/models:ro
+    ports:
+      - "8003:8000"  # HTTP inference (KServe v2 protocol)
+      - "8004:8001"  # gRPC inference
+      - "8005:8002"  # Prometheus metrics
+    restart: unless-stopped
+    networks:
+      - anomaly-net
+
+networks:
+  anomaly-net: {}
