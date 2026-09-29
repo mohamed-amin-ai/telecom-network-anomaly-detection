@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent))
-from models.common import time_split, tune_threshold
+from models.common import three_way_time_split, time_split, tune_threshold
 
 
 def test_time_split_respects_ratio():
@@ -93,3 +93,39 @@ def test_tune_threshold_perfect_separation():
     # Not exactly 1.0: tune_threshold adds a 1e-8 epsilon to the F1
     # denominator to avoid div-by-zero on the 0-precision/0-recall case.
     assert np.isclose(f1, 1.0, atol=1e-6)
+
+
+def _timeline(n=100):
+    return pd.DataFrame({
+        "timestamp": pd.date_range("2024-01-01", periods=n, freq="15min"),
+        "value": range(n),
+    })
+
+
+def test_three_way_split_sizes():
+    train_df, val_df, test_df = three_way_time_split(_timeline(100), train_ratio=0.8, val_fraction=0.25)
+    assert len(test_df) == 20                    # last 20%
+    assert len(val_df) == 20                     # 25% of the 80 pre-test rows
+    assert len(train_df) == 60
+    assert len(train_df) + len(val_df) + len(test_df) == 100
+
+
+def test_three_way_split_is_strictly_chronological_and_non_overlapping():
+    df = _timeline(100).sample(frac=1, random_state=3).reset_index(drop=True)  # shuffled input
+    train_df, val_df, test_df = three_way_time_split(df, train_ratio=0.8, val_fraction=0.25)
+
+    assert train_df["timestamp"].max() < val_df["timestamp"].min()
+    assert val_df["timestamp"].max() < test_df["timestamp"].min()
+    all_ts = pd.concat([train_df, val_df, test_df])["timestamp"]
+    assert all_ts.is_unique
+
+
+def test_three_way_split_test_window_matches_plain_time_split():
+    """Everything else in the repo (ONNX parity, Triton client, drift
+    reference) calls time_split(df, train_ratio) and expects the same
+    test window train.py evaluates on. Carving out a validation slice
+    must not move it."""
+    df = _timeline(200)
+    _, _, test_3way = three_way_time_split(df, train_ratio=0.8, val_fraction=0.2)
+    _, test_2way = time_split(df, ratio=0.8)
+    pd.testing.assert_frame_equal(test_3way.reset_index(drop=True), test_2way.reset_index(drop=True))

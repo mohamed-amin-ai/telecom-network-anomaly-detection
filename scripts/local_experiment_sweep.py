@@ -36,12 +36,12 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import average_precision_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
-from models.common import load_params, load_data, time_split, tune_threshold
+from models.common import load_params, load_data, three_way_time_split, tune_threshold
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 
@@ -59,7 +59,7 @@ SWEEP_GRID = [
 ]
 
 
-def run_one(config: dict, X_train, y_train, X_test, y_test, min_recall: float) -> dict:
+def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, min_recall: float) -> dict:
     neg = (y_train == 0).sum()
     pos = (y_train == 1).sum()
     scale_pos_weight = neg / pos
@@ -70,17 +70,27 @@ def run_one(config: dict, X_train, y_train, X_test, y_test, min_recall: float) -
         max_depth=config["max_depth"],
         learning_rate=config["learning_rate"],
         max_iter=config["max_iter"],
-        early_stopping=True,
-        validation_fraction=0.15,
+        # HGB's built-in early stopping carves its validation split out at
+        # RANDOM, which for time-series data puts neighbouring rows of the
+        # same anomaly event on both sides (leaky). Disabled on purpose —
+        # boosting rounds are an explicit swept hyperparameter instead.
+        early_stopping=False,
         random_state=42,
     )
     model.fit(X_train, y_train, sample_weight=sample_weight)
     train_seconds = time.time() - t0
 
-    y_prob = model.predict_proba(X_test)[:, 1]
-    threshold, recall, precision, f1 = tune_threshold(y_test, y_prob, min_recall)
-    y_pred = (y_prob >= threshold).astype(int)
-    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    val_prob = model.predict_proba(X_val)[:, 1]
+    test_prob = model.predict_proba(X_test)[:, 1]
+
+    # Threshold tuned on VALIDATION only, then frozen and applied to test.
+    threshold, val_recall, val_precision, val_f1 = tune_threshold(y_val, val_prob, min_recall)
+    y_pred = (test_prob >= threshold).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=[0, 1]).ravel()
+    test_recall = tp / (tp + fn) if (tp + fn) else 0.0
+    test_precision = tp / (tp + fp) if (tp + fp) else 0.0
+    test_f1 = (2 * test_precision * test_recall / (test_precision + test_recall)
+               if (test_precision + test_recall) else 0.0)
 
     return {
         "run_name": config["run_name"],
@@ -93,16 +103,19 @@ def run_one(config: dict, X_train, y_train, X_test, y_test, min_recall: float) -
             "model_class": "HistGradientBoostingClassifier (xgboost stand-in — see module docstring)",
         },
         "metrics": {
+            "val_pr_auc": round(float(average_precision_score(y_val, val_prob)), 4),
+            "test_pr_auc": round(float(average_precision_score(y_test, test_prob)), 4),
             "threshold": round(threshold, 4),
-            "recall": round(recall, 4),
-            "precision": round(precision, 4),
-            "f1": round(f1, 4),
+            "val_recall": round(val_recall, 4),
+            "val_precision": round(val_precision, 4),
+            "recall": round(float(test_recall), 4),
+            "precision": round(float(test_precision), 4),
+            "f1": round(float(test_f1), 4),
             "true_positives": int(tp),
             "false_positives": int(fp),
             "true_negatives": int(tn),
             "false_negatives": int(fn),
             "train_seconds": round(train_seconds, 2),
-            "n_iter_actual": int(getattr(model, "n_iter_", config["max_iter"])),
         },
     }
 
@@ -110,37 +123,34 @@ def run_one(config: dict, X_train, y_train, X_test, y_test, min_recall: float) -
 def main():
     params = load_params()
     min_recall = params["threshold"]["min_recall"]
-    train_ratio = params["split"]["train_ratio"]
 
     df = load_data()
     feature_cols = get_feature_columns(df)
-    train_df, test_df = time_split(df, train_ratio)
-
-    X_train_raw = train_df[feature_cols].values
-    y_train = train_df["anomaly"].values
-    X_test_raw = test_df[feature_cols].values
-    y_test = test_df["anomaly"].values
-
-    print(f"Loaded {len(df):,} real rows | {len(feature_cols)} features")
-    print(f"Train: {len(train_df):,} | Test: {len(test_df):,}")
-    print(f"Real train anomaly rate: {y_train.mean():.2%}")
-    print(f"Real test  anomaly rate: {y_test.mean():.2%}\n")
+    train_df, val_df, test_df = three_way_time_split(
+        df, params["split"]["train_ratio"], params["split"]["val_fraction"]
+    )
 
     scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train_raw)
-    X_test = scaler.transform(X_test_raw)
+    X_train = scaler.fit_transform(train_df[feature_cols].values)   # fit on train only
+    X_val = scaler.transform(val_df[feature_cols].values)
+    X_test = scaler.transform(test_df[feature_cols].values)
+    y_train, y_val, y_test = (d["anomaly"].values for d in (train_df, val_df, test_df))
+
+    print(f"Loaded {len(df):,} real rows | {len(feature_cols)} features")
+    print(f"Train: {len(train_df):,} | Val: {len(val_df):,} | Test: {len(test_df):,}")
+    print(f"Anomaly rate  train={y_train.mean():.2%}  val={y_val.mean():.2%}  test={y_test.mean():.2%}")
+    print(f"Anomalous rows  train={int(y_train.sum())}  val={int(y_val.sum())}  test={int(y_test.sum())}\n")
 
     results = []
     for config in SWEEP_GRID:
         print(f"── Running: {config['run_name']} "
               f"(depth={config['max_depth']}, lr={config['learning_rate']}, "
               f"max_iter={config['max_iter']}) ──")
-        result = run_one(config, X_train, y_train, X_test, y_test, min_recall)
+        result = run_one(config, X_train, y_train, X_val, y_val, X_test, y_test, min_recall)
         results.append(result)
         m = result["metrics"]
-        print(f"   recall={m['recall']:.3f}  precision={m['precision']:.3f}  "
-              f"f1={m['f1']:.3f}  threshold={m['threshold']:.3f}  "
-              f"train_time={m['train_seconds']}s\n")
+        print(f"   val_PR-AUC={m['val_pr_auc']:.3f}  test_PR-AUC={m['test_pr_auc']:.3f}  |  "
+              f"test recall={m['recall']:.3f} precision={m['precision']:.3f} f1={m['f1']:.3f}\n")
 
     RESULTS_DIR.mkdir(exist_ok=True)
     out_path = RESULTS_DIR / "experiments.json"
@@ -148,27 +158,31 @@ def main():
         json.dump({
             "generated_by": "scripts/local_experiment_sweep.py",
             "note": (
-                "Real metrics from a real hyperparameter sweep on real "
-                "generated/engineered data, using HistGradientBoostingClassifier "
-                "as an xgboost stand-in (xgboost unavailable — see module "
-                "docstring). Not the production model artifact."
+                "Real metrics from a real hyperparameter sweep on the deterministic "
+                "generated/engineered dataset, using HistGradientBoostingClassifier as an "
+                "xgboost stand-in (xgboost unavailable in the build sandbox). Protocol: fit on "
+                "train, threshold tuned on validation, test touched only for the final numbers; "
+                "configs ranked by VALIDATION PR-AUC. Not the production model artifact. The test "
+                "window contains very few independent anomaly events — see EXPERIMENTS.md before "
+                "reading any difference between configs as meaningful."
             ),
             "dataset": {
                 "total_rows": len(df),
                 "train_rows": len(train_df),
+                "val_rows": len(val_df),
                 "test_rows": len(test_df),
                 "n_features": len(feature_cols),
                 "train_anomaly_rate": round(float(y_train.mean()), 4),
+                "val_anomaly_rate": round(float(y_val.mean()), 4),
                 "test_anomaly_rate": round(float(y_test.mean()), 4),
             },
             "runs": results,
         }, f, indent=2)
 
-    best = max(results, key=lambda r: r["metrics"]["f1"])
+    best = max(results, key=lambda r: r["metrics"]["val_pr_auc"])
     print("=" * 60)
-    print(f"Best run by F1: {best['run_name']}  "
-          f"(f1={best['metrics']['f1']:.3f}, recall={best['metrics']['recall']:.3f}, "
-          f"precision={best['metrics']['precision']:.3f})")
+    print(f"Best run by VALIDATION PR-AUC: {best['run_name']}  "
+          f"(val_pr_auc={best['metrics']['val_pr_auc']:.3f})")
     print(f"Saved → {out_path}")
 
 

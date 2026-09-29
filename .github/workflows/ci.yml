@@ -80,7 +80,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -170,6 +170,20 @@ jobs:
             models/scaler.pkl
             models/metadata.json
             models/feature_importance.csv
+
+      - name: Upload MLflow tracking store
+        # train.py logs to a local ./mlruns (no MLFLOW_TRACKING_URI is set
+        # anywhere in this workflow), which otherwise evaporates when the
+        # runner is torn down. Uploading it is what makes "download this
+        # and run `mlflow ui --backend-store-uri ./mlruns`" actually
+        # possible — without this step there is nowhere to see the real
+        # XGBoost run's params/metrics after the job finishes.
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-tracking-store
+          path: mlruns/
+          retention-days: 14
+          if-no-files-found: warn
           retention-days: 14
 
   docker-build-and-push:

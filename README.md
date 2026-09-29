@@ -2,13 +2,13 @@
 
 An end-to-end ML system that detects anomalies in telecom network KPIs (latency, throughput, packet loss) in real time, deployed as a production-ready REST API.
 
-**Key result: 95.2% recall on detecting network faults before service degradation.**
+**Key result (synthetic data, scikit-learn stand-in model — see [Results](#results)): median test PR-AUC ≈ 0.953 against a ~2% base rate. Recall/precision at a fixed threshold vary widely with the data draw — quote ranges, not single numbers.**
 
 ---
 
 ## Problem
 
-Telecom networks generate thousands of KPI readings per minute across hundreds of cell towers. Identifying fault conditions (congestion, hardware degradation, interference) manually is slow and reactive. This system flags anomalies automatically, enabling NOC teams to act before users are impacted.
+Telecom networks generate thousands of KPI readings per minute across hundreds of cell towers. Identifying fault conditions (congestion, hardware degradation, interference) manually is slow and reactive. This system flags anomalies automatically, enabling NOC teams to react faster.
 
 ## Solution
 
@@ -57,6 +57,7 @@ telecom_anomaly/
 ├── scripts/
 │   ├── local_experiment_sweep.py       # offline hyperparameter sweep, see EXPERIMENTS.md
 │   ├── replay_experiments_to_mlflow.py # loads sweep results into real MLflow
+│   ├── seed_variance_check.py          # how much metrics move across generator seeds
 │   ├── generate_traffic.py             # demo traffic generator for Grafana
 │   └── query_triton.py                 # direct Triton client + /predict cross-check
 ├── prometheus/prometheus.yml            # scrape config
@@ -99,6 +100,14 @@ Prefer to run steps manually instead? `make pipeline` (or the individual scripts
 mlflow ui --port 5000
 ```
 Open [http://localhost:5000](http://localhost:5000) to compare runs, params, and metrics, and to see the model registered under `telecom-anomaly-xgb` in the Model Registry.
+
+**No local machine handy, or just pushed and want to see real numbers without running anything yourself?** Every CI run of `pipeline-and-integration-tests` (`.github/workflows/ci.yml`) trains the real model with real XGBoost and uploads two artifacts:
+- `model-artifacts` — `metadata.json` alone has the headline test/validation recall/precision/F1 for that run, no MLflow needed to read it.
+- `mlflow-tracking-store` — the actual `./mlruns` directory from that run. Download it from the workflow run's Summary page, then:
+  ```bash
+  mlflow ui --backend-store-uri ./mlruns
+  ```
+  This is the first point anywhere real MLflow tracking data for this project exists — nothing in this repo's history has run real `xgboost`+`mlflow` together outside of CI (see `EXPERIMENTS.md` for why: the sandbox this was built in has no network access to install either).
 
 ### 4. Start the API
 ```bash
@@ -181,13 +190,16 @@ git checkout <commit>
 dvc checkout   # restores data/model files to match that commit's dvc.lock
 ```
 
-**Real experiment results:** see [`EXPERIMENTS.md`](EXPERIMENTS.md) for a
-hyperparameter sweep run against the real generated data
-(`scripts/local_experiment_sweep.py`), including a genuine data-driven
-change to `params.yaml` (`learning_rate: 0.05 → 0.10`) and a real
-discrepancy caught between the documented ~5% anomaly rate and the
-actual ~1% the generator produces. `scripts/replay_experiments_to_mlflow.py`
-loads those same real numbers into MLflow once it's installed.
+**Real experiment results:** see [`EXPERIMENTS.md`](EXPERIMENTS.md) — read its
+**Retractions** section first. Validating this repo end-to-end found that the
+data generator was silently non-deterministic (fixed: `hash()` seeding),
+that `train.py` tuned its threshold and early-stopped on the test set
+(fixed: real validation slice), and that the test window holds only ~6
+independent anomaly events, so single-run recall/precision are unstable.
+An earlier `learning_rate: 0.05 → 0.10` "improvement" was retracted.
+`scripts/seed_variance_check.py` quantifies the instability;
+`scripts/replay_experiments_to_mlflow.py` loads the sweep into MLflow once
+it's installed.
 
 ### Phase 2 — CI/CD
 
@@ -374,8 +386,8 @@ make airflow-up                         # webserver + scheduler, joins the same 
 Open [http://localhost:8080](http://localhost:8080) (login `admin` / `admin` — same "change this off your laptop" caveat as Grafana).
 
 **Two things documented as real gaps, not silently glossed over:**
-- `generate_data` is deterministic (fixed seed) — rerunning it produces
-  byte-identical data. In this demo it stands in for "new production
+- `generate_data` is deterministic (fixed seed; enforced by
+  `tests/test_generate_data.py`) — rerunning it produces byte-identical data. In this demo it stands in for "new production
   data arrived"; a real deployment would pull from wherever labeled
   production data actually lands instead of a synthetic generator.
 - Promoting a model to "Production" in the MLflow registry currently has
@@ -495,8 +507,8 @@ Total: **68 features** across 5 KPIs.
 | Max depth | 6 |
 | Learning rate | 0.05 |
 | Class imbalance | Handled via `scale_pos_weight` |
-| Threshold | Tuned on validation set to maximize F1 subject to a recall floor |
-| Train/test split | Time-based 80/20 (no shuffle) |
+| Threshold | Highest threshold reaching the recall floor **on the validation slice** (never on the test set) |
+| Split | Chronological, no shuffle: 64% train / 16% validation / 20% test (`split.train_ratio`, `split.val_fraction`) |
 
 All of the above now live in `params.yaml`, not hardcoded in `train.py` — change a value there and `dvc repro` knows to retrain.
 
@@ -525,14 +537,37 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 ## Results
 
-| Metric | Value |
-|---|---|
-| Recall | **95.2%** — catches 95 of every 100 faults |
-| Precision | **76.9%** — ~23% false alarm rate, acceptable for NOC operations |
-| F1 Score | **0.851** |
+**Read this before quoting any number.** The synthetic generator injects only
+~6-9 anomaly *events* per cell, so validation and test windows each contain a
+handful of independent events (default seed: 2 validation, 6 test). Threshold-
+dependent metrics therefore swing widely with the data draw. Measured with the
+scikit-learn stand-in model (XGBoost isn't installable in the build sandbox),
+same train/validation/test protocol as `models/train.py`, 8 generator seeds
+(`scripts/seed_variance_check.py`):
 
-*Results on held-out test set (last 20% of time window, never seen during training).*
-*Threshold tuned to maximize precision subject to a 93% recall floor — missing a fault is more costly than a false alarm in NOC operations.*
+| Metric (test window) | min | median | max | default seed (42) |
+|---|---|---|---|---|
+| PR-AUC (base rate ≈ 2%) | 0.678 | 0.953 | 0.982 | 0.6781 |
+| Recall | 0.767 | 0.861 | 1.0 | 0.8289 |
+| Precision | 0.066 | 0.654 | 1.0 | 0.1765 |
+| F1 | 0.123 | 0.715 | 0.943 | 0.291 |
+
+- The model **ranks** anomalies well (PR-AUC is the stable metric here).
+- Recall/precision at the tuned threshold are **not** stable: threshold
+  selection rests on ~2-5 validation events. Default seed 42 is the *worst*
+  PR-AUC draw of the eight — it was deliberately not changed to look better.
+- The recall floor (`threshold.min_recall`, 0.93) is met on *validation* by
+  construction; it is **not** guaranteed on held-out data. `models/promote.py`
+  gates promotion on *test* recall and will often decline — that is the
+  honest behavior, not a bug.
+
+**Earlier versions of this README reported recall 95.2% / precision 76.9% /
+F1 0.851.** Those came from a single draw of a generator that was not
+deterministic, evaluated on a test set that also drove early stopping and
+threshold selection. They sit inside the range above but should not be quoted
+as this model's performance. Real XGBoost numbers come from
+`python models/train.py` (logged to MLflow; CI prints them in the job log).
+See [`EXPERIMENTS.md`](EXPERIMENTS.md) for the full story.
 
 ---
 

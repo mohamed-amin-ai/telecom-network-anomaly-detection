@@ -23,6 +23,12 @@ and `client.get_model_version_by_alias` instead; the decision logic in
 `should_promote` doesn't change either way.
 ═══════════════════════════════════════════════════════════════════════
 
+Which recall is checked: the `recall` metric logged by models/train.py is
+measured on the held-out TEST window at a threshold tuned on the separate
+validation slice. It is NOT tuned to hit the floor, so it will often fall
+below `threshold.min_recall` on small synthetic data (see EXPERIMENTS.md) —
+in which case this declines to promote. That is the intended, honest gate.
+
 Known gap this doesn't solve (documented in README's Phase 5 section):
 promoting a version to "Production" in the MLflow registry has NO EFFECT
 on what api/main.py actually serves — that code loads models/model.json

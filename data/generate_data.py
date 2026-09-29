@@ -160,14 +160,36 @@ def generate_cell_data(cell_id: str, n: int, rng) -> pd.DataFrame:
     })
 
 
-def main():
+def build_dataset() -> pd.DataFrame:
+    """Build the full synthetic dataset in memory. Fully deterministic
+    given params.yaml's seed — across processes, machines, AND repeated
+    calls within one process (tests/test_generate_data.py enforces all
+    of this).
+
+    Two sources of hidden nondeterminism this deliberately avoids:
+      1. hash(cell): Python randomizes str hash() per process
+         (PYTHONHASHSEED), so seeding from it silently made every fresh
+         run produce a DIFFERENT dataset despite the pinned seed. Caught
+         by rerunning this script and getting different anomaly counts
+         each time. enumerate()'s index is a plain int — stable.
+      2. The module-level `rng` used by the anomaly injectors is shared
+         mutable state; without reseeding here, a second call in the same
+         process would continue the first call's random stream.
+    """
+    global rng
+    rng = np.random.default_rng(SEED)
+
     frames = []
-    for cell in CELLS:
-        cell_rng = np.random.default_rng(SEED + hash(cell) % 1000)
+    for cell_index, cell in enumerate(CELLS):
+        cell_rng = np.random.default_rng(SEED + cell_index)
         frames.append(generate_cell_data(cell, PERIODS, cell_rng))
 
     df = pd.concat(frames, ignore_index=True)
-    df = df.sort_values(["cell_id", "timestamp"]).reset_index(drop=True)
+    return df.sort_values(["cell_id", "timestamp"]).reset_index(drop=True)
+
+
+def main():
+    df = build_dataset()
 
     out = Path(__file__).parent / "raw_kpis.csv"
     df.to_csv(out, index=False)

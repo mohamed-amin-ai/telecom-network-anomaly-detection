@@ -1,0 +1,117 @@
+{
+  "generated_by": "scripts/seed_variance_check.py",
+  "note": "Baseline config, scikit-learn stand-in model, train/val/test protocol identical to train.py. Measures spread across generator seeds, not model quality.",
+  "min_recall_floor": 0.93,
+  "runs": [
+    {
+      "seed": 42,
+      "test_events": 6,
+      "val_events": 2,
+      "test_positive_rows": 76,
+      "val_positive_rows": 13,
+      "test_pr_auc": 0.6781,
+      "test_recall": 0.8289,
+      "test_precision": 0.1765,
+      "test_f1": 0.291
+    },
+    {
+      "seed": 1,
+      "test_events": 3,
+      "val_events": 4,
+      "test_positive_rows": 73,
+      "val_positive_rows": 46,
+      "test_pr_auc": 0.8715,
+      "test_recall": 0.7671,
+      "test_precision": 0.7273,
+      "test_f1": 0.7467
+    },
+    {
+      "seed": 2,
+      "test_events": 3,
+      "val_events": 5,
+      "test_positive_rows": 56,
+      "val_positive_rows": 64,
+      "test_pr_auc": 0.9816,
+      "test_recall": 0.8214,
+      "test_precision": 1.0,
+      "test_f1": 0.902
+    },
+    {
+      "seed": 3,
+      "test_events": 3,
+      "val_events": 5,
+      "test_positive_rows": 42,
+      "val_positive_rows": 62,
+      "test_pr_auc": 0.9724,
+      "test_recall": 1.0,
+      "test_precision": 0.0657,
+      "test_f1": 0.1233
+    },
+    {
+      "seed": 4,
+      "test_events": 4,
+      "val_events": 5,
+      "test_positive_rows": 35,
+      "val_positive_rows": 47,
+      "test_pr_auc": 0.7947,
+      "test_recall": 0.8286,
+      "test_precision": 0.58,
+      "test_f1": 0.6824
+    },
+    {
+      "seed": 5,
+      "test_events": 4,
+      "val_events": 4,
+      "test_positive_rows": 44,
+      "val_positive_rows": 26,
+      "test_pr_auc": 0.9334,
+      "test_recall": 0.9773,
+      "test_precision": 0.3909,
+      "test_f1": 0.5584
+    },
+    {
+      "seed": 6,
+      "test_events": 4,
+      "val_events": 4,
+      "test_positive_rows": 42,
+      "val_positive_rows": 37,
+      "test_pr_auc": 0.9747,
+      "test_recall": 0.9286,
+      "test_precision": 0.8864,
+      "test_f1": 0.907
+    },
+    {
+      "seed": 7,
+      "test_events": 3,
+      "val_events": 4,
+      "test_positive_rows": 28,
+      "val_positive_rows": 33,
+      "test_pr_auc": 0.9769,
+      "test_recall": 0.8929,
+      "test_precision": 1.0,
+      "test_f1": 0.9434
+    }
+  ],
+  "summary": {
+    "test_pr_auc": {
+      "min": 0.678,
+      "median": 0.953,
+      "max": 0.982
+    },
+    "test_recall": {
+      "min": 0.767,
+      "median": 0.861,
+      "max": 1.0
+    },
+    "test_precision": {
+      "min": 0.066,
+      "median": 0.654,
+      "max": 1.0
+    },
+    "test_f1": {
+      "min": 0.123,
+      "median": 0.715,
+      "max": 0.943
+    }
+  }
+}
