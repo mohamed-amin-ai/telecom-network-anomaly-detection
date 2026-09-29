@@ -1,13 +1,15 @@
 {
   "generated_by": "scripts/local_experiment_sweep.py",
-  "note": "Real metrics from a real hyperparameter sweep on real generated/engineered data, using HistGradientBoostingClassifier as an xgboost stand-in (xgboost unavailable \u2014 see module docstring). Not the production model artifact.",
+  "note": "Real metrics from a real hyperparameter sweep on the deterministic generated/engineered dataset, using HistGradientBoostingClassifier as an xgboost stand-in (xgboost unavailable in the build sandbox). Protocol: fit on train, threshold tuned on validation, test touched only for the final numbers; configs ranked by VALIDATION PR-AUC. Not the production model artifact. The test window contains very few independent anomaly events \u2014 see EXPERIMENTS.md before reading any difference between configs as meaningful.",
   "dataset": {
-    "total_rows": 17241,
-    "train_rows": 13792,
-    "test_rows": 3449,
+    "total_rows": 17247,
+    "train_rows": 11037,
+    "val_rows": 2760,
+    "test_rows": 3450,
     "n_features": 68,
-    "train_anomaly_rate": 0.0117,
-    "test_anomaly_rate": 0.0075
+    "train_anomaly_rate": 0.0216,
+    "val_anomaly_rate": 0.0047,
+    "test_anomaly_rate": 0.022
   },
   "runs": [
     {
@@ -16,21 +18,24 @@
         "max_depth": 6,
         "learning_rate": 0.05,
         "max_iter": 300,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.0272,
-        "recall": 0.9615,
-        "precision": 0.6579,
-        "f1": 0.7812,
-        "true_positives": 25,
-        "false_positives": 13,
-        "true_negatives": 3410,
-        "false_negatives": 1,
-        "train_seconds": 0.91,
-        "n_iter_actual": 182
+        "val_pr_auc": 0.3768,
+        "test_pr_auc": 0.6781,
+        "threshold": 0.0,
+        "val_recall": 1.0,
+        "val_precision": 0.0537,
+        "recall": 0.8289,
+        "precision": 0.1765,
+        "f1": 0.291,
+        "true_positives": 63,
+        "false_positives": 294,
+        "true_negatives": 3080,
+        "false_negatives": 13,
+        "train_seconds": 1.56
       }
     },
     {
@@ -39,21 +44,24 @@
         "max_depth": 3,
         "learning_rate": 0.05,
         "max_iter": 300,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.0586,
-        "recall": 0.9615,
-        "precision": 0.3731,
-        "f1": 0.5376,
-        "true_positives": 25,
-        "false_positives": 42,
-        "true_negatives": 3381,
-        "false_negatives": 1,
-        "train_seconds": 0.83,
-        "n_iter_actual": 300
+        "val_pr_auc": 0.5095,
+        "test_pr_auc": 0.5944,
+        "threshold": 0.0008,
+        "val_recall": 1.0,
+        "val_precision": 0.0258,
+        "recall": 0.6316,
+        "precision": 0.0751,
+        "f1": 0.1343,
+        "true_positives": 48,
+        "false_positives": 591,
+        "true_negatives": 2783,
+        "false_negatives": 28,
+        "train_seconds": 0.8
       }
     },
     {
@@ -62,21 +70,24 @@
         "max_depth": 10,
         "learning_rate": 0.05,
         "max_iter": 300,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.0632,
-        "recall": 0.9615,
-        "precision": 0.2717,
-        "f1": 0.4237,
-        "true_positives": 25,
-        "false_positives": 67,
-        "true_negatives": 3356,
-        "false_negatives": 1,
-        "train_seconds": 0.47,
-        "n_iter_actual": 66
+        "val_pr_auc": 0.4435,
+        "test_pr_auc": 0.7064,
+        "threshold": 0.0,
+        "val_recall": 1.0,
+        "val_precision": 0.0399,
+        "recall": 0.8947,
+        "precision": 0.1341,
+        "f1": 0.2333,
+        "true_positives": 68,
+        "false_positives": 439,
+        "true_negatives": 2935,
+        "false_negatives": 8,
+        "train_seconds": 1.88
       }
     },
     {
@@ -85,21 +96,24 @@
         "max_depth": 6,
         "learning_rate": 0.1,
         "max_iter": 300,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.0128,
-        "recall": 0.9615,
-        "precision": 0.8929,
-        "f1": 0.9259,
-        "true_positives": 25,
-        "false_positives": 3,
-        "true_negatives": 3420,
-        "false_negatives": 1,
-        "train_seconds": 0.77,
-        "n_iter_actual": 154
+        "val_pr_auc": 0.4236,
+        "test_pr_auc": 0.694,
+        "threshold": 0.0,
+        "val_recall": 1.0,
+        "val_precision": 0.0684,
+        "recall": 0.8158,
+        "precision": 0.2046,
+        "f1": 0.3272,
+        "true_positives": 62,
+        "false_positives": 241,
+        "true_negatives": 3133,
+        "false_negatives": 14,
+        "train_seconds": 1.21
       }
     },
     {
@@ -108,21 +122,24 @@
         "max_depth": 6,
         "learning_rate": 0.02,
         "max_iter": 300,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.1347,
-        "recall": 0.9615,
-        "precision": 0.6944,
-        "f1": 0.8065,
-        "true_positives": 25,
-        "false_positives": 11,
-        "true_negatives": 3412,
-        "false_negatives": 1,
-        "train_seconds": 1.32,
-        "n_iter_actual": 300
+        "val_pr_auc": 0.465,
+        "test_pr_auc": 0.594,
+        "threshold": 0.003,
+        "val_recall": 1.0,
+        "val_precision": 0.1066,
+        "recall": 0.6579,
+        "precision": 0.2632,
+        "f1": 0.3759,
+        "true_positives": 50,
+        "false_positives": 140,
+        "true_negatives": 3234,
+        "false_negatives": 26,
+        "train_seconds": 1.35
       }
     },
     {
@@ -131,21 +148,24 @@
         "max_depth": 6,
         "learning_rate": 0.05,
         "max_iter": 100,
-        "scale_pos_weight": 84.66,
+        "scale_pos_weight": 45.37,
         "min_recall_floor": 0.93,
         "model_class": "HistGradientBoostingClassifier (xgboost stand-in \u2014 see module docstring)"
       },
       "metrics": {
-        "threshold": 0.1567,
-        "recall": 0.9615,
-        "precision": 0.7143,
-        "f1": 0.8197,
-        "true_positives": 25,
-        "false_positives": 10,
-        "true_negatives": 3413,
-        "false_negatives": 1,
-        "train_seconds": 0.5,
-        "n_iter_actual": 100
+        "val_pr_auc": 0.4463,
+        "test_pr_auc": 0.5475,
+        "threshold": 0.0079,
+        "val_recall": 1.0,
+        "val_precision": 0.125,
+        "recall": 0.6447,
+        "precision": 0.297,
+        "f1": 0.4066,
+        "true_positives": 49,
+        "false_positives": 116,
+        "true_negatives": 3258,
+        "false_negatives": 27,
+        "train_seconds": 0.5
       }
     }
   ]

@@ -23,9 +23,12 @@ stages:
     cmd: python models/train.py
     deps:
       - models/train.py
+      - models/common.py
+      - data/features.py
       - data/features.csv
     params:
       - split.train_ratio
+      - split.val_fraction
       - model
       - threshold.min_recall
     outs:

@@ -33,7 +33,9 @@ CAVEATS — read before trusting this DAG in production
    verification, not this comment.
 
 2. `generate_data` regenerates the SAME synthetic dataset every time
-   (fixed seed=42) — it does not produce new information. In this demo,
+   (fixed seed=42; enforced by tests/test_generate_data.py — this was
+   NOT actually true until a hash()-seeding bug was fixed) — it does not
+   produce new information. In this demo,
    it stands in for "new labeled production data became available."
    Rerunning it on a real drift signal will retrain on byte-identical
    data and produce the same model. A real deployment would replace this

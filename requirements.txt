@@ -13,6 +13,7 @@ dvc>=3.51
 # S3 remote support for DVC (swap/add for your actual remote: dvc[gs], dvc[azure], etc.)
 dvc-s3>=3.2
 pyyaml>=6.0
+requests>=2.31   # imported directly by scripts/generate_traffic.py + query_triton.py
 
 # Phase 3 — observability
 prometheus-fastapi-instrumentator>=7.0

@@ -45,6 +45,31 @@ def time_split(df: pd.DataFrame, ratio: float):
     return df.iloc[:split_idx], df.iloc[split_idx:]
 
 
+def three_way_time_split(df: pd.DataFrame, train_ratio: float, val_fraction: float):
+    """
+    Chronological train / validation / test split.
+
+    `train_ratio` keeps its original meaning — the fraction of time
+    BEFORE the test window — so every other caller of time_split()
+    (ONNX parity check, Triton client, drift-check reference) still sees
+    the exact same test set. `val_fraction` carves the most recent slice
+    of that pre-test portion out as validation, so:
+
+        [ ---- train ---- | -- validation -- | ------ test ------ ]
+                            (early stopping    (touched once, for
+                             + threshold        the final report)
+                             tuning)
+
+    Why this exists: train.py previously used the test set for early
+    stopping AND for tuning the decision threshold AND for reporting —
+    which makes "recall >= floor on the test set" true by construction
+    rather than a measured result.
+    """
+    trainval_df, test_df = time_split(df, train_ratio)
+    train_df, val_df = time_split(trainval_df, 1 - val_fraction)
+    return train_df, val_df, test_df
+
+
 def tune_threshold(y_true, y_prob, min_recall: float):
     """
     Find the highest threshold where recall >= min_recall.
