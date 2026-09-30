@@ -57,6 +57,12 @@ COLD_START_RESPONSES_TOTAL = Counter(
     "Total 425 responses returned because a cell had insufficient history.",
 )
 
+UNDEFINED_FEATURE_RESPONSES_TOTAL = Counter(
+    "undefined_feature_responses_total",
+    "Total 422 responses because the newest reading's engineered features were "
+    "undefined (e.g. previous packet_loss_pct was exactly 0). Distinct from cold starts.",
+)
+
 CELLS_TRACKED = Gauge(
     "cells_tracked",
     "Number of distinct cell_ids currently held in the in-process history "
@@ -92,6 +98,10 @@ def record_prediction(severity: str, feature_source: str, anomaly_score: float) 
 
 def record_cold_start() -> None:
     COLD_START_RESPONSES_TOTAL.inc()
+
+
+def record_undefined_features() -> None:
+    UNDEFINED_FEATURE_RESPONSES_TOTAL.inc()
 
 
 def set_cells_tracked(count: int) -> None:

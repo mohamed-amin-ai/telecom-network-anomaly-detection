@@ -23,12 +23,19 @@ import xgboost as xgb
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from api.live_features import CellHistoryStore, make_raw_row, now_iso, MIN_HISTORY_ROWS
+from api.live_features import (
+    CellHistoryStore,
+    UndefinedFeatureError,
+    make_raw_row,
+    now_iso,
+    MIN_HISTORY_ROWS,
+)
 from api.metrics import (
     instrument_app,
     set_model_info,
     record_prediction,
     record_cold_start,
+    record_undefined_features,
     set_cells_tracked,
 )
 from api.inference_log import log_inference
@@ -161,7 +168,11 @@ def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
             "connected_users": snapshot.connected_users,
         },
     )
-    computed = history_store.add_and_compute(snapshot.cell_id, raw_row)
+    try:
+        computed = history_store.add_and_compute(snapshot.cell_id, raw_row)
+    except UndefinedFeatureError as e:
+        record_undefined_features()
+        raise HTTPException(status_code=422, detail=str(e))
 
     if computed is None:
         rows_so_far = history_store.rows_available(snapshot.cell_id)

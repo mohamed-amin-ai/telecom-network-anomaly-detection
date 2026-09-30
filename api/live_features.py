@@ -41,6 +41,18 @@ MIN_HISTORY_ROWS = LONG_WINDOW + 4          # 20 rows before we can score
 MAX_HISTORY_ROWS = LONG_WINDOW + max(LAG_STEPS) + 10   # buffer cap per cell
 
 
+class UndefinedFeatureError(Exception):
+    """The newest reading is present in the buffer, but one or more of its
+    engineered features is undefined (NaN), so engineer_features() dropped
+    the row. Distinct from a cold start (None): history is sufficient, the
+    reading itself just can't be featurized.
+
+    Typical cause: the PREVIOUS reading's value for some KPI was exactly 0
+    (e.g. packet_loss_pct == 0.0), so that KPI's rate of change divides by
+    zero. Also: a KPI perfectly flat across the 4h window (zero std, so
+    z-score is undefined)."""
+
+
 class CellHistoryStore:
     """In-memory ring buffer of raw KPI readings, one deque per cell_id."""
 
@@ -81,10 +93,23 @@ class CellHistoryStore:
         df["anomaly"] = 0  # placeholder column; engineer_features doesn't use it for X
 
         feat_df = engineer_features(df, verbose=False)
-        if feat_df.empty:
-            return None
 
-        latest = feat_df.iloc[-1]
+        # Select the row for the reading we JUST added, by timestamp — do not
+        # take feat_df.iloc[-1]. engineer_features() drops any row with an
+        # undefined feature, so when the newest reading is dropped, iloc[-1]
+        # is the PREVIOUS reading, and the API would silently score stale
+        # features as if they were current (found by replaying real data:
+        # 9 of 17,247 rows, every one following a packet_loss_pct == 0.0).
+        matches = feat_df[feat_df["timestamp"] == raw_row["timestamp"]]
+        if matches.empty:
+            raise UndefinedFeatureError(
+                f"Cell '{cell_id}': features are undefined for the reading at "
+                f"{raw_row['timestamp']} (history is sufficient, but a feature is NaN — "
+                f"typically the previous reading's packet_loss_pct/other KPI was exactly 0, "
+                f"making its rate of change undefined, or a KPI was perfectly flat over the "
+                f"window). Not scoring stale features."
+            )
+        latest = matches.iloc[-1]
         return latest.drop(labels=["timestamp", "cell_id", "anomaly"]).to_dict()
 
 
