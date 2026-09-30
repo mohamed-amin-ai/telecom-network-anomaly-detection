@@ -148,37 +148,44 @@ Same baseline config, same protocol, 8 differently-seeded datasets
     gate (`models/promote.py`, which checks *test* recall) as the honest check:
     on many draws it will correctly decline to promote.
 
-## Finding: a flat KPI silently drops its row (found writing tests)
+## Finding: undefined features silently dropped rows — and served stale features (fixed)
 
-While writing `tests/test_features.py`, an early version of the synthetic
-fixture derived `packet_loss_pct` from a per-cell `base` value
-(`base/100 + noise`, clipped to `[0, 5]`). For a cell with `base=1000`,
-that clip saturates every single row to the ceiling of `5.0` — zero
-variance for the whole cell.
+**Corrects an earlier version of this section**, which predicted that a dropped
+row would make the API return a misleading `425`. That prediction was wrong; the
+real behavior was worse.
 
-`engineer_features` computes z-score as
-`(series - roll_mean_4h) / roll_std_4h.replace(0, np.nan)` — the
-`replace(0, np.nan)` guards against divide-by-zero, but it means a KPI
-that's genuinely flat for a full 4h window gets `zscore = NaN` for every
-row in that window, and the final `dropna()` then drops those rows
-entirely. In the test, this deleted **100% of one cell's rows** — not a
-few warmup rows, all of them, for as long as the flat streak lasted.
+`engineer_features` drops any row containing a `NaN` feature. Two ordinary
+situations produce one: (a) the *previous* reading's value for a KPI is exactly
+`0` (rate of change divides by zero — in practice `packet_loss_pct == 0.0`), and
+(b) a KPI is perfectly flat over the 4h window (zero std, so z-score is undefined).
 
-This was a bug in the test fixture, not in `features.py` — real telecom
-KPIs are essentially never perfectly flat for 4 hours. But it's a real
-latent behavior worth knowing: if a KPI's value did get stuck (e.g. a
-stuck sensor reporting the same reading repeatedly, a genuinely
-alert-worthy fault condition), the current code would silently drop that
-row from training data, and at serving time `live_features.py`'s
-`add_and_compute` would return `None` (empty `feat_df` after dropna) →
-the API would report `425 Too Early` / "not enough history" for a cell
-that actually has plenty of history — just degenerate variance. The
-error message would be misleading about the actual cause.
+In training this just removes a few rows: 9 non-warmup rows of 17,280 on the
+default seed, every one immediately after a `packet_loss_pct == 0.0` reading.
 
-**Not fixed here** (out of scope for a test-writing pass — it's a
-product decision, not a bug fix): options would be (a) treat `std==0` as
-`zscore=0` instead of `NaN` (a flat series is, definitionally, exactly at
-its own mean), or (b) keep it as `NaN` but have `live_features.py` surface
-a distinct error ("degenerate variance" vs "insufficient history") rather
-than conflating the two under the same 425. Flagging as a known
-limitation for Phase 2+ rather than silently patching it.
+At serving time it was a correctness bug. `CellHistoryStore.add_and_compute`
+returned `feat_df.iloc[-1]` — but when the *newest* reading is the one dropped,
+`iloc[-1]` is the **previous** reading. The API scored stale features as current,
+raised nothing, and reported `feature_source: "live"`. Replaying real data
+through the API's feature path reproduced it on all 9 of 9 such rows. Exact-zero
+packet loss is the norm, not the exception, in real telemetry, so this would
+have fired routinely in production.
+
+**Fixed:** `add_and_compute` now selects the row for the reading it just added
+(by timestamp) and raises `UndefinedFeatureError` if that row was dropped; the
+API returns `422` with an explanatory message and increments
+`undefined_feature_responses_total`. Guarded by `tests/test_live_features.py`
+(confirmed to fail against the old `iloc[-1]` code) and an API-level test that
+runs in CI.
+
+**Not fixed — a real limitation you should know about:** rejecting the reading
+is honest, but if a cell reports zero packet loss often, every reading after a
+zero is unscoreable. The proper fix is a feature redesign (e.g. a rate-of-change
+definition that's defined at zero, or NaN-native handling since XGBoost treats
+`NaN` as missing) plus retraining and re-validating ONNX/Triton with NaN inputs.
+That changes the model's feature semantics, so it wasn't done blind, without the
+ability to run XGBoost or ONNX conversion here.
+
+**Train/serve parity itself checks out:** replaying 450 randomly sampled real rows
+through the API's feature path reproduced `features.csv` exactly (max absolute
+difference 1.9e-11), i.e. the "no train/serve skew" claim in `live_features.py`
+holds for every row that is scoreable.

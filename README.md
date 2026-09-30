@@ -390,6 +390,17 @@ Open [http://localhost:8080](http://localhost:8080) (login `admin` / `admin` —
   `tests/test_generate_data.py`) — rerunning it produces byte-identical data. In this demo it stands in for "new production
   data arrived"; a real deployment would pull from wherever labeled
   production data actually lands instead of a synthetic generator.
+- **The DAG branches on Evidently's dataset-level flag, which may be too
+  coarse here.** As I understand Evidently's default, `dataset_drift` is
+  only true when at least 50% of columns drift. This model has 68 features
+  derived from just 5 KPIs. In an offline check (per-feature KS tests
+  standing in for Evidently, so indicative only), shifting two of the five
+  KPIs substantially (latency +30, throughput ×0.6) drifted 18 of 68
+  features (26%) — enough to matter, not enough to trip a 50% flag. If
+  that holds with real Evidently, consider branching on `drift_share` with
+  a lower threshold (or per-KPI) instead; retraining is already gated by
+  `models/promote.py`, so a lower trigger is cheap. Not changed here
+  because it can't be validated without the real library.
 - Promoting a model to "Production" in the MLflow registry currently has
   **no effect** on what `api/main.py` actually serves — it always loads
   `models/model.json` directly off disk. Wiring the API to load from

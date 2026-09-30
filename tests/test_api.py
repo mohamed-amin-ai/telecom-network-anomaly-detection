@@ -146,3 +146,29 @@ def test_metrics_endpoint_reflects_real_traffic(client):
     assert "model_threshold_info" in body
     # Standard instrumentator HTTP metrics should also be present.
     assert "http_requests_total" in body
+
+
+def test_reading_after_a_zero_packet_loss_reading_is_422_not_stale_features(client):
+    """Regression for a silent serving bug: after a reading with
+    packet_loss_pct == 0.0, the NEXT reading's rate-of-change feature is
+    undefined. The API used to score the previous row's features as if
+    they were current (feature_source still said 'live'). It must now
+    refuse explicitly, and count it in Prometheus."""
+    cell_id = "TEST_CELL_ZERO_PREV"
+    for i in range(30):   # warm up with strictly positive, varying packet loss
+        r = client.post("/predict", json=_snapshot(
+            cell_id, timestamp=f"2024-01-01T{i // 4:02d}:{(i % 4) * 15:02d}:00Z",
+            packet_loss_pct=0.3 + 0.01 * i, latency_ms=40 + i * 0.1,
+        ))
+    assert r.status_code == 200
+
+    zero = client.post("/predict", json=_snapshot(
+        cell_id, timestamp="2024-01-01T08:00:00Z", packet_loss_pct=0.0))
+    assert zero.status_code == 200      # the zero reading itself is fine (prev was > 0)
+
+    after = client.post("/predict", json=_snapshot(
+        cell_id, timestamp="2024-01-01T08:15:00Z", packet_loss_pct=0.4))
+    assert after.status_code == 422
+    assert "undefined" in after.json()["detail"].lower()
+
+    assert "undefined_feature_responses_total" in client.get("/metrics").text
