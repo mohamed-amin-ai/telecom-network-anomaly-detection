@@ -62,7 +62,7 @@ def one_seed(seed: int, params: dict) -> dict:
     y_train, y_val, y_test = (d["anomaly"].values for d in (train_df, val_df, test_df))
 
     result = run_one(BASELINE, X_train, y_train, X_val, y_val, X_test, y_test,
-                     params["threshold"]["min_recall"])
+                     params["threshold"]["validation_recall_target"])
     m = result["metrics"]
     return {
         "seed": seed,
@@ -102,7 +102,7 @@ def main():
             "generated_by": "scripts/seed_variance_check.py",
             "note": "Baseline config, scikit-learn stand-in model, train/val/test protocol identical to "
                     "train.py. Measures spread across generator seeds, not model quality.",
-            "min_recall_floor": params["threshold"]["min_recall"],
+            "validation_recall_target": params["threshold"]["validation_recall_target"],
             "runs": rows,
             "summary": summary,
         }, f, indent=2)

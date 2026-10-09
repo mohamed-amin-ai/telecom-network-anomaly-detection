@@ -1,117 +1,117 @@
 {
   "generated_by": "scripts/seed_variance_check.py",
   "note": "Baseline config, scikit-learn stand-in model, train/val/test protocol identical to train.py. Measures spread across generator seeds, not model quality.",
-  "min_recall_floor": 0.93,
+  "validation_recall_target": 0.975,
   "runs": [
     {
       "seed": 42,
-      "test_events": 6,
-      "val_events": 2,
-      "test_positive_rows": 76,
-      "val_positive_rows": 13,
-      "test_pr_auc": 0.6781,
-      "test_recall": 0.8289,
-      "test_precision": 0.1765,
-      "test_f1": 0.291
+      "test_events": 28,
+      "val_events": 23,
+      "test_positive_rows": 289,
+      "val_positive_rows": 225,
+      "test_pr_auc": 0.9797,
+      "test_recall": 0.9377,
+      "test_precision": 0.9748,
+      "test_f1": 0.9559
     },
     {
       "seed": 1,
-      "test_events": 3,
-      "val_events": 4,
-      "test_positive_rows": 73,
-      "val_positive_rows": 46,
-      "test_pr_auc": 0.8715,
-      "test_recall": 0.7671,
-      "test_precision": 0.7273,
-      "test_f1": 0.7467
+      "test_events": 27,
+      "val_events": 24,
+      "test_positive_rows": 313,
+      "val_positive_rows": 262,
+      "test_pr_auc": 0.9696,
+      "test_recall": 0.9457,
+      "test_precision": 0.8889,
+      "test_f1": 0.9164
     },
     {
       "seed": 2,
-      "test_events": 3,
-      "val_events": 5,
-      "test_positive_rows": 56,
-      "val_positive_rows": 64,
-      "test_pr_auc": 0.9816,
-      "test_recall": 0.8214,
-      "test_precision": 1.0,
-      "test_f1": 0.902
+      "test_events": 28,
+      "val_events": 23,
+      "test_positive_rows": 300,
+      "val_positive_rows": 269,
+      "test_pr_auc": 0.9857,
+      "test_recall": 0.9833,
+      "test_precision": 0.6893,
+      "test_f1": 0.8104
     },
     {
       "seed": 3,
-      "test_events": 3,
-      "val_events": 5,
-      "test_positive_rows": 42,
-      "val_positive_rows": 62,
-      "test_pr_auc": 0.9724,
-      "test_recall": 1.0,
-      "test_precision": 0.0657,
-      "test_f1": 0.1233
+      "test_events": 27,
+      "val_events": 22,
+      "test_positive_rows": 361,
+      "val_positive_rows": 210,
+      "test_pr_auc": 0.9932,
+      "test_recall": 0.9889,
+      "test_precision": 0.8925,
+      "test_f1": 0.9382
     },
     {
       "seed": 4,
-      "test_events": 4,
-      "val_events": 5,
-      "test_positive_rows": 35,
-      "val_positive_rows": 47,
-      "test_pr_auc": 0.7947,
-      "test_recall": 0.8286,
-      "test_precision": 0.58,
-      "test_f1": 0.6824
+      "test_events": 28,
+      "val_events": 23,
+      "test_positive_rows": 366,
+      "val_positive_rows": 270,
+      "test_pr_auc": 0.9936,
+      "test_recall": 0.9918,
+      "test_precision": 0.7908,
+      "test_f1": 0.88
     },
     {
       "seed": 5,
-      "test_events": 4,
-      "val_events": 4,
-      "test_positive_rows": 44,
-      "val_positive_rows": 26,
-      "test_pr_auc": 0.9334,
-      "test_recall": 0.9773,
-      "test_precision": 0.3909,
-      "test_f1": 0.5584
+      "test_events": 28,
+      "val_events": 22,
+      "test_positive_rows": 383,
+      "val_positive_rows": 245,
+      "test_pr_auc": 0.9898,
+      "test_recall": 0.9765,
+      "test_precision": 0.9078,
+      "test_f1": 0.9409
     },
     {
       "seed": 6,
-      "test_events": 4,
-      "val_events": 4,
-      "test_positive_rows": 42,
-      "val_positive_rows": 37,
-      "test_pr_auc": 0.9747,
-      "test_recall": 0.9286,
-      "test_precision": 0.8864,
-      "test_f1": 0.907
+      "test_events": 29,
+      "val_events": 24,
+      "test_positive_rows": 334,
+      "val_positive_rows": 309,
+      "test_pr_auc": 0.996,
+      "test_recall": 0.991,
+      "test_precision": 0.9093,
+      "test_f1": 0.9484
     },
     {
       "seed": 7,
-      "test_events": 3,
-      "val_events": 4,
-      "test_positive_rows": 28,
-      "val_positive_rows": 33,
-      "test_pr_auc": 0.9769,
-      "test_recall": 0.8929,
-      "test_precision": 1.0,
-      "test_f1": 0.9434
+      "test_events": 26,
+      "val_events": 23,
+      "test_positive_rows": 289,
+      "val_positive_rows": 291,
+      "test_pr_auc": 0.9886,
+      "test_recall": 0.9654,
+      "test_precision": 0.9755,
+      "test_f1": 0.9704
     }
   ],
   "summary": {
     "test_pr_auc": {
-      "min": 0.678,
-      "median": 0.953,
-      "max": 0.982
+      "min": 0.97,
+      "median": 0.989,
+      "max": 0.996
     },
     "test_recall": {
-      "min": 0.767,
-      "median": 0.861,
-      "max": 1.0
+      "min": 0.938,
+      "median": 0.98,
+      "max": 0.992
     },
     "test_precision": {
-      "min": 0.066,
-      "median": 0.654,
-      "max": 1.0
+      "min": 0.689,
+      "median": 0.9,
+      "max": 0.976
     },
     "test_f1": {
-      "min": 0.123,
-      "median": 0.715,
-      "max": 0.943
+      "min": 0.81,
+      "median": 0.94,
+      "max": 0.97
     }
   }
 }

@@ -109,6 +109,7 @@ def main():
             "train_ratio": split_params["train_ratio"],
             "val_fraction": split_params["val_fraction"],
             "min_recall_floor": threshold_params["min_recall"],
+            "validation_recall_target": threshold_params["validation_recall_target"],
             "train_rows": len(train_df),
             "val_rows": len(val_df),
             "test_rows": len(test_df),
@@ -145,10 +146,10 @@ def main():
         # ── Threshold tuning: on VALIDATION only ─────────────────────────
         val_prob = model.predict_proba(X_val_scaled)[:, 1]
         best_threshold, val_recall, val_precision, val_f1 = tune_threshold(
-            y_val, val_prob, threshold_params["min_recall"]
+            y_val, val_prob, threshold_params["validation_recall_target"]
         )
         val_pr_auc = float(average_precision_score(y_val, val_prob))
-        print(f"\nThreshold tuned on VALIDATION for recall >= {threshold_params['min_recall']}:")
+        print(f"\nThreshold tuned on VALIDATION for recall >= {threshold_params['validation_recall_target']}:")
         print(f"  Threshold        : {best_threshold:.4f}")
         print(f"  Val recall       : {val_recall:.3f}")
         print(f"  Val precision    : {val_precision:.3f}")
