@@ -1,4 +1,4 @@
-.PHONY: install pipeline repro train mlflow-ui serve docker-build docker-up clean
+.PHONY: k8s-render k8s-apply k8s-delete k8s-port-forward install pipeline repro train mlflow-ui serve docker-build docker-up clean
 
 install:
 	pip install -r requirements.txt
@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -84,3 +84,16 @@ query-triton:
 
 clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__
+
+# ── Kubernetes (see k8s/README.md) ───────────────────────────────────────
+k8s-render:
+	kubectl kustomize k8s/base
+
+k8s-apply:
+	kubectl apply -k k8s/base
+
+k8s-delete:
+	kubectl delete -k k8s/base
+
+k8s-port-forward:
+	kubectl -n telecom-anomaly port-forward svc/anomaly-api 8000:8000

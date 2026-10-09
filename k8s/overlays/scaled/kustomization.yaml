@@ -1,0 +1,30 @@
+# ONLY safe when clients send PRE-COMPUTED features (stateless path), or after the per-cell history
+# moves to a shared store. With raw readings, replicas split a cell's history and answer 425.
+# See k8s/README.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: telecom-anomaly   # also applies to hpa.yaml / pdb.yaml, which carry no namespace
+resources:
+  - ../../base
+  - hpa.yaml
+  - pdb.yaml
+patches:
+  # Replicas can't share a ReadWriteOnce volume across nodes: use per-pod scratch logs instead.
+  # The inference log is then lost on restart and not shared, so drift_check.py can't read it.
+  - target: {kind: Deployment, name: anomaly-api}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/volumes/0
+        value: {name: logs, emptyDir: {}}
+      - op: replace
+        path: /spec/strategy
+        value: {type: RollingUpdate, rollingUpdate: {maxSurge: 1, maxUnavailable: 0}}
+      - op: remove
+        path: /spec/replicas
+  - target: {kind: PersistentVolumeClaim, name: anomaly-api-logs}
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: anomaly-api-logs

@@ -1,0 +1,19 @@
+# Requires the Prometheus Operator CRDs (kube-prometheus-stack). Not part of the base kustomization
+# so a cluster without them still applies cleanly: kubectl apply -f k8s/optional/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: anomaly-api
+  namespace: telecom-anomaly
+  labels:
+    app.kubernetes.io/name: anomaly-api
+    # kube-prometheus-stack selects on its release label; set it to YOUR release name.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anomaly-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
