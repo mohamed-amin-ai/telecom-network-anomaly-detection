@@ -197,8 +197,45 @@ def test_readme_internal_anchor_links_resolve():
     assert not broken, f"README links to missing anchors: {sorted(broken)}"
 
 
+def test_configured_validation_target_matches_the_studys_pre_stated_rule():
+    """params.yaml's validation_recall_target must be what
+    scripts/recall_target_study.py chose (max median dev F2) for the level
+    that data.profile selects — otherwise the config claims a provenance it
+    doesn't have. Switching data.profile therefore REQUIRES switching the
+    target; this fails loudly if only one of the two was changed."""
+    import json
+    study = json.loads((REPO / "results/recall_target_study.json").read_text())
+    params = yaml.safe_load((REPO / "params.yaml").read_text())
+    profile, target = params["data"]["profile"], params["threshold"]["validation_recall_target"]
+    if profile == "calibrated":
+        # target AND the onset dial must be what scripts/calibrate_to_original.py chose
+        cal = json.loads((REPO / "results/calibration_to_original.json").read_text())
+        assert target == cal["chosen_target"], (
+            f"data.profile='calibrated': calibration chose target {cal['chosen_target']} but params.yaml has {target}")
+        assert params["data"]["calibrated"] == {**cal["fixed"], "ramp_fraction": cal["chosen_ramp_fraction"]}, (
+            f"params.yaml data.calibrated {params['data']['calibrated']} != calibration result "
+            f"{ {**cal['fixed'], 'ramp_fraction': cal['chosen_ramp_fraction']} }")
+    else:
+        level = "clean" if profile == "legacy" else "realistic"
+        chosen = study["levels"][level]["chosen_target"]
+        assert target == chosen, (
+            f"data.profile={profile!r} -> level {level!r}: the study chose {chosen} but params.yaml has {target}. "
+            f"Update validation_recall_target to {chosen} (or rerun scripts/recall_target_study.py)."
+        )
+    realism = params["data"]["realism"]
+    assert {k: realism[k] for k in ("severity_min", "benign_to_fault_ratio")} == study["realistic_level_params"], \
+        "the study was run against different realism parameters than params.yaml currently has"
+
+
 def test_model_registry_name_and_recall_floor_used_by_code_exist_in_params():
     params = yaml.safe_load((REPO / "params.yaml").read_text())
     assert "registered_model_name" in params["mlflow"]
     assert "min_recall" in params["threshold"]
+    assert "validation_recall_target" in params["threshold"]
+    assert 0 < params["threshold"]["validation_recall_target"] < 1
+    assert 0 < params["threshold"]["min_recall"] <= 1
+    # NOTE: no assertion that validation_recall_target >= min_recall. That held
+    # on the clean benchmark, but on realistic data the F2-optimal operating
+    # point sits far below a 0.93 row-level recall floor; see the README's
+    # "What this means for promotion" and EXPERIMENTS.md.
     assert "val_fraction" in params["split"] and "train_ratio" in params["split"]

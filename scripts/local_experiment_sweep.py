@@ -35,13 +35,13 @@ import time
 from pathlib import Path
 
 import numpy as np
-from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import average_precision_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
 from models.common import load_params, load_data, three_way_time_split, tune_threshold
+from scripts.study_common import fit_stand_in, predict_best
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
 
@@ -59,32 +59,27 @@ SWEEP_GRID = [
 ]
 
 
-def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, min_recall: float) -> dict:
+def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, val_recall_target: float) -> dict:
     neg = (y_train == 0).sum()
     pos = (y_train == 1).sum()
     scale_pos_weight = neg / pos
     sample_weight = np.where(y_train == 1, scale_pos_weight, 1.0)
 
     t0 = time.time()
-    model = HistGradientBoostingClassifier(
-        max_depth=config["max_depth"],
-        learning_rate=config["learning_rate"],
-        max_iter=config["max_iter"],
-        # HGB's built-in early stopping carves its validation split out at
-        # RANDOM, which for time-series data puts neighbouring rows of the
-        # same anomaly event on both sides (leaky). Disabled on purpose —
-        # boosting rounds are an explicit swept hyperparameter instead.
-        early_stopping=False,
-        random_state=42,
-    )
-    model.fit(X_train, y_train, sample_weight=sample_weight)
+    # Follows models/train.py's recipe: stop on VALIDATION PR-AUC (patience 30).
+    # HGB's own early stopping is not used — it carves its validation split out
+    # at RANDOM, putting neighbouring rows of one anomaly event on both sides.
+    model, best_round = fit_stand_in(X_train, y_train, X_val, y_val, {
+        "max_depth": config["max_depth"], "learning_rate": config["learning_rate"],
+        "n_estimators": config["max_iter"], "early_stopping_rounds": 30, "random_state": 42,
+    })
     train_seconds = time.time() - t0
 
-    val_prob = model.predict_proba(X_val)[:, 1]
-    test_prob = model.predict_proba(X_test)[:, 1]
+    val_prob = predict_best(model, X_val, best_round)
+    test_prob = predict_best(model, X_test, best_round)
 
     # Threshold tuned on VALIDATION only, then frozen and applied to test.
-    threshold, val_recall, val_precision, val_f1 = tune_threshold(y_val, val_prob, min_recall)
+    threshold, val_recall, val_precision, val_f1 = tune_threshold(y_val, val_prob, val_recall_target)
     y_pred = (test_prob >= threshold).astype(int)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=[0, 1]).ravel()
     test_recall = tp / (tp + fn) if (tp + fn) else 0.0
@@ -99,7 +94,7 @@ def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, min_re
             "learning_rate": config["learning_rate"],
             "max_iter": config["max_iter"],
             "scale_pos_weight": round(float(scale_pos_weight), 2),
-            "min_recall_floor": min_recall,
+            "validation_recall_target": val_recall_target,
             "model_class": "HistGradientBoostingClassifier (xgboost stand-in — see module docstring)",
         },
         "metrics": {
@@ -122,7 +117,7 @@ def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, min_re
 
 def main():
     params = load_params()
-    min_recall = params["threshold"]["min_recall"]
+    val_recall_target = params["threshold"]["validation_recall_target"]
 
     df = load_data()
     feature_cols = get_feature_columns(df)
@@ -146,7 +141,7 @@ def main():
         print(f"── Running: {config['run_name']} "
               f"(depth={config['max_depth']}, lr={config['learning_rate']}, "
               f"max_iter={config['max_iter']}) ──")
-        result = run_one(config, X_train, y_train, X_val, y_val, X_test, y_test, min_recall)
+        result = run_one(config, X_train, y_train, X_val, y_val, X_test, y_test, val_recall_target)
         results.append(result)
         m = result["metrics"]
         print(f"   val_PR-AUC={m['val_pr_auc']:.3f}  test_PR-AUC={m['test_pr_auc']:.3f}  |  "

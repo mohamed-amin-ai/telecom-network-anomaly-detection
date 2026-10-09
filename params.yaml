@@ -8,8 +8,55 @@
 data:
   seed: 42
   cells: ["CELL_001", "CELL_002", "CELL_003"]
-  periods_days: 60
+  periods_days: 365   # was 60. Anomaly EVENTS now scale with this (generate_data.py), so
+                      # validation/test windows hold dozens of events instead of ~2 and ~6.
   freq_minutes: 15
+
+  # "legacy"    = the original clean-room generator (byte-identical to before profiles existed):
+  #               simple step-change anomalies, perfect labels, stationary data. An UPPER BOUND —
+  #               it reproduces the ORIGINAL project's metric level, and is the configured default.
+  # "realistic" = adds the difficulty factors below. Each switch is independent, so
+  #               scripts/realism_study.py can show how much each one moves the numbers.
+  #
+  # "calibrated" = ALIAS for the realistic code path with only `severity_and_ramp` on, every fault
+  #               at full strength, and the onset ramp set by data.calibrated.ramp_fraction below.
+  #               That dial and the operating point were chosen by scripts/calibrate_to_original.py
+  #               so a baseline lands near the ORIGINAL project's reported metrics. The match is
+  #               therefore BY CONSTRUCTION — not independent evidence of model quality. This is the
+  #               configured default at the project owner's request.
+  #
+  # SWITCHING PROFILE: also set threshold.validation_recall_target to that level's value
+  # (legacy -> 0.96, calibrated -> 0.95, realistic -> 0.5; each chosen by its study script).
+  # A test fails if only one of the two was changed.
+  profile: calibrated
+  calibrated:
+    severity_min: 1.0     # fixed: every fault at full strength
+    ramp_fraction: 0.0      # owner-selected from the calibration dev table (scripts/calibrate_to_original.py);
+                            # 0 = abrupt step change, i.e. clean-level difficulty. The distance rule would have picked 0.1.
+
+  realism:
+    # Every value below is a judgment call about what real telemetry looks like — NOT calibrated
+    # to any production system (none was available).
+    #
+    # History, stated plainly: the values were first fixed BEFORE any model was trained on this
+    # profile (severity_min 0.15, benign_to_fault_ratio 1.0). That setting turned out to be
+    # degenerate (PR-AUC ~0.2 on a development seed; ~3.7 false alerts per cell-day at 50% recall).
+    # It is kept and reported as the "harsh" level (scripts/recall_target_study.py). The two values
+    # below were then revised ONCE, post hoc, to a milder setting; that is the default. No further
+    # revisions were made after seeing the default's results. All three levels are reported
+    # side by side so the sensitivity is visible rather than hidden behind one chosen number.
+    nonstationarity: true         # per-cell baselines, weekly seasonality, slow drift
+    severity_and_ramp: true       # faults range from barely-visible to dramatic, with gradual onset
+    label_noise: true             # ticket-derived labels: jittered boundaries + some faults never logged
+    benign_surges: true           # real but non-fault episodes that resemble mild faults
+    severity_min: 0.4             # weakest fault is 40% of the legacy magnitude (log-uniform up to 100%); harsh level: 0.15
+    ramp_fraction: 0.3            # effect ramps in over the first 30% of an event
+    label_jitter_intervals: 2     # label start/end off by up to +/-2 intervals (30 min)
+    unlabeled_fault_prob: 0.10    # 10% of real faults never get labeled
+    benign_to_fault_ratio: 0.5    # one benign surge per two real faults; harsh level: 1.0
+    cell_scale_range: [0.8, 1.25] # per-cell latency/throughput scale
+    latency_drift_pct: 10         # latency creeps +10% over the timeline
+    throughput_drift_pct: -8      # throughput erodes 8% over the timeline
 
 split:
   train_ratio: 0.8   # time-based: first 80% of the timeline is train+validation, last 20% is TEST
@@ -31,6 +78,21 @@ model:
   random_state: 42
 
 threshold:
+  # Two different numbers, deliberately:
+  #   validation_recall_target: what the threshold is TUNED to hit on the validation slice.
+  #     Chosen by a rule stated in advance — maximise median row-level F2 on DEVELOPMENT seeds —
+  #     for the default data profile, then evaluated on separate seeds. See
+  #     scripts/recall_target_study.py and EXPERIMENTS.md. A test keeps this equal to the
+  #     study's result for the level data.profile selects. F2 rule: 0.96 on the clean benchmark,
+  #     0.5 on the realistic one. For the calibrated profile the target (0.975) is the owner's pick from the
+  #     calibration dev table, chosen so row-level recall sits clearly above precision;
+  #     scripts/calibrate_to_original.py.
+  #   min_recall: the production floor a model must meet on the held-out TEST window to be
+  #     promoted (models/promote.py). Reachable on most draws of the clean benchmark; NOT
+  #     reachable at a usable alert rate on the realistic one — see README "What this means for
+  #     promotion". Left unchanged: it is a business requirement, not something to tune to
+  #     whatever the model achieves.
+  validation_recall_target: 0.975
   min_recall: 0.93   # production recall floor (missed fault > false alarm)
 
 mlflow:

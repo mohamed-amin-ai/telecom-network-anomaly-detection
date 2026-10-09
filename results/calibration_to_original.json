@@ -1,0 +1,2464 @@
+{
+  "dev_by_dial": {
+    "0.0": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8014,
+          "precision": 0.996,
+          "f1": 0.8882,
+          "distance": 0.2724
+        },
+        "0.85": {
+          "recall": 0.8569,
+          "precision": 0.9961,
+          "f1": 0.9204,
+          "distance": 0.2462
+        },
+        "0.9": {
+          "recall": 0.9035,
+          "precision": 0.9931,
+          "f1": 0.9424,
+          "distance": 0.2292
+        },
+        "0.92": {
+          "recall": 0.9213,
+          "precision": 0.9856,
+          "f1": 0.9493,
+          "distance": 0.2186
+        },
+        "0.94": {
+          "recall": 0.9383,
+          "precision": 0.9778,
+          "f1": 0.9544,
+          "distance": 0.2091
+        },
+        "0.95": {
+          "recall": 0.9558,
+          "precision": 0.9667,
+          "f1": 0.9581,
+          "distance": 0.1975
+        },
+        "0.96": {
+          "recall": 0.9558,
+          "precision": 0.9611,
+          "f1": 0.9567,
+          "distance": 0.192
+        },
+        "0.97": {
+          "recall": 0.9698,
+          "precision": 0.8968,
+          "f1": 0.9315,
+          "distance": 0.1288
+        },
+        "0.975": {
+          "recall": 0.9773,
+          "precision": 0.8039,
+          "f1": 0.8853,
+          "distance": 0.0428
+        },
+        "0.98": {
+          "recall": 0.9863,
+          "precision": 0.6404,
+          "f1": 0.7753,
+          "distance": 0.1332
+        },
+        "0.985": {
+          "recall": 0.9897,
+          "precision": 0.5306,
+          "f1": 0.6883,
+          "distance": 0.2415
+        },
+        "0.99": {
+          "recall": 0.9907,
+          "precision": 0.3427,
+          "f1": 0.5075,
+          "distance": 0.4282
+        }
+      },
+      "best_target": 0.975,
+      "best_distance": 0.0428,
+      "pr_auc_median": 0.9817
+    },
+    "0.05": {
+      "summary": {
+        "0.8": {
+          "recall": 0.811,
+          "precision": 0.9963,
+          "f1": 0.8941,
+          "distance": 0.2675
+        },
+        "0.85": {
+          "recall": 0.8535,
+          "precision": 0.9965,
+          "f1": 0.9193,
+          "distance": 0.2478
+        },
+        "0.9": {
+          "recall": 0.8973,
+          "precision": 0.992,
+          "f1": 0.9412,
+          "distance": 0.2295
+        },
+        "0.92": {
+          "recall": 0.9248,
+          "precision": 0.9878,
+          "f1": 0.9543,
+          "distance": 0.2203
+        },
+        "0.94": {
+          "recall": 0.9426,
+          "precision": 0.9738,
+          "f1": 0.9532,
+          "distance": 0.2048
+        },
+        "0.95": {
+          "recall": 0.9501,
+          "precision": 0.9646,
+          "f1": 0.9534,
+          "distance": 0.1954
+        },
+        "0.96": {
+          "recall": 0.9645,
+          "precision": 0.8926,
+          "f1": 0.9286,
+          "distance": 0.124
+        },
+        "0.97": {
+          "recall": 0.9722,
+          "precision": 0.839,
+          "f1": 0.9037,
+          "distance": 0.0726
+        },
+        "0.975": {
+          "recall": 0.9785,
+          "precision": 0.6794,
+          "f1": 0.7984,
+          "distance": 0.0935
+        },
+        "0.98": {
+          "recall": 0.9836,
+          "precision": 0.5579,
+          "f1": 0.7107,
+          "distance": 0.2136
+        },
+        "0.985": {
+          "recall": 0.9854,
+          "precision": 0.4748,
+          "f1": 0.6393,
+          "distance": 0.2962
+        },
+        "0.99": {
+          "recall": 0.9909,
+          "precision": 0.1929,
+          "f1": 0.3228,
+          "distance": 0.5776
+        }
+      },
+      "best_target": 0.97,
+      "best_distance": 0.0726,
+      "pr_auc_median": 0.9789
+    },
+    "0.1": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8042,
+          "precision": 0.9959,
+          "f1": 0.89,
+          "distance": 0.2708
+        },
+        "0.85": {
+          "recall": 0.8648,
+          "precision": 0.992,
+          "f1": 0.9225,
+          "distance": 0.2394
+        },
+        "0.9": {
+          "recall": 0.9081,
+          "precision": 0.9778,
+          "f1": 0.9414,
+          "distance": 0.2132
+        },
+        "0.92": {
+          "recall": 0.9246,
+          "precision": 0.9557,
+          "f1": 0.941,
+          "distance": 0.1886
+        },
+        "0.94": {
+          "recall": 0.9454,
+          "precision": 0.8392,
+          "f1": 0.8873,
+          "distance": 0.0703
+        },
+        "0.95": {
+          "recall": 0.9525,
+          "precision": 0.729,
+          "f1": 0.8236,
+          "distance": 0.0402
+        },
+        "0.96": {
+          "recall": 0.962,
+          "precision": 0.5092,
+          "f1": 0.6624,
+          "distance": 0.2601
+        },
+        "0.97": {
+          "recall": 0.9688,
+          "precision": 0.2315,
+          "f1": 0.3734,
+          "distance": 0.5379
+        },
+        "0.975": {
+          "recall": 0.9731,
+          "precision": 0.1706,
+          "f1": 0.2898,
+          "distance": 0.599
+        },
+        "0.98": {
+          "recall": 0.9746,
+          "precision": 0.1288,
+          "f1": 0.2271,
+          "distance": 0.6408
+        },
+        "0.985": {
+          "recall": 0.9868,
+          "precision": 0.0703,
+          "f1": 0.1311,
+          "distance": 0.6997
+        },
+        "0.99": {
+          "recall": 0.9911,
+          "precision": 0.0465,
+          "f1": 0.0887,
+          "distance": 0.7238
+        }
+      },
+      "best_target": 0.95,
+      "best_distance": 0.0402,
+      "pr_auc_median": 0.9562
+    },
+    "0.15": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8027,
+          "precision": 0.9958,
+          "f1": 0.8889,
+          "distance": 0.2715
+        },
+        "0.85": {
+          "recall": 0.8612,
+          "precision": 0.985,
+          "f1": 0.9164,
+          "distance": 0.2343
+        },
+        "0.9": {
+          "recall": 0.9023,
+          "precision": 0.9431,
+          "f1": 0.9201,
+          "distance": 0.181
+        },
+        "0.92": {
+          "recall": 0.9166,
+          "precision": 0.8729,
+          "f1": 0.9044,
+          "distance": 0.1097
+        },
+        "0.94": {
+          "recall": 0.9421,
+          "precision": 0.5195,
+          "f1": 0.6697,
+          "distance": 0.2499
+        },
+        "0.95": {
+          "recall": 0.9525,
+          "precision": 0.2568,
+          "f1": 0.4042,
+          "distance": 0.5125
+        },
+        "0.96": {
+          "recall": 0.9684,
+          "precision": 0.1568,
+          "f1": 0.2696,
+          "distance": 0.6126
+        },
+        "0.97": {
+          "recall": 0.9748,
+          "precision": 0.1016,
+          "f1": 0.184,
+          "distance": 0.6679
+        },
+        "0.975": {
+          "recall": 0.9813,
+          "precision": 0.0733,
+          "f1": 0.1361,
+          "distance": 0.6965
+        },
+        "0.98": {
+          "recall": 0.9831,
+          "precision": 0.061,
+          "f1": 0.1149,
+          "distance": 0.7089
+        },
+        "0.985": {
+          "recall": 0.9861,
+          "precision": 0.0416,
+          "f1": 0.0796,
+          "distance": 0.7284
+        },
+        "0.99": {
+          "recall": 0.9914,
+          "precision": 0.0256,
+          "f1": 0.0499,
+          "distance": 0.7446
+        }
+      },
+      "best_target": 0.92,
+      "best_distance": 0.1097,
+      "pr_auc_median": 0.9403
+    },
+    "0.2": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8135,
+          "precision": 0.9918,
+          "f1": 0.8913,
+          "distance": 0.2624
+        },
+        "0.85": {
+          "recall": 0.8644,
+          "precision": 0.9594,
+          "f1": 0.9068,
+          "distance": 0.2096
+        },
+        "0.9": {
+          "recall": 0.9055,
+          "precision": 0.7587,
+          "f1": 0.8289,
+          "distance": 0.048
+        },
+        "0.92": {
+          "recall": 0.9282,
+          "precision": 0.3919,
+          "f1": 0.5524,
+          "distance": 0.3781
+        },
+        "0.94": {
+          "recall": 0.9488,
+          "precision": 0.1942,
+          "f1": 0.3225,
+          "distance": 0.575
+        },
+        "0.95": {
+          "recall": 0.961,
+          "precision": 0.1053,
+          "f1": 0.1899,
+          "distance": 0.6639
+        },
+        "0.96": {
+          "recall": 0.97,
+          "precision": 0.0795,
+          "f1": 0.1469,
+          "distance": 0.6899
+        },
+        "0.97": {
+          "recall": 0.9721,
+          "precision": 0.0527,
+          "f1": 0.1,
+          "distance": 0.7168
+        },
+        "0.975": {
+          "recall": 0.9773,
+          "precision": 0.0407,
+          "f1": 0.0782,
+          "distance": 0.7289
+        },
+        "0.98": {
+          "recall": 0.9808,
+          "precision": 0.0381,
+          "f1": 0.0733,
+          "distance": 0.7317
+        },
+        "0.985": {
+          "recall": 0.9837,
+          "precision": 0.0328,
+          "f1": 0.0635,
+          "distance": 0.7371
+        },
+        "0.99": {
+          "recall": 0.9903,
+          "precision": 0.0244,
+          "f1": 0.0476,
+          "distance": 0.7458
+        }
+      },
+      "best_target": 0.9,
+      "best_distance": 0.048,
+      "pr_auc_median": 0.9226
+    },
+    "0.3": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8088,
+          "precision": 0.9497,
+          "f1": 0.8656,
+          "distance": 0.2307
+        },
+        "0.85": {
+          "recall": 0.8599,
+          "precision": 0.6822,
+          "f1": 0.7578,
+          "distance": 0.127
+        },
+        "0.9": {
+          "recall": 0.9015,
+          "precision": 0.171,
+          "f1": 0.2883,
+          "distance": 0.6003
+        },
+        "0.92": {
+          "recall": 0.9292,
+          "precision": 0.1079,
+          "f1": 0.1935,
+          "distance": 0.6617
+        },
+        "0.94": {
+          "recall": 0.9538,
+          "precision": 0.059,
+          "f1": 0.1111,
+          "distance": 0.7102
+        },
+        "0.95": {
+          "recall": 0.9634,
+          "precision": 0.0474,
+          "f1": 0.0902,
+          "distance": 0.7219
+        },
+        "0.96": {
+          "recall": 0.9702,
+          "precision": 0.0376,
+          "f1": 0.0723,
+          "distance": 0.7318
+        },
+        "0.97": {
+          "recall": 0.9741,
+          "precision": 0.0328,
+          "f1": 0.0635,
+          "distance": 0.7367
+        },
+        "0.975": {
+          "recall": 0.979,
+          "precision": 0.0255,
+          "f1": 0.0498,
+          "distance": 0.7441
+        },
+        "0.98": {
+          "recall": 0.986,
+          "precision": 0.0241,
+          "f1": 0.047,
+          "distance": 0.7459
+        },
+        "0.985": {
+          "recall": 0.9912,
+          "precision": 0.0212,
+          "f1": 0.0416,
+          "distance": 0.749
+        },
+        "0.99": {
+          "recall": 0.9927,
+          "precision": 0.019,
+          "f1": 0.0372,
+          "distance": 0.7513
+        }
+      },
+      "best_target": 0.85,
+      "best_distance": 0.127,
+      "pr_auc_median": 0.8738
+    },
+    "0.075": {
+      "summary": {
+        "0.8": {
+          "recall": 0.808,
+          "precision": 0.996,
+          "f1": 0.8931,
+          "distance": 0.2688
+        },
+        "0.85": {
+          "recall": 0.8433,
+          "precision": 0.9961,
+          "f1": 0.9135,
+          "distance": 0.2518
+        },
+        "0.9": {
+          "recall": 0.9109,
+          "precision": 0.9897,
+          "f1": 0.9448,
+          "distance": 0.2244
+        },
+        "0.92": {
+          "recall": 0.9218,
+          "precision": 0.9785,
+          "f1": 0.9447,
+          "distance": 0.2115
+        },
+        "0.94": {
+          "recall": 0.9356,
+          "precision": 0.9528,
+          "f1": 0.9451,
+          "distance": 0.1844
+        },
+        "0.95": {
+          "recall": 0.9469,
+          "precision": 0.8661,
+          "f1": 0.9059,
+          "distance": 0.0971
+        },
+        "0.96": {
+          "recall": 0.9641,
+          "precision": 0.726,
+          "f1": 0.8257,
+          "distance": 0.0448
+        },
+        "0.97": {
+          "recall": 0.9686,
+          "precision": 0.5216,
+          "f1": 0.6753,
+          "distance": 0.2481
+        },
+        "0.975": {
+          "recall": 0.9767,
+          "precision": 0.3247,
+          "f1": 0.4869,
+          "distance": 0.4451
+        },
+        "0.98": {
+          "recall": 0.9785,
+          "precision": 0.1977,
+          "f1": 0.3289,
+          "distance": 0.572
+        },
+        "0.985": {
+          "recall": 0.985,
+          "precision": 0.1708,
+          "f1": 0.291,
+          "distance": 0.5993
+        },
+        "0.99": {
+          "recall": 0.9924,
+          "precision": 0.0804,
+          "f1": 0.1488,
+          "distance": 0.6899
+        }
+      },
+      "best_target": 0.96,
+      "best_distance": 0.0448,
+      "pr_auc_median": 0.9654
+    },
+    "0.125": {
+      "summary": {
+        "0.8": {
+          "recall": 0.8011,
+          "precision": 0.9963,
+          "f1": 0.8881,
+          "distance": 0.2728
+        },
+        "0.85": {
+          "recall": 0.8577,
+          "precision": 0.992,
+          "f1": 0.9192,
+          "distance": 0.2421
+        },
+        "0.9": {
+          "recall": 0.9042,
+          "precision": 0.9664,
+          "f1": 0.9362,
+          "distance": 0.203
+        },
+        "0.92": {
+          "recall": 0.9211,
+          "precision": 0.9287,
+          "f1": 0.9276,
+          "distance": 0.1626
+        },
+        "0.94": {
+          "recall": 0.9398,
+          "precision": 0.6967,
+          "f1": 0.7991,
+          "distance": 0.0735
+        },
+        "0.95": {
+          "recall": 0.9511,
+          "precision": 0.4044,
+          "f1": 0.5675,
+          "distance": 0.3648
+        },
+        "0.96": {
+          "recall": 0.9576,
+          "precision": 0.2479,
+          "f1": 0.3929,
+          "distance": 0.5213
+        },
+        "0.97": {
+          "recall": 0.9636,
+          "precision": 0.173,
+          "f1": 0.2929,
+          "distance": 0.5963
+        },
+        "0.975": {
+          "recall": 0.9745,
+          "precision": 0.0899,
+          "f1": 0.1647,
+          "distance": 0.6797
+        },
+        "0.98": {
+          "recall": 0.9823,
+          "precision": 0.0662,
+          "f1": 0.124,
+          "distance": 0.7036
+        },
+        "0.985": {
+          "recall": 0.9879,
+          "precision": 0.0466,
+          "f1": 0.089,
+          "distance": 0.7234
+        },
+        "0.99": {
+          "recall": 0.9902,
+          "precision": 0.0321,
+          "f1": 0.0621,
+          "distance": 0.7381
+        }
+      },
+      "best_target": 0.94,
+      "best_distance": 0.0735,
+      "pr_auc_median": 0.9496
+    }
+  },
+  "first_attempt": {
+    "dial": "severity_min (ramp 0.3)",
+    "dev_best": {
+      "1.0": {
+        "target": 0.85,
+        "recall": 0.86,
+        "precision": 0.682,
+        "f1": 0.758,
+        "distance": 0.127
+      },
+      "0.8": {
+        "target": 0.8,
+        "recall": 0.813,
+        "precision": 0.924,
+        "f1": 0.868,
+        "distance": 0.208
+      }
+    }
+  },
+  "generated_by": "scripts/calibrate_to_original.py",
+  "periods_days": 365,
+  "original_readme_metrics": {
+    "recall": 0.9524,
+    "precision": 0.7692,
+    "f1": 0.8511
+  },
+  "dev_seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107
+  ],
+  "eval_seeds": [
+    42,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "targets": [
+    0.8,
+    0.85,
+    0.9,
+    0.92,
+    0.94,
+    0.95,
+    0.96,
+    0.97,
+    0.975,
+    0.98,
+    0.985,
+    0.99
+  ],
+  "dials": [
+    0.0,
+    0.05,
+    0.075,
+    0.1,
+    0.125,
+    0.15,
+    0.2,
+    0.3
+  ],
+  "fixed": {
+    "severity_min": 1.0
+  },
+  "chosen_ramp_fraction": 0.0,
+  "chosen_target": 0.975,
+  "eval_summary": {
+    "recall": {
+      "min": 0.938,
+      "median": 0.971,
+      "max": 0.992
+    },
+    "precision": {
+      "min": 0.689,
+      "median": 0.909,
+      "max": 0.976
+    },
+    "f1": {
+      "min": 0.81,
+      "median": 0.942,
+      "max": 0.97
+    },
+    "event_detection_rate": {
+      "min": 1.0,
+      "median": 1.0,
+      "max": 1.0
+    },
+    "false_alerts_per_cell_day": {
+      "min": 0.018,
+      "median": 0.151,
+      "max": 0.53
+    },
+    "median_delay_minutes": {
+      "min": 0.0,
+      "median": 0.0,
+      "max": 0.0
+    },
+    "pr_auc": {
+      "min": 0.97,
+      "median": 0.987,
+      "max": 0.996
+    },
+    "test_events": {
+      "min": 25.0,
+      "median": 27.5,
+      "max": 29.0
+    },
+    "test_positive_rows": {
+      "min": 289.0,
+      "median": 337.0,
+      "max": 383.0
+    }
+  },
+  "eval_distance_of_medians": 0.141,
+  "eval_rows": [
+    {
+      "val_events": 23,
+      "test_events": 28,
+      "test_positive_rows": 289,
+      "test_anomaly_rate": 0.0138,
+      "test_pr_auc": 0.9797,
+      "best_round": 282,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9998,
+          "recall": 0.6332,
+          "precision": 1.0,
+          "f1": 0.7754,
+          "f2": 0.6833,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0087,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9994,
+          "recall": 0.7232,
+          "precision": 0.9905,
+          "f1": 0.836,
+          "f2": 0.7644,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9688,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.01,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9976,
+          "recall": 0.8201,
+          "precision": 0.9916,
+          "f1": 0.8977,
+          "f2": 0.8495,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9688,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0114,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 0.0
+        },
+        "0.92": {
+          "threshold": 0.9911,
+          "recall": 0.872,
+          "precision": 0.9882,
+          "f1": 0.9265,
+          "f2": 0.893,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9655,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0121,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.94": {
+          "threshold": 0.9803,
+          "recall": 0.8927,
+          "precision": 0.9885,
+          "f1": 0.9382,
+          "f2": 0.9104,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9655,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0124,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.9661,
+          "recall": 0.8962,
+          "precision": 0.9848,
+          "f1": 0.9384,
+          "f2": 0.9126,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9333,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0125,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.9564,
+          "recall": 0.8997,
+          "precision": 0.9848,
+          "f1": 0.9403,
+          "f2": 0.9155,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9333,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0126,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.8624,
+          "recall": 0.917,
+          "precision": 0.9779,
+          "f1": 0.9464,
+          "f2": 0.9285,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9032,
+          "false_alerts_per_cell_day": 0.0137,
+          "flagged_fraction": 0.0129,
+          "alerts_per_cell_day": 0.1417,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.5661,
+          "recall": 0.9377,
+          "precision": 0.9748,
+          "f1": 0.9559,
+          "f2": 0.9449,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.875,
+          "false_alerts_per_cell_day": 0.0183,
+          "flagged_fraction": 0.0132,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.4767,
+          "recall": 0.9377,
+          "precision": 0.9713,
+          "f1": 0.9542,
+          "f2": 0.9443,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8485,
+          "false_alerts_per_cell_day": 0.0228,
+          "flagged_fraction": 0.0133,
+          "alerts_per_cell_day": 0.1508,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.4733,
+          "recall": 0.9377,
+          "precision": 0.9713,
+          "f1": 0.9542,
+          "f2": 0.9443,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8485,
+          "false_alerts_per_cell_day": 0.0228,
+          "flagged_fraction": 0.0133,
+          "alerts_per_cell_day": 0.1508,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0706,
+          "recall": 0.9619,
+          "precision": 0.9115,
+          "f1": 0.936,
+          "f2": 0.9514,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5833,
+          "false_alerts_per_cell_day": 0.0914,
+          "flagged_fraction": 0.0145,
+          "alerts_per_cell_day": 0.2193,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 42
+    },
+    {
+      "val_events": 24,
+      "test_events": 27,
+      "test_positive_rows": 313,
+      "test_anomaly_rate": 0.0149,
+      "test_pr_auc": 0.9696,
+      "best_round": 224,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9995,
+          "recall": 0.7252,
+          "precision": 1.0,
+          "f1": 0.8407,
+          "f2": 0.7674,
+          "event_detection_rate": 0.963,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0108,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9987,
+          "recall": 0.7923,
+          "precision": 1.0,
+          "f1": 0.8841,
+          "f2": 0.8267,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0118,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9878,
+          "recall": 0.853,
+          "precision": 1.0,
+          "f1": 0.9207,
+          "f2": 0.8789,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0127,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.9778,
+          "recall": 0.869,
+          "precision": 1.0,
+          "f1": 0.9299,
+          "f2": 0.8924,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0129,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.94": {
+          "threshold": 0.9099,
+          "recall": 0.8818,
+          "precision": 1.0,
+          "f1": 0.9372,
+          "f2": 0.9031,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0131,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.95": {
+          "threshold": 0.8447,
+          "recall": 0.885,
+          "precision": 1.0,
+          "f1": 0.939,
+          "f2": 0.9058,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0132,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.96": {
+          "threshold": 0.1943,
+          "recall": 0.9329,
+          "precision": 0.9669,
+          "f1": 0.9496,
+          "f2": 0.9395,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7297,
+          "false_alerts_per_cell_day": 0.0457,
+          "flagged_fraction": 0.0144,
+          "alerts_per_cell_day": 0.1691,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.0925,
+          "recall": 0.9361,
+          "precision": 0.9272,
+          "f1": 0.9316,
+          "f2": 0.9343,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5625,
+          "false_alerts_per_cell_day": 0.096,
+          "flagged_fraction": 0.015,
+          "alerts_per_cell_day": 0.2194,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.0367,
+          "recall": 0.9457,
+          "precision": 0.8889,
+          "f1": 0.9164,
+          "f2": 0.9338,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4516,
+          "false_alerts_per_cell_day": 0.1554,
+          "flagged_fraction": 0.0159,
+          "alerts_per_cell_day": 0.2833,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.0229,
+          "recall": 0.9585,
+          "precision": 0.8287,
+          "f1": 0.8889,
+          "f2": 0.9294,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.3373,
+          "false_alerts_per_cell_day": 0.2514,
+          "flagged_fraction": 0.0172,
+          "alerts_per_cell_day": 0.3793,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.004,
+          "recall": 0.9681,
+          "precision": 0.5642,
+          "f1": 0.7129,
+          "f2": 0.8468,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1202,
+          "false_alerts_per_cell_day": 0.9369,
+          "flagged_fraction": 0.0256,
+          "alerts_per_cell_day": 1.0648,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0028,
+          "recall": 0.9681,
+          "precision": 0.5025,
+          "f1": 0.6616,
+          "f2": 0.8167,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0972,
+          "false_alerts_per_cell_day": 1.1882,
+          "flagged_fraction": 0.0287,
+          "alerts_per_cell_day": 1.3162,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 1
+    },
+    {
+      "val_events": 23,
+      "test_events": 28,
+      "test_positive_rows": 300,
+      "test_anomaly_rate": 0.0143,
+      "test_pr_auc": 0.9857,
+      "best_round": 299,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9996,
+          "recall": 0.7867,
+          "precision": 1.0,
+          "f1": 0.8806,
+          "f2": 0.8217,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0112,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9976,
+          "recall": 0.8433,
+          "precision": 1.0,
+          "f1": 0.915,
+          "f2": 0.8706,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.012,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.8825,
+          "recall": 0.92,
+          "precision": 1.0,
+          "f1": 0.9583,
+          "f2": 0.935,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0131,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 0.0
+        },
+        "0.92": {
+          "threshold": 0.414,
+          "recall": 0.9433,
+          "precision": 0.9725,
+          "f1": 0.9577,
+          "f2": 0.949,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8235,
+          "false_alerts_per_cell_day": 0.0274,
+          "flagged_fraction": 0.0139,
+          "alerts_per_cell_day": 0.1554,
+          "median_delay_minutes": 0.0
+        },
+        "0.94": {
+          "threshold": 0.1702,
+          "recall": 0.9533,
+          "precision": 0.963,
+          "f1": 0.9581,
+          "f2": 0.9552,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7568,
+          "false_alerts_per_cell_day": 0.0411,
+          "flagged_fraction": 0.0141,
+          "alerts_per_cell_day": 0.1691,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.0453,
+          "recall": 0.9667,
+          "precision": 0.9295,
+          "f1": 0.9477,
+          "f2": 0.959,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.6087,
+          "false_alerts_per_cell_day": 0.0823,
+          "flagged_fraction": 0.0149,
+          "alerts_per_cell_day": 0.2102,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.0129,
+          "recall": 0.97,
+          "precision": 0.8765,
+          "f1": 0.9209,
+          "f2": 0.9497,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4308,
+          "false_alerts_per_cell_day": 0.1691,
+          "flagged_fraction": 0.0158,
+          "alerts_per_cell_day": 0.297,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.003,
+          "recall": 0.9833,
+          "precision": 0.7338,
+          "f1": 0.8405,
+          "f2": 0.9207,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.2373,
+          "false_alerts_per_cell_day": 0.4113,
+          "flagged_fraction": 0.0191,
+          "alerts_per_cell_day": 0.5392,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.0022,
+          "recall": 0.9833,
+          "precision": 0.6893,
+          "f1": 0.8104,
+          "f2": 0.906,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1944,
+          "false_alerts_per_cell_day": 0.5301,
+          "flagged_fraction": 0.0204,
+          "alerts_per_cell_day": 0.6581,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.0017,
+          "recall": 0.9867,
+          "precision": 0.6435,
+          "f1": 0.7789,
+          "f2": 0.8916,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1628,
+          "false_alerts_per_cell_day": 0.6581,
+          "flagged_fraction": 0.0219,
+          "alerts_per_cell_day": 0.786,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0007,
+          "recall": 0.99,
+          "precision": 0.4737,
+          "f1": 0.6408,
+          "f2": 0.8128,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.093,
+          "false_alerts_per_cell_day": 1.2476,
+          "flagged_fraction": 0.0298,
+          "alerts_per_cell_day": 1.3755,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0003,
+          "recall": 0.99,
+          "precision": 0.3218,
+          "f1": 0.4857,
+          "f2": 0.6995,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0552,
+          "false_alerts_per_cell_day": 2.189,
+          "flagged_fraction": 0.0439,
+          "alerts_per_cell_day": 2.3169,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 2
+    },
+    {
+      "val_events": 22,
+      "test_events": 27,
+      "test_positive_rows": 361,
+      "test_anomaly_rate": 0.0172,
+      "test_pr_auc": 0.9932,
+      "best_round": 255,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9987,
+          "recall": 0.8199,
+          "precision": 1.0,
+          "f1": 0.9011,
+          "f2": 0.8506,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0141,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9967,
+          "recall": 0.8476,
+          "precision": 1.0,
+          "f1": 0.9175,
+          "f2": 0.8743,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0146,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9829,
+          "recall": 0.8864,
+          "precision": 1.0,
+          "f1": 0.9398,
+          "f2": 0.907,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0152,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.9255,
+          "recall": 0.9169,
+          "precision": 0.994,
+          "f1": 0.9539,
+          "f2": 0.9313,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9655,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0159,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.94": {
+          "threshold": 0.759,
+          "recall": 0.9418,
+          "precision": 0.9942,
+          "f1": 0.9673,
+          "f2": 0.9518,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9655,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0163,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.5954,
+          "recall": 0.9501,
+          "precision": 0.9942,
+          "f1": 0.9717,
+          "f2": 0.9586,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9655,
+          "false_alerts_per_cell_day": 0.0046,
+          "flagged_fraction": 0.0164,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.0891,
+          "recall": 0.9806,
+          "precision": 0.9491,
+          "f1": 0.9646,
+          "f2": 0.9741,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.6136,
+          "false_alerts_per_cell_day": 0.0777,
+          "flagged_fraction": 0.0178,
+          "alerts_per_cell_day": 0.2011,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.0404,
+          "recall": 0.9889,
+          "precision": 0.8992,
+          "f1": 0.942,
+          "f2": 0.9696,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4286,
+          "false_alerts_per_cell_day": 0.1645,
+          "flagged_fraction": 0.0189,
+          "alerts_per_cell_day": 0.2879,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.0358,
+          "recall": 0.9889,
+          "precision": 0.8925,
+          "f1": 0.9382,
+          "f2": 0.968,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4091,
+          "false_alerts_per_cell_day": 0.1782,
+          "flagged_fraction": 0.019,
+          "alerts_per_cell_day": 0.3016,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.0042,
+          "recall": 0.9945,
+          "precision": 0.6254,
+          "f1": 0.7679,
+          "f2": 0.8895,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1256,
+          "false_alerts_per_cell_day": 0.8591,
+          "flagged_fraction": 0.0273,
+          "alerts_per_cell_day": 0.9825,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0009,
+          "recall": 0.9972,
+          "precision": 0.3161,
+          "f1": 0.48,
+          "f2": 0.6969,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0412,
+          "false_alerts_per_cell_day": 2.8699,
+          "flagged_fraction": 0.0542,
+          "alerts_per_cell_day": 2.9933,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0008,
+          "recall": 1.0,
+          "precision": 0.3054,
+          "f1": 0.4679,
+          "f2": 0.6874,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0396,
+          "false_alerts_per_cell_day": 2.9887,
+          "flagged_fraction": 0.0563,
+          "alerts_per_cell_day": 3.1121,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 3
+    },
+    {
+      "val_events": 23,
+      "test_events": 28,
+      "test_positive_rows": 366,
+      "test_anomaly_rate": 0.0174,
+      "test_pr_auc": 0.9936,
+      "best_round": 291,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9973,
+          "recall": 0.8197,
+          "precision": 1.0,
+          "f1": 0.9009,
+          "f2": 0.8503,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0143,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9907,
+          "recall": 0.8552,
+          "precision": 1.0,
+          "f1": 0.9219,
+          "f2": 0.8807,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0149,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9339,
+          "recall": 0.9016,
+          "precision": 0.991,
+          "f1": 0.9442,
+          "f2": 0.9182,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9355,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0159,
+          "alerts_per_cell_day": 0.1417,
+          "median_delay_minutes": 7.5
+        },
+        "0.92": {
+          "threshold": 0.7831,
+          "recall": 0.9235,
+          "precision": 0.9883,
+          "f1": 0.9548,
+          "f2": 0.9358,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9032,
+          "false_alerts_per_cell_day": 0.0137,
+          "flagged_fraction": 0.0163,
+          "alerts_per_cell_day": 0.1417,
+          "median_delay_minutes": 0.0
+        },
+        "0.94": {
+          "threshold": 0.5814,
+          "recall": 0.9317,
+          "precision": 0.9827,
+          "f1": 0.9565,
+          "f2": 0.9415,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.875,
+          "false_alerts_per_cell_day": 0.0183,
+          "flagged_fraction": 0.0165,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.2698,
+          "recall": 0.9672,
+          "precision": 0.9699,
+          "f1": 0.9685,
+          "f2": 0.9677,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7568,
+          "false_alerts_per_cell_day": 0.0411,
+          "flagged_fraction": 0.0174,
+          "alerts_per_cell_day": 0.1691,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.0609,
+          "recall": 0.9809,
+          "precision": 0.9205,
+          "f1": 0.9497,
+          "f2": 0.9682,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5091,
+          "false_alerts_per_cell_day": 0.1234,
+          "flagged_fraction": 0.0186,
+          "alerts_per_cell_day": 0.2513,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.037,
+          "recall": 0.9836,
+          "precision": 0.9091,
+          "f1": 0.9449,
+          "f2": 0.9677,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4746,
+          "false_alerts_per_cell_day": 0.1417,
+          "flagged_fraction": 0.0189,
+          "alerts_per_cell_day": 0.2696,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.0085,
+          "recall": 0.9918,
+          "precision": 0.7908,
+          "f1": 0.88,
+          "f2": 0.9438,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.25,
+          "false_alerts_per_cell_day": 0.3839,
+          "flagged_fraction": 0.0218,
+          "alerts_per_cell_day": 0.5118,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.0084,
+          "recall": 0.9918,
+          "precision": 0.7908,
+          "f1": 0.88,
+          "f2": 0.9438,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.25,
+          "false_alerts_per_cell_day": 0.3839,
+          "flagged_fraction": 0.0218,
+          "alerts_per_cell_day": 0.5118,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0044,
+          "recall": 0.9945,
+          "precision": 0.6973,
+          "f1": 0.8198,
+          "f2": 0.9164,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1677,
+          "false_alerts_per_cell_day": 0.6352,
+          "flagged_fraction": 0.0248,
+          "alerts_per_cell_day": 0.7632,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0017,
+          "recall": 0.9973,
+          "precision": 0.5069,
+          "f1": 0.6722,
+          "f2": 0.8356,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0824,
+          "false_alerts_per_cell_day": 1.4258,
+          "flagged_fraction": 0.0343,
+          "alerts_per_cell_day": 1.5538,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 4
+    },
+    {
+      "val_events": 22,
+      "test_events": 28,
+      "test_positive_rows": 383,
+      "test_anomaly_rate": 0.0182,
+      "test_pr_auc": 0.9898,
+      "best_round": 298,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9966,
+          "recall": 0.8251,
+          "precision": 1.0,
+          "f1": 0.9041,
+          "f2": 0.855,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.015,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9685,
+          "recall": 0.8773,
+          "precision": 1.0,
+          "f1": 0.9346,
+          "f2": 0.8994,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.016,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 0.0
+        },
+        "0.9": {
+          "threshold": 0.7609,
+          "recall": 0.9164,
+          "precision": 1.0,
+          "f1": 0.9564,
+          "f2": 0.932,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0167,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 0.0
+        },
+        "0.92": {
+          "threshold": 0.639,
+          "recall": 0.9269,
+          "precision": 1.0,
+          "f1": 0.9621,
+          "f2": 0.9406,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0169,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 0.0
+        },
+        "0.94": {
+          "threshold": 0.1799,
+          "recall": 0.9582,
+          "precision": 0.9761,
+          "f1": 0.9671,
+          "f2": 0.9617,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7838,
+          "false_alerts_per_cell_day": 0.0366,
+          "flagged_fraction": 0.0179,
+          "alerts_per_cell_day": 0.1691,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.1702,
+          "recall": 0.9582,
+          "precision": 0.9761,
+          "f1": 0.9671,
+          "f2": 0.9617,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7838,
+          "false_alerts_per_cell_day": 0.0366,
+          "flagged_fraction": 0.0179,
+          "alerts_per_cell_day": 0.1691,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.0457,
+          "recall": 0.9765,
+          "precision": 0.9373,
+          "f1": 0.9565,
+          "f2": 0.9684,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.549,
+          "false_alerts_per_cell_day": 0.1051,
+          "flagged_fraction": 0.019,
+          "alerts_per_cell_day": 0.2331,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.0299,
+          "recall": 0.9765,
+          "precision": 0.9122,
+          "f1": 0.9433,
+          "f2": 0.9629,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4667,
+          "false_alerts_per_cell_day": 0.1462,
+          "flagged_fraction": 0.0195,
+          "alerts_per_cell_day": 0.2742,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.028,
+          "recall": 0.9765,
+          "precision": 0.9078,
+          "f1": 0.9409,
+          "f2": 0.9619,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4516,
+          "false_alerts_per_cell_day": 0.1554,
+          "flagged_fraction": 0.0196,
+          "alerts_per_cell_day": 0.2833,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.0055,
+          "recall": 0.9869,
+          "precision": 0.8008,
+          "f1": 0.8842,
+          "f2": 0.9431,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.2456,
+          "false_alerts_per_cell_day": 0.393,
+          "flagged_fraction": 0.0225,
+          "alerts_per_cell_day": 0.521,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0011,
+          "recall": 0.9896,
+          "precision": 0.6143,
+          "f1": 0.758,
+          "f2": 0.8818,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1181,
+          "false_alerts_per_cell_day": 0.9551,
+          "flagged_fraction": 0.0294,
+          "alerts_per_cell_day": 1.0831,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0004,
+          "recall": 0.9948,
+          "precision": 0.4325,
+          "f1": 0.6028,
+          "f2": 0.7895,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.0639,
+          "false_alerts_per_cell_day": 1.8737,
+          "flagged_fraction": 0.0419,
+          "alerts_per_cell_day": 2.0016,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 5
+    },
+    {
+      "val_events": 24,
+      "test_events": 29,
+      "test_positive_rows": 334,
+      "test_anomaly_rate": 0.0159,
+      "test_pr_auc": 0.996,
+      "best_round": 130,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9964,
+          "recall": 0.7605,
+          "precision": 1.0,
+          "f1": 0.8639,
+          "f2": 0.7987,
+          "event_detection_rate": 0.9655,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0121,
+          "alerts_per_cell_day": 0.1371,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9945,
+          "recall": 0.8234,
+          "precision": 1.0,
+          "f1": 0.9031,
+          "f2": 0.8535,
+          "event_detection_rate": 0.9655,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0131,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9741,
+          "recall": 0.9072,
+          "precision": 1.0,
+          "f1": 0.9513,
+          "f2": 0.9243,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0144,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.9581,
+          "recall": 0.9222,
+          "precision": 1.0,
+          "f1": 0.9595,
+          "f2": 0.9367,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0147,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.94": {
+          "threshold": 0.8589,
+          "recall": 0.9611,
+          "precision": 0.9877,
+          "f1": 0.9742,
+          "f2": 0.9663,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8788,
+          "false_alerts_per_cell_day": 0.0183,
+          "flagged_fraction": 0.0155,
+          "alerts_per_cell_day": 0.1508,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.7259,
+          "recall": 0.9731,
+          "precision": 0.9701,
+          "f1": 0.9716,
+          "f2": 0.9725,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7436,
+          "false_alerts_per_cell_day": 0.0457,
+          "flagged_fraction": 0.0159,
+          "alerts_per_cell_day": 0.1782,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.589,
+          "recall": 0.982,
+          "precision": 0.9507,
+          "f1": 0.9661,
+          "f2": 0.9756,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.6304,
+          "false_alerts_per_cell_day": 0.0777,
+          "flagged_fraction": 0.0164,
+          "alerts_per_cell_day": 0.2102,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.3541,
+          "recall": 0.991,
+          "precision": 0.9144,
+          "f1": 0.9511,
+          "f2": 0.9747,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4915,
+          "false_alerts_per_cell_day": 0.1371,
+          "flagged_fraction": 0.0172,
+          "alerts_per_cell_day": 0.2696,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.3308,
+          "recall": 0.991,
+          "precision": 0.9093,
+          "f1": 0.9484,
+          "f2": 0.9735,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4754,
+          "false_alerts_per_cell_day": 0.1462,
+          "flagged_fraction": 0.0173,
+          "alerts_per_cell_day": 0.2788,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.3203,
+          "recall": 0.994,
+          "precision": 0.8997,
+          "f1": 0.9445,
+          "f2": 0.9736,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4462,
+          "false_alerts_per_cell_day": 0.1645,
+          "flagged_fraction": 0.0176,
+          "alerts_per_cell_day": 0.297,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.2288,
+          "recall": 0.994,
+          "precision": 0.8806,
+          "f1": 0.9339,
+          "f2": 0.9691,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4143,
+          "false_alerts_per_cell_day": 0.1874,
+          "flagged_fraction": 0.0179,
+          "alerts_per_cell_day": 0.3199,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.0911,
+          "recall": 0.997,
+          "precision": 0.7655,
+          "f1": 0.8661,
+          "f2": 0.9401,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.2437,
+          "false_alerts_per_cell_day": 0.4113,
+          "flagged_fraction": 0.0207,
+          "alerts_per_cell_day": 0.5438,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 6
+    },
+    {
+      "val_events": 23,
+      "test_events": 26,
+      "test_positive_rows": 289,
+      "test_anomaly_rate": 0.0138,
+      "test_pr_auc": 0.9886,
+      "best_round": 298,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9999,
+          "recall": 0.7509,
+          "precision": 1.0,
+          "f1": 0.8577,
+          "f2": 0.7902,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0103,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.85": {
+          "threshold": 0.9997,
+          "recall": 0.8131,
+          "precision": 1.0,
+          "f1": 0.8969,
+          "f2": 0.8447,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0112,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9982,
+          "recall": 0.8858,
+          "precision": 1.0,
+          "f1": 0.9394,
+          "f2": 0.9065,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0122,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.9963,
+          "recall": 0.9031,
+          "precision": 0.9962,
+          "f1": 0.9474,
+          "f2": 0.9203,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0125,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 7.5
+        },
+        "0.94": {
+          "threshold": 0.9689,
+          "recall": 0.9412,
+          "precision": 0.9963,
+          "f1": 0.968,
+          "f2": 0.9517,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.013,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.873,
+          "recall": 0.955,
+          "precision": 0.9964,
+          "f1": 0.9753,
+          "f2": 0.963,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0132,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.6972,
+          "recall": 0.9585,
+          "precision": 0.9964,
+          "f1": 0.9771,
+          "f2": 0.9658,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0132,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.1761,
+          "recall": 0.9654,
+          "precision": 0.9789,
+          "f1": 0.9721,
+          "f2": 0.9681,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8387,
+          "false_alerts_per_cell_day": 0.0228,
+          "flagged_fraction": 0.0136,
+          "alerts_per_cell_day": 0.1417,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.1689,
+          "recall": 0.9654,
+          "precision": 0.9755,
+          "f1": 0.9704,
+          "f2": 0.9674,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8125,
+          "false_alerts_per_cell_day": 0.0274,
+          "flagged_fraction": 0.0136,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.114,
+          "recall": 0.9689,
+          "precision": 0.9722,
+          "f1": 0.9705,
+          "f2": 0.9695,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7879,
+          "false_alerts_per_cell_day": 0.032,
+          "flagged_fraction": 0.0137,
+          "alerts_per_cell_day": 0.1508,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0292,
+          "recall": 0.9758,
+          "precision": 0.9338,
+          "f1": 0.9543,
+          "f2": 0.9671,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5778,
+          "false_alerts_per_cell_day": 0.0868,
+          "flagged_fraction": 0.0144,
+          "alerts_per_cell_day": 0.2056,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.006,
+          "recall": 0.9862,
+          "precision": 0.8213,
+          "f1": 0.8962,
+          "f2": 0.9481,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.3171,
+          "false_alerts_per_cell_day": 0.2559,
+          "flagged_fraction": 0.0165,
+          "alerts_per_cell_day": 0.3747,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 7
+    },
+    {
+      "val_events": 23,
+      "test_events": 25,
+      "test_positive_rows": 340,
+      "test_anomaly_rate": 0.0162,
+      "test_pr_auc": 0.983,
+      "best_round": 120,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9962,
+          "recall": 0.7353,
+          "precision": 1.0,
+          "f1": 0.8475,
+          "f2": 0.7764,
+          "event_detection_rate": 0.96,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0119,
+          "alerts_per_cell_day": 0.1142,
+          "median_delay_minutes": 22.5
+        },
+        "0.85": {
+          "threshold": 0.9934,
+          "recall": 0.7794,
+          "precision": 1.0,
+          "f1": 0.876,
+          "f2": 0.8154,
+          "event_detection_rate": 0.96,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0126,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9858,
+          "recall": 0.8294,
+          "precision": 1.0,
+          "f1": 0.9068,
+          "f2": 0.8587,
+          "event_detection_rate": 0.96,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0134,
+          "alerts_per_cell_day": 0.1234,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.9629,
+          "recall": 0.8765,
+          "precision": 1.0,
+          "f1": 0.9342,
+          "f2": 0.8987,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0142,
+          "alerts_per_cell_day": 0.1188,
+          "median_delay_minutes": 15.0
+        },
+        "0.94": {
+          "threshold": 0.8749,
+          "recall": 0.9059,
+          "precision": 0.9935,
+          "f1": 0.9477,
+          "f2": 0.9222,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.9286,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0148,
+          "alerts_per_cell_day": 0.1279,
+          "median_delay_minutes": 0.0
+        },
+        "0.95": {
+          "threshold": 0.8221,
+          "recall": 0.9176,
+          "precision": 0.9905,
+          "f1": 0.9527,
+          "f2": 0.9313,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8966,
+          "false_alerts_per_cell_day": 0.0137,
+          "flagged_fraction": 0.015,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.6736,
+          "recall": 0.9382,
+          "precision": 0.9667,
+          "f1": 0.9522,
+          "f2": 0.9438,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7143,
+          "false_alerts_per_cell_day": 0.0457,
+          "flagged_fraction": 0.0157,
+          "alerts_per_cell_day": 0.1599,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.4767,
+          "recall": 0.9588,
+          "precision": 0.9261,
+          "f1": 0.9422,
+          "f2": 0.9521,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5208,
+          "false_alerts_per_cell_day": 0.1051,
+          "flagged_fraction": 0.0168,
+          "alerts_per_cell_day": 0.2193,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.3988,
+          "recall": 0.9647,
+          "precision": 0.9213,
+          "f1": 0.9425,
+          "f2": 0.9557,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.5,
+          "false_alerts_per_cell_day": 0.1142,
+          "flagged_fraction": 0.0169,
+          "alerts_per_cell_day": 0.2285,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.3191,
+          "recall": 0.9647,
+          "precision": 0.8889,
+          "f1": 0.9252,
+          "f2": 0.9485,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4167,
+          "false_alerts_per_cell_day": 0.1599,
+          "flagged_fraction": 0.0176,
+          "alerts_per_cell_day": 0.2742,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.1293,
+          "recall": 0.9735,
+          "precision": 0.7557,
+          "f1": 0.8509,
+          "f2": 0.9205,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.2049,
+          "false_alerts_per_cell_day": 0.4432,
+          "flagged_fraction": 0.0208,
+          "alerts_per_cell_day": 0.5575,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.1117,
+          "recall": 0.9794,
+          "precision": 0.7255,
+          "f1": 0.8335,
+          "f2": 0.9153,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.1799,
+          "false_alerts_per_cell_day": 0.5209,
+          "flagged_fraction": 0.0218,
+          "alerts_per_cell_day": 0.6352,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 8
+    },
+    {
+      "val_events": 23,
+      "test_events": 27,
+      "test_positive_rows": 370,
+      "test_anomaly_rate": 0.0176,
+      "test_pr_auc": 0.9852,
+      "best_round": 264,
+      "by_target": {
+        "0.8": {
+          "threshold": 0.9995,
+          "recall": 0.7243,
+          "precision": 1.0,
+          "f1": 0.8401,
+          "f2": 0.7666,
+          "event_detection_rate": 0.9259,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0128,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 30.0
+        },
+        "0.85": {
+          "threshold": 0.9984,
+          "recall": 0.8027,
+          "precision": 1.0,
+          "f1": 0.8906,
+          "f2": 0.8357,
+          "event_detection_rate": 0.963,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0141,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.9": {
+          "threshold": 0.9954,
+          "recall": 0.8486,
+          "precision": 1.0,
+          "f1": 0.9181,
+          "f2": 0.8751,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0149,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.92": {
+          "threshold": 0.991,
+          "recall": 0.8703,
+          "precision": 1.0,
+          "f1": 0.9306,
+          "f2": 0.8935,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0153,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 15.0
+        },
+        "0.94": {
+          "threshold": 0.9617,
+          "recall": 0.9216,
+          "precision": 0.9971,
+          "f1": 0.9579,
+          "f2": 0.9358,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0163,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 15.0
+        },
+        "0.95": {
+          "threshold": 0.9466,
+          "recall": 0.927,
+          "precision": 0.9971,
+          "f1": 0.9608,
+          "f2": 0.9402,
+          "event_detection_rate": 1.0,
+          "alert_precision": 1.0,
+          "false_alerts_per_cell_day": 0.0,
+          "flagged_fraction": 0.0164,
+          "alerts_per_cell_day": 0.128,
+          "median_delay_minutes": 0.0
+        },
+        "0.96": {
+          "threshold": 0.8544,
+          "recall": 0.9459,
+          "precision": 0.9831,
+          "f1": 0.9642,
+          "f2": 0.9532,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.931,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0169,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.97": {
+          "threshold": 0.6592,
+          "recall": 0.9514,
+          "precision": 0.9805,
+          "f1": 0.9657,
+          "f2": 0.957,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.931,
+          "false_alerts_per_cell_day": 0.0091,
+          "flagged_fraction": 0.0171,
+          "alerts_per_cell_day": 0.1325,
+          "median_delay_minutes": 0.0
+        },
+        "0.975": {
+          "threshold": 0.4061,
+          "recall": 0.9568,
+          "precision": 0.9672,
+          "f1": 0.962,
+          "f2": 0.9588,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.8438,
+          "false_alerts_per_cell_day": 0.0228,
+          "flagged_fraction": 0.0174,
+          "alerts_per_cell_day": 0.1462,
+          "median_delay_minutes": 0.0
+        },
+        "0.98": {
+          "threshold": 0.1869,
+          "recall": 0.9676,
+          "precision": 0.9496,
+          "f1": 0.9585,
+          "f2": 0.9639,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.7105,
+          "false_alerts_per_cell_day": 0.0503,
+          "flagged_fraction": 0.0179,
+          "alerts_per_cell_day": 0.1737,
+          "median_delay_minutes": 0.0
+        },
+        "0.985": {
+          "threshold": 0.0941,
+          "recall": 0.9757,
+          "precision": 0.9426,
+          "f1": 0.9588,
+          "f2": 0.9689,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.6585,
+          "false_alerts_per_cell_day": 0.064,
+          "flagged_fraction": 0.0182,
+          "alerts_per_cell_day": 0.1874,
+          "median_delay_minutes": 0.0
+        },
+        "0.99": {
+          "threshold": 0.038,
+          "recall": 0.9757,
+          "precision": 0.9025,
+          "f1": 0.9377,
+          "f2": 0.9601,
+          "event_detection_rate": 1.0,
+          "alert_precision": 0.4821,
+          "false_alerts_per_cell_day": 0.1325,
+          "flagged_fraction": 0.019,
+          "alerts_per_cell_day": 0.2559,
+          "median_delay_minutes": 0.0
+        }
+      },
+      "seed": 9
+    }
+  ],
+  "selection": {
+    "method": "owner_selected_from_dev_table",
+    "distance_rule_pick": {
+      "ramp_fraction": 0.1,
+      "target": 0.95,
+      "dev_distance": 0.0402
+    },
+    "selected_dev_summary": {
+      "recall": 0.9773,
+      "precision": 0.8039,
+      "f1": 0.8853,
+      "distance": 0.0428
+    },
+    "distance_rule_pick_eval_summary": {
+      "recall": {
+        "min": 0.917,
+        "median": 0.941,
+        "max": 0.967
+      },
+      "precision": {
+        "min": 0.494,
+        "median": 0.841,
+        "max": 0.964
+      },
+      "f1": {
+        "min": 0.65,
+        "median": 0.89,
+        "max": 0.94
+      }
+    }
+  }
+}

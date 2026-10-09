@@ -1,152 +1,293 @@
 # Experiment Log
 
-Real experiments run against this repo's generated data, and — more
-importantly — what they revealed about the repo's own claims. Read the
-**Retractions** section first: several things this project previously
-stated turned out to be wrong.
+Real experiments run against this repo's generated data — and, more importantly,
+what they revealed about the repo's own claims. Read **Retractions**, **What the
+original headline was resting on**, and **Which number to quote** first.
 
 ## Methodology & caveats
 
 The sandbox these experiments ran in had **no network access**, so `xgboost`,
 `mlflow`, and `dvc` could not be installed. The experiments use
 `sklearn.ensemble.HistGradientBoostingClassifier` (same algorithm family as
-XGBoost) as a stand-in. That is adequate for the questions below — how stable
-the *evaluation* is, and whether config differences are real — because those
-are properties of the dataset and protocol, not of which boosted-tree library
-is used. It is **not** the production model: absolute numbers from real
-XGBoost (`models/train.py`, logged to MLflow) will differ.
+XGBoost) as a stand-in, fitted the way `models/train.py` does: positives
+upweighted by neg/pos, boosting stopped by **validation** PR-AUC with patience 30
+(`scripts/study_common.py::fit_stand_in`). It is **not** the production model; real
+XGBoost numbers (logged to MLflow, uploaded by CI) will differ.
 
-Protocol (identical in `models/train.py` and the scripts here): chronological
-train / validation / test split (`params.yaml` → `split`); scaler fit on train
-only; early stopping and the decision threshold use **validation only**; the
-test set is touched once, for the reported numbers. Threshold = highest
-threshold reaching the recall floor (`threshold.min_recall`) on validation.
+Protocol (identical in `models/train.py` and the scripts): chronological
+train / validation / test split; scaler fit on train only; early stopping and the
+decision threshold use **validation only**; the test set is touched once.
 
-Reproduce: `python scripts/local_experiment_sweep.py` and
-`python scripts/seed_variance_check.py` (write `results/*.json`).
-`scripts/replay_experiments_to_mlflow.py` loads the sweep into a real MLflow
-store once mlflow is installed, tagged `is_xgboost_stand_in=true`.
+Reproduce (each writes `results/*.json`): `scripts/calibrate_to_original.py`,
+`scripts/recall_target_study.py` (levels, operating point), `scripts/realism_study.py`
+(ablation), `scripts/local_experiment_sweep.py`, `scripts/seed_variance_check.py`. The studies
+read the dataset you generated, so run `python data/generate_data.py && python data/features.py`
+first (this bit me once: a sweep silently ran on a stale file from an older generator).
 
 ## Retractions
 
-**1. The generator was not deterministic.** `data/generate_data.py` seeded each
-cell's RNG from `hash(cell) % 1000`. Python randomizes `str` hashing per
-process, so every fresh run produced a *different* dataset despite the pinned
-`seed: 42`. Rerunning the script five times gave anomaly counts of 187, 200,
-254, 195 and 287. It was noticed only by rerunning the script during final
-validation. Fixed (`enumerate` index instead of `hash`, and the module-level
-injector RNG is reseeded per build); `tests/test_generate_data.py` runs the
-generator in separate processes under different `PYTHONHASHSEED` values and
-requires identical output. The test was confirmed to *fail* when the bug is
-reintroduced. Consequences:
-  - Every number in the previous version of this file came from one
-    unreproducible draw.
-  - "DVC reproducibility" and the Airflow DAG's "fixed seed" claim were false
-    until this fix.
-  - The README's original headline (recall 95.2% / precision 76.9% /
-    F1 0.851) cannot be reproduced from anything in this repo. It is
-    consistent with the *range* below, but is one draw from it.
+**1. The generator was not deterministic.** It seeded each cell's RNG from
+`hash(cell) % 1000`; Python randomizes `str` hashing per process, so every run produced a
+different dataset despite `seed: 42` (five reruns: 187, 200, 254, 195, 287 anomalies).
+Fixed; `tests/test_generate_data.py` runs the generator under different `PYTHONHASHSEED`
+values and was confirmed to fail when the bug is reintroduced.
 
-**2. "`learning_rate` 0.10 lifts F1 from 0.781 to 0.926" — retracted.** That came
-from the unreproducible draw. Re-run on the deterministic dataset with a proper
-protocol, config differences are within noise (see the sweep table). `params.yaml`
-is back at `learning_rate: 0.05`.
+**2. "`learning_rate` 0.10 lifts F1 from 0.781 to 0.926" — retracted** (one unreproducible
+draw). `params.yaml` stays at 0.05.
 
-**3. `train.py` evaluated on the data it tuned on.** The original code used the
-test set for early stopping (`eval_set`), for choosing the threshold, and for
-reporting. That makes "recall >= 0.93 on the test set" true *by construction*,
-not a measured result, and contradicts the README's statements that the
-threshold was tuned "on validation set" and that the test set was "never seen
-during training". Fixed with a real validation slice
-(`models/common.py::three_way_time_split`, unit-tested — including that the
-test window is unchanged, so ONNX parity / Triton / drift code see the same
-test rows).
+**3. `train.py` evaluated on the data it tuned on** (early stopping, threshold, and report
+all on the test set). Fixed with a real validation slice.
 
-**4. "~1% anomaly rate" was itself a one-draw number.** On the deterministic
-dataset the rate is 2.16% (train), 0.47% (validation),
-2.20% (test). It is not ~5% as the original comments claimed, but it
-also isn't a stable ~1%: it varies with the draw.
+**4. Which benchmark is the headline has changed three times**, and you should know why. One
+revision called the original metrics "met or beaten" on the **clean** benchmark; the next made the
+**realistic** benchmark the headline because clean is too easy to say anything about production; the
+current default is the **calibrated** benchmark, requested because the clean one overshoots the
+original's precision and F1. None of these is wrong, but they answer different questions, and
+all three are reported side by side. See **Which number to quote**.
 
-## The core problem: very few independent anomaly events
+**5. A hypothesis I got wrong.** When the realistic profile first produced very low PR-AUC
+(0.39 on one seed), I suspected my stand-in was overfitting (300 rounds, no early stopping)
+and made it follow `train.py`'s validation early stopping. PR-AUC barely moved (0.392 → 0.388):
+the difficulty is in the data, not the stand-in. The fix is kept because it is more faithful.
 
-The generator injects roughly 6-9 anomaly *events* per cell regardless of
-timeline length. On the default seed the windows contain:
+## What the original headline was resting on
 
-| Window | Rows | Anomalous rows | Independent events |
+The original README reported recall 95.2%, precision 76.9%, F1 0.851. The original
+`model.json`/`metadata.json` pin down what those came from: `scale_pos_weight = 89.1764679`
+on 13,797 rows means **153** anomalous training rows, and recall 0.9524 = **20/21**, precision
+0.7692 = **20/26**, F1 0.8511 reproduce to four decimals from TP=20, FP=6, FN=1. So the
+headline was **one test window with 21 anomalous rows**; its exact 95% intervals are recall
+[0.76, 1.00] and precision [0.56, 0.91]. The exact three numbers can't be
+reproduced (one draw); the level can — see **Calibration** below.
+
+## Which number to quote
+
+| If you are asked… | Quote | Why |
+|---|---|---|
+| "How does it compare to the original project?" | the **calibrated** row: recall 0.97 / precision 0.91 / F1 0.94, **and say it was calibrated to (and selected against) the original** | the benchmark's difficulty was chosen to reproduce the original's level and the final setting was picked by the owner for recall > precision, so the match is by construction |
+| "Is the model good?" | **don't answer with the calibrated numbers.** Use the realistic row as the more honest stress test | calibration can't show quality: the target was built in |
+| "How will it perform in production?" | **none of these.** Nothing here is calibrated to a real network | all three are synthetic |
+
+## Calibration to the original metrics
+
+**What and why.** On the clean benchmark recall already matches the original (~0.95) but precision
+is ~0.96, far above 0.77 — and the threshold can't fix it: pushing precision down to 0.77 pushes recall
+up to ~0.975. The original point lies *below* the clean precision–recall curve, so the data has to be a
+little harder than clean. `scripts/calibrate_to_original.py` searches two knobs — how gradually faults
+begin (`ramp_fraction`; every fault at full strength) and the operating point — to put the median
+(recall, precision) over **development** seeds closest to the original. F1 is *not* a target; it follows
+from the other two, so its closeness is a genuine consistency check.
+
+**First attempt, kept on record.** The dial was fault faintness (`severity_min`) with the default ramp.
+That overshot: `severity_min=1.0` already gave recall 0.860 / precision 0.682 (distance 0.127), and 0.8 was
+worse, because the ramp alone is too hard. The dial moved to the ramp itself, and two refinement values
+(0.075, 0.125) were added after the coarse pass showed where the best region was.
+
+Development seeds [100, 101, 102, 103, 104, 105, 106, 107] — best operating point per ramp fraction:
+
+| ramp_fraction | best target | recall | precision | F1 | distance to original | median PR-AUC |
+|---|---|---|---|---|---|---|
+| 0.0 | 0.975 | 0.977 | 0.804 | 0.885 | 0.043 | 0.982 |
+| 0.05 | 0.97 | 0.972 | 0.839 | 0.904 | 0.073 | 0.979 |
+| 0.075 | 0.96 | 0.964 | 0.726 | 0.826 | 0.045 | 0.965 |
+| 0.1 | 0.95 | 0.953 | 0.729 | 0.824 | 0.040 | 0.956 |
+| 0.125 | 0.94 | 0.940 | 0.697 | 0.799 | 0.073 | 0.950 |
+| 0.15 | 0.92 | 0.917 | 0.873 | 0.904 | 0.110 | 0.940 |
+| 0.2 | 0.9 | 0.905 | 0.759 | 0.829 | 0.048 | 0.923 |
+| 0.3 | 0.85 | 0.860 | 0.682 | 0.758 | 0.127 | 0.874 |
+
+**Selection.** The pre-stated distance rule (closest median recall/precision on dev seeds) picks `ramp_fraction` 0.1, target 0.95 (dev distance 0.0402). Several settings are about equally close (distance ≈ 0.04–0.05), so the search is limited by 8 dev seeds. The project owner then **chose `ramp_fraction` 0.0, target 0.975** from the table above, because they want recall clearly higher than precision (dev: 0.9773 / 0.8039 / 0.8853, distance 0.0428). That is a preference, not the output of the rule, and it is recorded as such in `results/calibration_to_original.json` (`selection`).
+
+**Ramp 0.0 means abrupt step-change faults with full strength and perfect labels — the same difficulty as the clean benchmark.** It differs from `legacy` only in the operating point (0.975 vs 0.96) and the random stream. Treat it as an easy, upper-bound benchmark.
+
+Result on the 10 **evaluation** seeds [42, 1, 2, 3, 4, 5, 6, 7, 8, 9], not used in the search (distance-rule pick on the same seeds shown for comparison):
+
+| metric | original | selected (ramp 0.0, 0.975): median (min–max) | distance-rule pick (ramp 0.1, 0.95) |
 |---|---|---|---|
-| Train | 11,037 | 238 | 17 |
-| Validation | 2,760 | 13 | 2 |
-| Test | 3,450 | 76 | 6 |
+| recall | 0.952 | **0.971 (0.938–0.992)** | 0.941 (0.917–0.967) |
+| precision | 0.769 | **0.909 (0.689–0.976)** | 0.841 (0.494–0.964) |
+| F1 | 0.851 | **0.942 (0.810–0.970)** | 0.890 (0.650–0.940) |
 
-A recall floor tuned on 2 validation events, then measured on 6 test events, is
-dominated by whether one or two hard events (e.g. a mild throughput drop that
-sits inside normal variation) fall in each window.
+Recall exceeds precision, as requested. Precision is *above* the original's 0.769 on eval seeds, so this is not a closer match to the original than the rule's pick; it trades closeness for the recall>precision shape. The same dev setting gave 0.977 / 0.804 / 0.885 on dev seeds, and eval numbers shifted slightly when the study was rerun after a sandbox rebuild (library versions), so quote the table in this file, not older figures.
 
-## Sweep on the default seed (42)
+**What this does and does not mean.**
+  - The match is **by construction** and the final setting is an owner preference. It is *not* evidence the model is good.
+    Ramp 0.0 is clean-level difficulty.
+  - What it buys is a **reference difficulty**: a benchmark where "original-level" performance is the
+    baseline, so changes to features, model or thresholds can be judged against it.
+  - The per-seed spread is large — precision ranges 0.69–0.98 across seeds, F1 0.81–0.97 —
+    so the original's single 0.769 was one draw from a wide distribution, which is the same lesson as the 21-row window.
+  - Incident detection is 100% at ~0.15 false alerts per cell-day (median; 0.02–0.53).
 
-Baseline model class: HistGradientBoostingClassifier stand-in. Configs are
-ranked by **validation** PR-AUC (threshold-free); test columns are reported
-alongside, never used to choose. Recall floor = 0.93.
+## Why evaluation windows were thin — and the fix
+
+The generator injected a fixed 6-9 anomaly events per cell *regardless of `periods_days`*,
+so a longer timeline only added normal rows (old default: 2 validation events, 6 test events).
+Events now **scale with timeline length** (the 60-day clean dataset is byte-identical to
+before; `tests/test_generate_data.py` guards the scaling) and `periods_days` is 365: roughly
+27 test events and 337 anomalous test rows per evaluation seed.
+
+## The realistic profile
+
+`params.yaml` → `data.profile: realistic` adds four independently switchable factors:
+
+| Factor | What it models |
+|---|---|
+| `nonstationarity` | per-cell baselines (x0.8–1.25), weekly seasonality, slow drift (latency +10%, throughput -8% over the year) |
+| `severity_and_ramp` | fault severity log-uniform on [0.4, 1] of the clean magnitude (many faults are faint), with gradual onset over the first 30% of each event |
+| `label_noise` | ticket-style labels: start/end jittered by up to ±2 intervals, 10% of faults never logged |
+| `benign_surges` | real but non-fault load surges (latency up, throughput down, users up) at 0.5 per fault, labeled normal |
+
+(`calibrated` is the same code path with only `severity_and_ramp` on, every fault at full strength,
+and the ramp set to 0.1.) Fault positions, types and durations are identical in every profile (a test
+enforces it), and with all switches off `realistic` equals `legacy` exactly (also tested). Event metadata
+goes in a sidecar (`data/events.csv`), never in `raw_kpis.csv`: any extra column there would silently
+become a model feature.
+
+**None of these values is calibrated to a real network** — none was available. One pair has a history:
+`severity_min 0.15` / `benign_to_fault_ratio 1.0` were fixed before any model was trained and gave a
+near-unusable detector (PR-AUC ≈ 0.2) — kept as the **harsh** level — then were revised once, post hoc, to
+0.4 / 0.5, the **realistic** level.
+
+**To switch benchmark:** set `data.profile` *and* `threshold.validation_recall_target` together
+(`legacy` → 0.96, `calibrated` → 0.975, `realistic` → 0.5); a test fails if only one changes.
+
+## Results by difficulty level
+
+For clean / realistic / harsh the operating point was chosen by a rule stated in advance — **maximise
+median row-level F2 on development seeds [100, 101, 102, 103, 104, 105, 106, 107]** (ties → smaller target) — then reported on disjoint
+evaluation seeds [42, 1, 2, 3, 4, 5, 6, 7, 8, 9]; the calibrated row's operating point was selected by the owner from the calibration above instead.
+Median (min–max) over 10 seeds; the test window is held out. A **false alert** is a merged run of
+flagged intervals matching no real incident (±2 intervals); delay is time from onset to first flag.
+
+| Level | target | PR-AUC | row recall | row precision | row F1 | incident detection | false alerts / cell-day | delay (min) |
+|---|---|---|---|---|---|---|---|---|
+| **calibrated (owner-selected, ramp 0.0) ← configured** | 0.975 | **0.99 (0.97–1.00)** | **0.97 (0.94–0.99)** | **0.91 (0.69–0.98)** | **0.94 (0.81–0.97)** | **100%** (100%–100%) | **0.15** (0.02–0.53) | **0** (0–0) |
+| clean (legacy generator) | 0.96 | 0.98 (0.96–0.99) | 0.95 (0.88–0.98) | 0.96 (0.81–0.99) | 0.95 (0.87–0.97) | 100% (100%–100%) | 0.05 (0.01–0.30) | 0 (0–15) |
+| realistic | 0.5 | 0.56 (0.39–0.66) | 0.59 (0.37–0.70) | 0.50 (0.32–0.79) | 0.53 (0.42–0.66) | 96% (67%–100%) | 0.36 (0.08–0.80) | 38 (30–75) |
+| harsh (original realism setting) | 0.2 | 0.27 (0.11–0.31) | 0.26 (0.08–0.36) | 0.35 (0.20–0.97) | 0.28 (0.15–0.36) | 52% (18%–76%) | 0.33 (0.01–0.86) | 64 (30–165) |
+
+Original README, for comparison: recall 0.952, precision 0.769, F1 0.851 (one 21-row window).
+
+**Reading it:** calibrated ≈ original by construction; clean overshoots precision/F1; realistic is a deployed-detector-shaped
+stress test (per cell it would miss ~41% of anomalous rows, yet catch ~96% of incidents ~38 minutes after
+onset at ~0.36 false alerts per cell-day); harsh is the original, too-severe realism setting.
+
+## Operating points
+
+Evaluation seeds, medians. "Flagged" is the share of all test rows flagged.
+
+**Clean benchmark**
+
+| validation target | row recall | row precision | flagged | incident detection | false alerts / cell-day | delay (min) | seeds with recall ≥ 0.93 |
+|---|---|---|---|---|---|---|---|
+| 0.1 | 0.14 | 1.00 | 0% | 33% | 0.00 | 75 | 0/10 |
+| 0.2 | 0.23 | 1.00 | 0% | 45% | 0.00 | 60 | 0/10 |
+| 0.3 | 0.32 | 1.00 | 0% | 62% | 0.00 | 52 | 0/10 |
+| 0.4 | 0.39 | 1.00 | 1% | 71% | 0.00 | 52 | 0/10 |
+| 0.5 | 0.45 | 1.00 | 1% | 82% | 0.00 | 45 | 0/10 |
+| 0.6 | 0.54 | 1.00 | 1% | 93% | 0.00 | 33 | 0/10 |
+| 0.7 | 0.64 | 1.00 | 1% | 95% | 0.00 | 30 | 0/10 |
+| 0.8 | 0.78 | 1.00 | 1% | 98% | 0.00 | 15 | 0/10 |
+| 0.9 | 0.89 | 1.00 | 1% | 100% | 0.00 | 15 | 0/10 |
+| 0.93 | 0.92 | 0.99 | 2% | 100% | 0.01 | 15 | 3/10 |
+| 0.96 ← chosen | 0.95 | 0.96 | 2% | 100% | 0.05 | 0 | 8/10 |
+| 0.99 | 0.99 | 0.47 | 3% | 100% | 1.42 | 0 | 10/10 |
+
+**Realistic benchmark**
+
+| validation target | row recall | row precision | flagged | incident detection | false alerts / cell-day | delay (min) | seeds with recall ≥ 0.93 |
+|---|---|---|---|---|---|---|---|
+| 0.1 | 0.13 | 0.89 | 0% | 32% | 0.01 | 116 | 0/10 |
+| 0.2 | 0.25 | 0.89 | 0% | 51% | 0.01 | 60 | 0/10 |
+| 0.3 | 0.34 | 0.76 | 1% | 72% | 0.04 | 60 | 0/10 |
+| 0.4 | 0.47 | 0.67 | 1% | 83% | 0.15 | 45 | 0/10 |
+| 0.5 ← chosen | 0.59 | 0.50 | 2% | 96% | 0.36 | 37 | 0/10 |
+| 0.6 | 0.69 | 0.32 | 3% | 96% | 1.09 | 30 | 0/10 |
+| 0.7 | 0.73 | 0.14 | 8% | 100% | 2.65 | 18 | 0/10 |
+| 0.8 | 0.80 | 0.06 | 18% | 100% | 4.93 | 0 | 0/10 |
+| 0.9 | 0.91 | 0.02 | 53% | 100% | 4.85 | 0 | 3/10 |
+| 0.93 | 0.95 | 0.02 | 71% | 100% | 3.28 | 0 | 7/10 |
+| 0.96 | 0.98 | 0.02 | 85% | 100% | 1.58 | 0 | 10/10 |
+| 0.99 | 0.99 | 0.01 | 95% | 100% | 0.42 | 0 | 10/10 |
+
+## What this means for promotion
+
+`params.yaml`'s `min_recall: 0.93` is the test-recall floor `models/promote.py` requires.
+
+  - **Calibrated (configured):** 10/10 evaluation seeds meet it at target 0.975 (this benchmark is easy; the clean level meets it on 8/10).
+  - **Clean:** 8/10 at its chosen target (0.96).
+  - **Realistic:** 0/10 at its chosen target (0.5); forcing 0.96 gives median recall 0.98 at precision 0.02 while flagging
+    85% of all rows. The gate would decline essentially every model there.
+
+I have **not** lowered the floor: it reads as a business requirement, and tuning a gate to whatever the model
+achieves would defeat it. On realistic data your options are: accept that the gate never opens, set a floor the data
+can support, or gate on **incident-level** detection plus a false-alert budget (`models/alerting.py` computes both).
+
+## Which realism factors cost what (cumulative ablation)
+
+Factors added one at a time, in this order, at the realistic level's own operating point (0.5); 6 seeds,
+median (min–max). Order matters (factors interact) — one path, not a unique attribution. PR-AUC is threshold-free and
+the cleanest column; the others are at a fixed target, not each profile's own optimum.
+
+| Profile | PR-AUC | row recall | row precision | incident detection | false alerts / cell-day |
+|---|---|---|---|---|---|
+| clean (legacy) | 0.98 (0.97–0.99) | 0.46 (0.32–0.56) | 1.00 (1.00–1.00) | 0.82 (0.50–0.89) | 0.00 (0.00–0.00) |
+| + nonstationarity | 0.98 (0.97–0.99) | 0.46 (0.38–0.61) | 1.00 (1.00–1.00) | 0.80 (0.64–0.89) | 0.00 (0.00–0.00) |
+| + severity & ramp | 0.72 (0.64–0.75) | 0.62 (0.51–0.67) | 0.88 (0.47–0.98) | 0.86 (0.78–0.96) | 0.09 (0.01–0.65) |
+| + label noise | 0.54 (0.49–0.61) | 0.59 (0.50–0.61) | 0.55 (0.45–0.79) | 0.88 (0.83–0.96) | 0.32 (0.12–0.37) |
+| + benign surges (full) | 0.56 (0.45–0.66) | 0.61 (0.49–0.70) | 0.47 (0.32–0.73) | 0.96 (0.83–0.96) | 0.46 (0.13–0.80) |
+
+Faint, gradually-starting faults and noisy labels account for nearly all of the drop in PR-AUC; non-stationarity is nearly
+free here, and benign surges mainly add false alerts (that step's PR-AUC change is inside seed-to-seed noise).
+
+## Sweep on the default seed (42) — calibrated benchmark (ramp 0.0)
+
+Test columns reported alongside validation PR-AUC, never used to choose. Target 0.975.
 
 | Run | max_depth | learning_rate | max_iter | val PR-AUC | test PR-AUC | test recall | test precision | test F1 |
 |---|---|---|---|---|---|---|---|---|
-| baseline | 6 | 0.05 | 300 | 0.377 | 0.678 | 0.829 | 0.176 | 0.291 |
-| shallow_trees | 3 | 0.05 | 300 | 0.509 | 0.594 | 0.632 | 0.075 | 0.134 |
-| deep_trees | 10 | 0.05 | 300 | 0.444 | 0.706 | 0.895 | 0.134 | 0.233 |
-| high_lr | 6 | 0.1 | 300 | 0.424 | 0.694 | 0.816 | 0.205 | 0.327 |
-| low_lr | 6 | 0.02 | 300 | 0.465 | 0.594 | 0.658 | 0.263 | 0.376 |
-| fewer_rounds | 6 | 0.05 | 100 | 0.446 | 0.547 | 0.645 | 0.297 | 0.407 |
+| baseline | 6 | 0.05 | 300 | 0.993 | 0.980 | 0.938 | 0.975 | 0.956 |
+| shallow_trees | 3 | 0.05 | 300 | 0.990 | 0.977 | 0.931 | 0.941 | 0.936 |
+| deep_trees | 10 | 0.05 | 300 | 0.991 | 0.977 | 0.934 | 0.975 | 0.954 |
+| high_lr | 6 | 0.1 | 300 | 0.993 | 0.980 | 0.938 | 0.982 | 0.959 |
+| low_lr | 6 | 0.02 | 300 | 0.968 | 0.947 | 0.952 | 0.684 | 0.796 |
+| fewer_rounds | 6 | 0.05 | 100 | 0.989 | 0.970 | 0.931 | 0.951 | 0.941 |
 
-**Reading it:** validation ranks `shallow_trees` first, but on test it is
-near-last; `deep_trees` is best on test. With 2 validation events and 6 test
-events these orderings are noise. **No hyperparameter conclusion is supported.**
-Note also that no config reaches the 0.93 recall floor on the test window —
-the floor met on validation did not generalize.
+All configs are within a point or two of each other on PR-AUC, so no hyperparameter conclusion is supported; `params.yaml` is unchanged.
 
-## Spread across generator seeds
-
-Same baseline config, same protocol, 8 differently-seeded datasets
-(`scripts/seed_variance_check.py`):
+## Spread across generator seeds — calibrated benchmark, target 0.975
 
 | seed | val events | test events | test +rows | test PR-AUC | test recall | test precision | test F1 |
 |---|---|---|---|---|---|---|---|
-| 42 (default) | 2 | 6 | 76 | 0.678 | 0.829 | 0.176 | 0.291 |
-| 1 | 4 | 3 | 73 | 0.872 | 0.767 | 0.727 | 0.747 |
-| 2 | 5 | 3 | 56 | 0.982 | 0.821 | 1.000 | 0.902 |
-| 3 | 5 | 3 | 42 | 0.972 | 1.000 | 0.066 | 0.123 |
-| 4 | 5 | 4 | 35 | 0.795 | 0.829 | 0.580 | 0.682 |
-| 5 | 4 | 4 | 44 | 0.933 | 0.977 | 0.391 | 0.558 |
-| 6 | 4 | 4 | 42 | 0.975 | 0.929 | 0.886 | 0.907 |
-| 7 | 4 | 3 | 28 | 0.977 | 0.893 | 1.000 | 0.943 |
+| 42 (default) | 23 | 28 | 289 | 0.980 | 0.938 | 0.975 | 0.956 |
+| 1 | 24 | 27 | 313 | 0.970 | 0.946 | 0.889 | 0.916 |
+| 2 | 23 | 28 | 300 | 0.986 | 0.983 | 0.689 | 0.810 |
+| 3 | 22 | 27 | 361 | 0.993 | 0.989 | 0.892 | 0.938 |
+| 4 | 23 | 28 | 366 | 0.994 | 0.992 | 0.791 | 0.880 |
+| 5 | 22 | 28 | 383 | 0.990 | 0.977 | 0.908 | 0.941 |
+| 6 | 24 | 29 | 334 | 0.996 | 0.991 | 0.909 | 0.948 |
+| 7 | 23 | 26 | 289 | 0.989 | 0.965 | 0.976 | 0.970 |
 
 | Metric | min | median | max |
 |---|---|---|---|
-| test PR-AUC | 0.678 | 0.953 | 0.982 |
-| test recall | 0.767 | 0.861 | 1.0 |
-| test precision | 0.066 | 0.654 | 1.0 |
-| test F1 | 0.123 | 0.715 | 0.943 |
+| test PR-AUC | 0.97 | 0.989 | 0.996 |
+| test recall | 0.938 | 0.98 | 0.992 |
+| test precision | 0.689 | 0.9 | 0.976 |
+| test F1 | 0.81 | 0.94 | 0.97 |
 
-**Reading it:**
-  - The model has real signal: median test PR-AUC is 0.953 against a base
-    rate of about 2%.
-  - But threshold-dependent metrics are unstable: precision ranges from
-    0.066 to 1.0, F1 from 0.123 to 0.943, driven by
-    threshold tuning on a handful of validation events.
-  - The default seed (42) happens to be the *worst* draw for PR-AUC. It was
-    deliberately **not** changed to get nicer numbers — that would be
-    cherry-picking.
+## Caveats that remain
 
-## What this suggests (not done here)
-
-  - Scale the number of injected events with timeline length (or generate many
-    more days), so validation/test each contain dozens of events.
-  - Tune the threshold with rolling-origin / blocked cross-validation across
-    events rather than one small validation slice.
-  - Report PR-AUC (stable) alongside recall/precision at a threshold (unstable),
-    and quote ranges, not single numbers.
-  - Treat the 0.93 recall floor as a validation-time target and the promotion
-    gate (`models/promote.py`, which checks *test* recall) as the honest check:
-    on many draws it will correctly decline to promote.
+  - **The calibrated numbers are tuned to the original's level and finally selected by the owner (recall > precision), by construction.** At ramp 0.0 the benchmark is as easy as the clean one — an upper
+    bound; the realistic one is not calibrated to a real network (parameters are my judgment, one pair revised after
+    seeing results). None is a production forecast.
+  - **Calibration used 8 dev seeds and a coarse operating-point grid**; several settings were about equally close.
+  - **Not modeled:** missing readings and stuck sensors, correlated multi-KPI outages, regime changes beyond smooth drift,
+    delayed or partial label arrival, and real operator labeling behaviour.
+  - **Stand-in model**, not XGBoost. Real numbers come from CI (`model-artifacts`, `mlflow-tracking-store`), and will
+    differ from every table here.
+  - **The operating-point rules are choices.** An alert budget — the threshold that keeps false alerts per cell-day under a
+    limit — is how production usually sets it; the operating-point tables let you read that off.
 
 ## Finding: undefined features silently dropped rows — and served stale features (fixed)
 
@@ -159,8 +300,10 @@ situations produce one: (a) the *previous* reading's value for a KPI is exactly
 `0` (rate of change divides by zero — in practice `packet_loss_pct == 0.0`), and
 (b) a KPI is perfectly flat over the 4h window (zero std, so z-score is undefined).
 
-In training this just removes a few rows: 9 non-warmup rows of 17,280 on the
-default seed, every one immediately after a `packet_loss_pct == 0.0` reading.
+In training this just removes a few rows: 9 non-warmup rows of 17,280 on the 60-day clean
+dataset, 56 of 105,120 on the 365-day clean dataset, 55 of 105,120 on the 365-day realistic
+dataset — in every case each one immediately after a `packet_loss_pct == 0.0` reading (one
+dropped row per exact-zero reading).
 
 At serving time it was a correctness bug. `CellHistoryStore.add_and_compute`
 returned `feat_df.iloc[-1]` — but when the *newest* reading is the one dropped,

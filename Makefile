@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py -v
 
 test-api:
 	pytest tests/test_api.py -v

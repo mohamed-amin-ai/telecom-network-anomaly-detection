@@ -25,9 +25,12 @@ and `client.get_model_version_by_alias` instead; the decision logic in
 
 Which recall is checked: the `recall` metric logged by models/train.py is
 measured on the held-out TEST window at a threshold tuned on the separate
-validation slice. It is NOT tuned to hit the floor, so it will often fall
-below `threshold.min_recall` on small synthetic data (see EXPERIMENTS.md) —
-in which case this declines to promote. That is the intended, honest gate.
+validation slice, at the operating point chosen in params.yaml. It is NOT
+tuned to hit the floor on the test window. On the clean benchmark most draws
+clear `threshold.min_recall`; on the realistic benchmark essentially none do
+(0 of 10 evaluation seeds — EXPERIMENTS.md, "What this means for promotion"),
+so this declines there. That is a documented conflict between the floor and
+the data, not a bug; the gate is deliberately left honest rather than tuned.
 
 Known gap this doesn't solve (documented in README's Phase 5 section):
 promoting a version to "Production" in the MLflow registry has NO EFFECT

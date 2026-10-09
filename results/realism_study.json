@@ -1,0 +1,2696 @@
+{
+  "generated_by": "scripts/realism_study.py",
+  "periods_days": 365,
+  "seeds": [
+    42,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "realism_params": {
+    "nonstationarity": true,
+    "severity_and_ramp": true,
+    "label_noise": true,
+    "benign_surges": true,
+    "severity_min": 0.4,
+    "ramp_fraction": 0.3,
+    "label_jitter_intervals": 2,
+    "unlabeled_fault_prob": 0.1,
+    "benign_to_fault_ratio": 0.5,
+    "cell_scale_range": [
+      0.8,
+      1.25
+    ],
+    "latency_drift_pct": 10,
+    "throughput_drift_pct": -8
+  },
+  "summary": {
+    "clean (legacy)": {
+      "test_pr_auc": {
+        "min": 0.967,
+        "median": 0.984,
+        "max": 0.991
+      },
+      "recall": {
+        "min": 0.317,
+        "median": 0.458,
+        "max": 0.563
+      },
+      "precision": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "f1": {
+        "min": 0.481,
+        "median": 0.627,
+        "max": 0.72
+      },
+      "event_detection_rate": {
+        "min": 0.5,
+        "median": 0.818,
+        "max": 0.893
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "median_delay_minutes": {
+        "min": 30.0,
+        "median": 37.5,
+        "max": 60.0
+      },
+      "anomaly_rate": {
+        "min": 0.014,
+        "median": 0.016,
+        "max": 0.018
+      }
+    },
+    "+ nonstationarity": {
+      "test_pr_auc": {
+        "min": 0.971,
+        "median": 0.976,
+        "max": 0.991
+      },
+      "recall": {
+        "min": 0.377,
+        "median": 0.461,
+        "max": 0.607
+      },
+      "precision": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "f1": {
+        "min": 0.547,
+        "median": 0.63,
+        "max": 0.755
+      },
+      "event_detection_rate": {
+        "min": 0.643,
+        "median": 0.8,
+        "max": 0.893
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "median_delay_minutes": {
+        "min": 30.0,
+        "median": 37.5,
+        "max": 60.0
+      },
+      "anomaly_rate": {
+        "min": 0.014,
+        "median": 0.016,
+        "max": 0.018
+      }
+    },
+    "+ severity & ramp": {
+      "test_pr_auc": {
+        "min": 0.637,
+        "median": 0.717,
+        "max": 0.753
+      },
+      "recall": {
+        "min": 0.511,
+        "median": 0.621,
+        "max": 0.671
+      },
+      "precision": {
+        "min": 0.469,
+        "median": 0.877,
+        "max": 0.984
+      },
+      "f1": {
+        "min": 0.552,
+        "median": 0.697,
+        "max": 0.733
+      },
+      "event_detection_rate": {
+        "min": 0.778,
+        "median": 0.857,
+        "max": 0.964
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.009,
+        "median": 0.091,
+        "max": 0.649
+      },
+      "median_delay_minutes": {
+        "min": 30.0,
+        "median": 37.5,
+        "max": 75.0
+      },
+      "anomaly_rate": {
+        "min": 0.014,
+        "median": 0.016,
+        "max": 0.018
+      }
+    },
+    "+ label noise": {
+      "test_pr_auc": {
+        "min": 0.492,
+        "median": 0.541,
+        "max": 0.612
+      },
+      "recall": {
+        "min": 0.504,
+        "median": 0.595,
+        "max": 0.61
+      },
+      "precision": {
+        "min": 0.446,
+        "median": 0.547,
+        "max": 0.789
+      },
+      "f1": {
+        "min": 0.511,
+        "median": 0.567,
+        "max": 0.631
+      },
+      "event_detection_rate": {
+        "min": 0.833,
+        "median": 0.882,
+        "max": 0.963
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.123,
+        "median": 0.315,
+        "max": 0.37
+      },
+      "median_delay_minutes": {
+        "min": 37.5,
+        "median": 48.75,
+        "max": 75.0
+      },
+      "anomaly_rate": {
+        "min": 0.013,
+        "median": 0.015,
+        "max": 0.017
+      }
+    },
+    "+ benign surges (full)": {
+      "test_pr_auc": {
+        "min": 0.452,
+        "median": 0.561,
+        "max": 0.656
+      },
+      "recall": {
+        "min": 0.495,
+        "median": 0.612,
+        "max": 0.702
+      },
+      "precision": {
+        "min": 0.319,
+        "median": 0.475,
+        "max": 0.735
+      },
+      "f1": {
+        "min": 0.417,
+        "median": 0.536,
+        "max": 0.652
+      },
+      "event_detection_rate": {
+        "min": 0.826,
+        "median": 0.961,
+        "max": 0.963
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.133,
+        "median": 0.455,
+        "max": 0.804
+      },
+      "median_delay_minutes": {
+        "min": 30.0,
+        "median": 30.0,
+        "max": 75.0
+      },
+      "anomaly_rate": {
+        "min": 0.013,
+        "median": 0.015,
+        "max": 0.017
+      }
+    }
+  },
+  "operating_points_full_profile": {
+    "0.5": {
+      "recall": {
+        "min": 0.495,
+        "median": 0.612,
+        "max": 0.702
+      },
+      "precision": {
+        "min": 0.319,
+        "median": 0.475,
+        "max": 0.735
+      },
+      "f2": {
+        "min": 0.511,
+        "median": 0.574,
+        "max": 0.659
+      },
+      "event_detection_rate": {
+        "min": 0.826,
+        "median": 0.961,
+        "max": 0.963
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.133,
+        "median": 0.455,
+        "max": 0.804
+      },
+      "median_delay_minutes": {
+        "min": 30.0,
+        "median": 30.0,
+        "max": 75.0
+      }
+    },
+    "0.7": {
+      "recall": {
+        "min": 0.639,
+        "median": 0.767,
+        "max": 0.864
+      },
+      "precision": {
+        "min": 0.055,
+        "median": 0.137,
+        "max": 0.304
+      },
+      "f2": {
+        "min": 0.215,
+        "median": 0.399,
+        "max": 0.524
+      },
+      "event_detection_rate": {
+        "min": 0.963,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.996,
+        "median": 2.849,
+        "max": 5.602
+      },
+      "median_delay_minutes": {
+        "min": 0.0,
+        "median": 18.75,
+        "max": 45.0
+      }
+    },
+    "0.8": {
+      "recall": {
+        "min": 0.754,
+        "median": 0.82,
+        "max": 0.921
+      },
+      "precision": {
+        "min": 0.026,
+        "median": 0.064,
+        "max": 0.091
+      },
+      "f2": {
+        "min": 0.115,
+        "median": 0.244,
+        "max": 0.31
+      },
+      "event_detection_rate": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "false_alerts_per_cell_day": {
+        "min": 3.925,
+        "median": 5.223,
+        "max": 5.863
+      },
+      "median_delay_minutes": {
+        "min": 0.0,
+        "median": 7.5,
+        "max": 30.0
+      }
+    },
+    "0.9": {
+      "recall": {
+        "min": 0.872,
+        "median": 0.922,
+        "max": 0.951
+      },
+      "precision": {
+        "min": 0.017,
+        "median": 0.024,
+        "max": 0.034
+      },
+      "f2": {
+        "min": 0.079,
+        "median": 0.11,
+        "max": 0.146
+      },
+      "event_detection_rate": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "false_alerts_per_cell_day": {
+        "min": 2.582,
+        "median": 4.472,
+        "max": 6.037
+      },
+      "median_delay_minutes": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      }
+    },
+    "0.96": {
+      "recall": {
+        "min": 0.955,
+        "median": 0.98,
+        "max": 0.997
+      },
+      "precision": {
+        "min": 0.015,
+        "median": 0.017,
+        "max": 0.02
+      },
+      "f2": {
+        "min": 0.071,
+        "median": 0.08,
+        "max": 0.092
+      },
+      "event_detection_rate": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "false_alerts_per_cell_day": {
+        "min": 1.143,
+        "median": 1.577,
+        "max": 2.906
+      },
+      "median_delay_minutes": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      }
+    }
+  },
+  "rows": {
+    "clean (legacy)": [
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 289,
+        "test_anomaly_rate": 0.0138,
+        "test_pr_auc": 0.9811,
+        "best_round": 189,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.3979,
+            "precision": 1.0,
+            "f1": 0.5693,
+            "f2": 0.4524,
+            "event_detection_rate": 0.8571,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0055,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.9995,
+            "recall": 0.6228,
+            "precision": 1.0,
+            "f1": 0.7676,
+            "f2": 0.6737,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0086,
+            "alerts_per_cell_day": 0.1508,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.999,
+            "recall": 0.7232,
+            "precision": 0.9952,
+            "f1": 0.8377,
+            "f2": 0.765,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.01,
+            "alerts_per_cell_day": 0.1417,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.9688,
+            "recall": 0.872,
+            "precision": 0.9844,
+            "f1": 0.9248,
+            "f2": 0.8924,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.9375,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.0122,
+            "alerts_per_cell_day": 0.1462,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.3112,
+            "recall": 0.955,
+            "precision": 0.9169,
+            "f1": 0.9356,
+            "f2": 0.9472,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.5918,
+            "false_alerts_per_cell_day": 0.0914,
+            "flagged_fraction": 0.0143,
+            "alerts_per_cell_day": 0.2239,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 42
+      },
+      {
+        "val_events": 24,
+        "test_events": 27,
+        "test_positive_rows": 313,
+        "test_anomaly_rate": 0.0149,
+        "test_pr_auc": 0.9672,
+        "best_round": 212,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.5623,
+            "precision": 1.0,
+            "f1": 0.7198,
+            "f2": 0.6162,
+            "event_detection_rate": 0.7037,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0084,
+            "alerts_per_cell_day": 0.0914,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.9998,
+            "recall": 0.7444,
+            "precision": 1.0,
+            "f1": 0.8535,
+            "f2": 0.7845,
+            "event_detection_rate": 0.9259,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0111,
+            "alerts_per_cell_day": 0.1143,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.9899,
+            "recall": 0.8658,
+            "precision": 1.0,
+            "f1": 0.9281,
+            "f2": 0.8897,
+            "event_detection_rate": 0.963,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0129,
+            "alerts_per_cell_day": 0.1188,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.6693,
+            "recall": 0.9042,
+            "precision": 0.9861,
+            "f1": 0.9433,
+            "f2": 0.9194,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.871,
+            "false_alerts_per_cell_day": 0.0183,
+            "flagged_fraction": 0.0137,
+            "alerts_per_cell_day": 0.1417,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0316,
+            "recall": 0.9457,
+            "precision": 0.811,
+            "f1": 0.8732,
+            "f2": 0.9153,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.3011,
+            "false_alerts_per_cell_day": 0.2971,
+            "flagged_fraction": 0.0174,
+            "alerts_per_cell_day": 0.425,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 1
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 300,
+        "test_anomaly_rate": 0.0143,
+        "test_pr_auc": 0.9869,
+        "best_round": 297,
+        "by_target": {
+          "0.5": {
+            "threshold": 1.0,
+            "recall": 0.3167,
+            "precision": 1.0,
+            "f1": 0.481,
+            "f2": 0.3668,
+            "event_detection_rate": 0.5,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0045,
+            "alerts_per_cell_day": 0.0685,
+            "median_delay_minutes": 60.0
+          },
+          "0.7": {
+            "threshold": 0.9999,
+            "recall": 0.61,
+            "precision": 1.0,
+            "f1": 0.7578,
+            "f2": 0.6616,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0087,
+            "alerts_per_cell_day": 0.1371,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9989,
+            "recall": 0.8067,
+            "precision": 1.0,
+            "f1": 0.893,
+            "f2": 0.8391,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0115,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.7131,
+            "recall": 0.9267,
+            "precision": 0.9964,
+            "f1": 0.9603,
+            "f2": 0.9398,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0133,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.1318,
+            "recall": 0.96,
+            "precision": 0.9632,
+            "f1": 0.9616,
+            "f2": 0.9606,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.7568,
+            "false_alerts_per_cell_day": 0.0411,
+            "flagged_fraction": 0.0142,
+            "alerts_per_cell_day": 0.1691,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 2
+      },
+      {
+        "val_events": 22,
+        "test_events": 27,
+        "test_positive_rows": 361,
+        "test_anomaly_rate": 0.0172,
+        "test_pr_auc": 0.9911,
+        "best_round": 211,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.5042,
+            "precision": 1.0,
+            "f1": 0.6703,
+            "f2": 0.5597,
+            "event_detection_rate": 0.8148,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0087,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 52.5
+          },
+          "0.7": {
+            "threshold": 0.9997,
+            "recall": 0.7008,
+            "precision": 1.0,
+            "f1": 0.8241,
+            "f2": 0.7454,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.012,
+            "alerts_per_cell_day": 0.1371,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9992,
+            "recall": 0.7867,
+            "precision": 1.0,
+            "f1": 0.8806,
+            "f2": 0.8218,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0135,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.9654,
+            "recall": 0.8837,
+            "precision": 0.9969,
+            "f1": 0.9369,
+            "f2": 0.9042,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.9655,
+            "false_alerts_per_cell_day": 0.0046,
+            "flagged_fraction": 0.0152,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.3747,
+            "recall": 0.9557,
+            "precision": 0.9637,
+            "f1": 0.9597,
+            "f2": 0.9573,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.7105,
+            "false_alerts_per_cell_day": 0.0503,
+            "flagged_fraction": 0.017,
+            "alerts_per_cell_day": 0.1737,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 3
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 366,
+        "test_anomaly_rate": 0.0174,
+        "test_pr_auc": 0.9849,
+        "best_round": 154,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9996,
+            "recall": 0.5628,
+            "precision": 1.0,
+            "f1": 0.7203,
+            "f2": 0.6168,
+            "event_detection_rate": 0.8929,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0098,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.9991,
+            "recall": 0.7213,
+            "precision": 1.0,
+            "f1": 0.8381,
+            "f2": 0.7639,
+            "event_detection_rate": 0.9286,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0126,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9966,
+            "recall": 0.8279,
+            "precision": 1.0,
+            "f1": 0.9058,
+            "f2": 0.8574,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0144,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.9846,
+            "recall": 0.8579,
+            "precision": 1.0,
+            "f1": 0.9235,
+            "f2": 0.883,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0149,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.6557,
+            "recall": 0.9536,
+            "precision": 0.9859,
+            "f1": 0.9694,
+            "f2": 0.9598,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.875,
+            "false_alerts_per_cell_day": 0.0183,
+            "flagged_fraction": 0.0169,
+            "alerts_per_cell_day": 0.1462,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 4
+      },
+      {
+        "val_events": 22,
+        "test_events": 28,
+        "test_positive_rows": 383,
+        "test_anomaly_rate": 0.0182,
+        "test_pr_auc": 0.9833,
+        "best_round": 203,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.4125,
+            "precision": 1.0,
+            "f1": 0.5841,
+            "f2": 0.4675,
+            "event_detection_rate": 0.8214,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0075,
+            "alerts_per_cell_day": 0.1188,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.9998,
+            "recall": 0.6371,
+            "precision": 1.0,
+            "f1": 0.7783,
+            "f2": 0.6869,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0116,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9994,
+            "recall": 0.7206,
+            "precision": 1.0,
+            "f1": 0.8376,
+            "f2": 0.7633,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0131,
+            "alerts_per_cell_day": 0.1417,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.9965,
+            "recall": 0.8303,
+            "precision": 1.0,
+            "f1": 0.9073,
+            "f2": 0.8595,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0151,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.8273,
+            "recall": 0.9217,
+            "precision": 0.9944,
+            "f1": 0.9566,
+            "f2": 0.9353,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.9667,
+            "false_alerts_per_cell_day": 0.0046,
+            "flagged_fraction": 0.0169,
+            "alerts_per_cell_day": 0.1371,
+            "median_delay_minutes": 15.0
+          }
+        },
+        "seed": 5
+      }
+    ],
+    "+ nonstationarity": [
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 289,
+        "test_anomaly_rate": 0.0138,
+        "test_pr_auc": 0.9756,
+        "best_round": 170,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9997,
+            "recall": 0.4325,
+            "precision": 1.0,
+            "f1": 0.6039,
+            "f2": 0.4879,
+            "event_detection_rate": 0.8929,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.006,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.998,
+            "recall": 0.6678,
+            "precision": 1.0,
+            "f1": 0.8008,
+            "f2": 0.7153,
+            "event_detection_rate": 0.9286,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0092,
+            "alerts_per_cell_day": 0.1371,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.9823,
+            "recall": 0.7785,
+            "precision": 0.9868,
+            "f1": 0.8704,
+            "f2": 0.8129,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.9394,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.0109,
+            "alerts_per_cell_day": 0.1508,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.7866,
+            "recall": 0.8824,
+            "precision": 0.9375,
+            "f1": 0.9091,
+            "f2": 0.8929,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.7317,
+            "false_alerts_per_cell_day": 0.0503,
+            "flagged_fraction": 0.0129,
+            "alerts_per_cell_day": 0.1874,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.1775,
+            "recall": 0.9723,
+            "precision": 0.7849,
+            "f1": 0.8686,
+            "f2": 0.928,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.3372,
+            "false_alerts_per_cell_day": 0.2605,
+            "flagged_fraction": 0.017,
+            "alerts_per_cell_day": 0.393,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 42
+      },
+      {
+        "val_events": 24,
+        "test_events": 27,
+        "test_positive_rows": 313,
+        "test_anomaly_rate": 0.0149,
+        "test_pr_auc": 0.974,
+        "best_round": 276,
+        "by_target": {
+          "0.5": {
+            "threshold": 1.0,
+            "recall": 0.607,
+            "precision": 1.0,
+            "f1": 0.7555,
+            "f2": 0.6588,
+            "event_detection_rate": 0.8148,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.009,
+            "alerts_per_cell_day": 0.1097,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.9994,
+            "recall": 0.8019,
+            "precision": 1.0,
+            "f1": 0.8901,
+            "f2": 0.835,
+            "event_detection_rate": 0.963,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0119,
+            "alerts_per_cell_day": 0.1188,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.984,
+            "recall": 0.8626,
+            "precision": 1.0,
+            "f1": 0.9262,
+            "f2": 0.887,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0129,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.3813,
+            "recall": 0.9329,
+            "precision": 0.9542,
+            "f1": 0.9435,
+            "f2": 0.9371,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.675,
+            "false_alerts_per_cell_day": 0.0594,
+            "flagged_fraction": 0.0146,
+            "alerts_per_cell_day": 0.1828,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0039,
+            "recall": 0.9808,
+            "precision": 0.4984,
+            "f1": 0.6609,
+            "f2": 0.8217,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.1007,
+            "false_alerts_per_cell_day": 1.1014,
+            "flagged_fraction": 0.0293,
+            "alerts_per_cell_day": 1.2248,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 1
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 300,
+        "test_anomaly_rate": 0.0143,
+        "test_pr_auc": 0.9713,
+        "best_round": 154,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9995,
+            "recall": 0.3767,
+            "precision": 1.0,
+            "f1": 0.5472,
+            "f2": 0.4303,
+            "event_detection_rate": 0.6429,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0054,
+            "alerts_per_cell_day": 0.0914,
+            "median_delay_minutes": 60.0
+          },
+          "0.7": {
+            "threshold": 0.9987,
+            "recall": 0.54,
+            "precision": 1.0,
+            "f1": 0.7013,
+            "f2": 0.5947,
+            "event_detection_rate": 0.8214,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0077,
+            "alerts_per_cell_day": 0.1188,
+            "median_delay_minutes": 45.0
+          },
+          "0.8": {
+            "threshold": 0.9952,
+            "recall": 0.7067,
+            "precision": 1.0,
+            "f1": 0.8281,
+            "f2": 0.7507,
+            "event_detection_rate": 0.9286,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0101,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.9439,
+            "recall": 0.8633,
+            "precision": 0.9885,
+            "f1": 0.9217,
+            "f2": 0.8858,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 0.931,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.0125,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.6004,
+            "recall": 0.9267,
+            "precision": 0.9329,
+            "f1": 0.9298,
+            "f2": 0.9279,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.6364,
+            "false_alerts_per_cell_day": 0.0731,
+            "flagged_fraction": 0.0142,
+            "alerts_per_cell_day": 0.2011,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 2
+      },
+      {
+        "val_events": 22,
+        "test_events": 27,
+        "test_positive_rows": 361,
+        "test_anomaly_rate": 0.0172,
+        "test_pr_auc": 0.9909,
+        "best_round": 297,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.5457,
+            "precision": 1.0,
+            "f1": 0.7061,
+            "f2": 0.6002,
+            "event_detection_rate": 0.8519,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0094,
+            "alerts_per_cell_day": 0.1234,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.9994,
+            "recall": 0.759,
+            "precision": 1.0,
+            "f1": 0.863,
+            "f2": 0.7974,
+            "event_detection_rate": 0.963,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.013,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9966,
+            "recall": 0.8449,
+            "precision": 0.9935,
+            "f1": 0.9132,
+            "f2": 0.8709,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.931,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.0146,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.945,
+            "recall": 0.892,
+            "precision": 0.9877,
+            "f1": 0.9374,
+            "f2": 0.9096,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.871,
+            "false_alerts_per_cell_day": 0.0183,
+            "flagged_fraction": 0.0155,
+            "alerts_per_cell_day": 0.1417,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.3028,
+            "recall": 0.9695,
+            "precision": 0.9186,
+            "f1": 0.9434,
+            "f2": 0.9589,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.5192,
+            "false_alerts_per_cell_day": 0.1142,
+            "flagged_fraction": 0.0181,
+            "alerts_per_cell_day": 0.2376,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 3
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 366,
+        "test_anomaly_rate": 0.0174,
+        "test_pr_auc": 0.9758,
+        "best_round": 115,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9984,
+            "recall": 0.4891,
+            "precision": 1.0,
+            "f1": 0.6569,
+            "f2": 0.5447,
+            "event_detection_rate": 0.6786,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0085,
+            "alerts_per_cell_day": 0.0914,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.9974,
+            "recall": 0.6885,
+            "precision": 1.0,
+            "f1": 0.8155,
+            "f2": 0.7343,
+            "event_detection_rate": 0.8214,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.012,
+            "alerts_per_cell_day": 0.1188,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9932,
+            "recall": 0.7814,
+            "precision": 0.9965,
+            "f1": 0.876,
+            "f2": 0.8167,
+            "event_detection_rate": 0.8929,
+            "alert_precision": 0.9643,
+            "false_alerts_per_cell_day": 0.0046,
+            "flagged_fraction": 0.0137,
+            "alerts_per_cell_day": 0.128,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.979,
+            "recall": 0.8552,
+            "precision": 0.9905,
+            "f1": 0.9179,
+            "f2": 0.8792,
+            "event_detection_rate": 0.9286,
+            "alert_precision": 0.8966,
+            "false_alerts_per_cell_day": 0.0137,
+            "flagged_fraction": 0.015,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.6036,
+            "recall": 0.9399,
+            "precision": 0.9348,
+            "f1": 0.9373,
+            "f2": 0.9389,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.549,
+            "false_alerts_per_cell_day": 0.1051,
+            "flagged_fraction": 0.0175,
+            "alerts_per_cell_day": 0.2331,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 4
+      },
+      {
+        "val_events": 22,
+        "test_events": 28,
+        "test_positive_rows": 383,
+        "test_anomaly_rate": 0.0182,
+        "test_pr_auc": 0.9824,
+        "best_round": 202,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9999,
+            "recall": 0.3864,
+            "precision": 1.0,
+            "f1": 0.5574,
+            "f2": 0.4405,
+            "event_detection_rate": 0.7857,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.007,
+            "alerts_per_cell_day": 0.1371,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.9995,
+            "recall": 0.6423,
+            "precision": 1.0,
+            "f1": 0.7822,
+            "f2": 0.6918,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0117,
+            "alerts_per_cell_day": 0.1508,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.9975,
+            "recall": 0.7807,
+            "precision": 0.9967,
+            "f1": 0.8755,
+            "f2": 0.816,
+            "event_detection_rate": 1.0,
+            "alert_precision": 1.0,
+            "false_alerts_per_cell_day": 0.0,
+            "flagged_fraction": 0.0143,
+            "alerts_per_cell_day": 0.1417,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.9657,
+            "recall": 0.8668,
+            "precision": 0.991,
+            "f1": 0.9248,
+            "f2": 0.8891,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.9375,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.0159,
+            "alerts_per_cell_day": 0.1462,
+            "median_delay_minutes": 15.0
+          },
+          "0.96": {
+            "threshold": 0.5704,
+            "recall": 0.9426,
+            "precision": 0.9475,
+            "f1": 0.945,
+            "f2": 0.9435,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.6364,
+            "false_alerts_per_cell_day": 0.0731,
+            "flagged_fraction": 0.0181,
+            "alerts_per_cell_day": 0.2011,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 5
+      }
+    ],
+    "+ severity & ramp": [
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 289,
+        "test_anomaly_rate": 0.0138,
+        "test_pr_auc": 0.6374,
+        "best_round": 85,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.6479,
+            "recall": 0.6713,
+            "precision": 0.4686,
+            "f1": 0.5519,
+            "f2": 0.6178,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 0.1598,
+            "false_alerts_per_cell_day": 0.6489,
+            "flagged_fraction": 0.0197,
+            "alerts_per_cell_day": 0.7723,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.224,
+            "recall": 0.7993,
+            "precision": 0.0863,
+            "f1": 0.1558,
+            "f2": 0.3013,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0261,
+            "false_alerts_per_cell_day": 4.9398,
+            "flagged_fraction": 0.1274,
+            "alerts_per_cell_day": 5.0724,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.1562,
+            "recall": 0.8374,
+            "precision": 0.0476,
+            "f1": 0.09,
+            "f2": 0.1938,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0194,
+            "false_alerts_per_cell_day": 6.6855,
+            "flagged_fraction": 0.2421,
+            "alerts_per_cell_day": 6.818,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.0925,
+            "recall": 0.917,
+            "precision": 0.0239,
+            "f1": 0.0467,
+            "f2": 0.1084,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0243,
+            "false_alerts_per_cell_day": 5.31,
+            "flagged_fraction": 0.5267,
+            "alerts_per_cell_day": 5.4425,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0636,
+            "recall": 0.9689,
+            "precision": 0.017,
+            "f1": 0.0334,
+            "f2": 0.0794,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0592,
+            "false_alerts_per_cell_day": 2.1066,
+            "flagged_fraction": 0.7839,
+            "alerts_per_cell_day": 2.2391,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 42
+      },
+      {
+        "val_events": 24,
+        "test_events": 27,
+        "test_positive_rows": 313,
+        "test_anomaly_rate": 0.0149,
+        "test_pr_auc": 0.7305,
+        "best_round": 239,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8947,
+            "recall": 0.6198,
+            "precision": 0.8622,
+            "f1": 0.7212,
+            "f2": 0.6567,
+            "event_detection_rate": 0.8148,
+            "alert_precision": 0.5111,
+            "false_alerts_per_cell_day": 0.1005,
+            "flagged_fraction": 0.0107,
+            "alerts_per_cell_day": 0.2057,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.4208,
+            "recall": 0.7508,
+            "precision": 0.3476,
+            "f1": 0.4752,
+            "f2": 0.6094,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0936,
+            "false_alerts_per_cell_day": 1.2385,
+            "flagged_fraction": 0.0322,
+            "alerts_per_cell_day": 1.3665,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.1635,
+            "recall": 0.8243,
+            "precision": 0.1345,
+            "f1": 0.2313,
+            "f2": 0.4069,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0317,
+            "false_alerts_per_cell_day": 3.9075,
+            "flagged_fraction": 0.0913,
+            "alerts_per_cell_day": 4.0354,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.0457,
+            "recall": 0.9297,
+            "precision": 0.0438,
+            "f1": 0.0836,
+            "f2": 0.1842,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0183,
+            "false_alerts_per_cell_day": 7.1065,
+            "flagged_fraction": 0.3163,
+            "alerts_per_cell_day": 7.2391,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0144,
+            "recall": 0.9808,
+            "precision": 0.0211,
+            "f1": 0.0413,
+            "f2": 0.0972,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0366,
+            "false_alerts_per_cell_day": 3.3636,
+            "flagged_fraction": 0.6922,
+            "alerts_per_cell_day": 3.4916,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 1
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 300,
+        "test_anomaly_rate": 0.0143,
+        "test_pr_auc": 0.753,
+        "best_round": 286,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8557,
+            "recall": 0.64,
+            "precision": 0.8312,
+            "f1": 0.7232,
+            "f2": 0.6709,
+            "event_detection_rate": 0.9643,
+            "alert_precision": 0.551,
+            "false_alerts_per_cell_day": 0.1005,
+            "flagged_fraction": 0.011,
+            "alerts_per_cell_day": 0.2239,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.4052,
+            "recall": 0.8067,
+            "precision": 0.3596,
+            "f1": 0.4974,
+            "f2": 0.646,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0982,
+            "false_alerts_per_cell_day": 1.1745,
+            "flagged_fraction": 0.032,
+            "alerts_per_cell_day": 1.3024,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.1226,
+            "recall": 0.8867,
+            "precision": 0.1057,
+            "f1": 0.1889,
+            "f2": 0.3578,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0296,
+            "false_alerts_per_cell_day": 4.1997,
+            "flagged_fraction": 0.1198,
+            "alerts_per_cell_day": 4.3277,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.0375,
+            "recall": 0.9367,
+            "precision": 0.0388,
+            "f1": 0.0746,
+            "f2": 0.1666,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0193,
+            "false_alerts_per_cell_day": 6.4938,
+            "flagged_fraction": 0.3444,
+            "alerts_per_cell_day": 6.6218,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0141,
+            "recall": 0.9667,
+            "precision": 0.0222,
+            "f1": 0.0435,
+            "f2": 0.1018,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0278,
+            "false_alerts_per_cell_day": 4.4785,
+            "flagged_fraction": 0.6207,
+            "alerts_per_cell_day": 4.6065,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 2
+      },
+      {
+        "val_events": 22,
+        "test_events": 27,
+        "test_positive_rows": 361,
+        "test_anomaly_rate": 0.0172,
+        "test_pr_auc": 0.7076,
+        "best_round": 149,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.9123,
+            "recall": 0.5208,
+            "precision": 0.891,
+            "f1": 0.6573,
+            "f2": 0.568,
+            "event_detection_rate": 0.7778,
+            "alert_precision": 0.6154,
+            "false_alerts_per_cell_day": 0.0685,
+            "flagged_fraction": 0.01,
+            "alerts_per_cell_day": 0.1782,
+            "median_delay_minutes": 75.0
+          },
+          "0.7": {
+            "threshold": 0.6416,
+            "recall": 0.7064,
+            "precision": 0.5795,
+            "f1": 0.6367,
+            "f2": 0.6768,
+            "event_detection_rate": 0.8889,
+            "alert_precision": 0.1688,
+            "false_alerts_per_cell_day": 0.6078,
+            "flagged_fraction": 0.0209,
+            "alerts_per_cell_day": 0.7312,
+            "median_delay_minutes": 37.5
+          },
+          "0.8": {
+            "threshold": 0.3112,
+            "recall": 0.8006,
+            "precision": 0.2072,
+            "f1": 0.3292,
+            "f2": 0.509,
+            "event_detection_rate": 0.963,
+            "alert_precision": 0.0414,
+            "false_alerts_per_cell_day": 2.9613,
+            "flagged_fraction": 0.0664,
+            "alerts_per_cell_day": 3.0893,
+            "median_delay_minutes": 22.5
+          },
+          "0.9": {
+            "threshold": 0.0994,
+            "recall": 0.9335,
+            "precision": 0.0572,
+            "f1": 0.1077,
+            "f2": 0.2296,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0182,
+            "false_alerts_per_cell_day": 6.9143,
+            "flagged_fraction": 0.2806,
+            "alerts_per_cell_day": 7.0422,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0323,
+            "recall": 0.9834,
+            "precision": 0.0234,
+            "f1": 0.0456,
+            "f2": 0.1067,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0379,
+            "false_alerts_per_cell_day": 3.135,
+            "flagged_fraction": 0.7232,
+            "alerts_per_cell_day": 3.2583,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 3
+      },
+      {
+        "val_events": 23,
+        "test_events": 28,
+        "test_positive_rows": 366,
+        "test_anomaly_rate": 0.0174,
+        "test_pr_auc": 0.7214,
+        "best_round": 219,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8909,
+            "recall": 0.5109,
+            "precision": 0.9842,
+            "f1": 0.6727,
+            "f2": 0.5653,
+            "event_detection_rate": 0.8214,
+            "alert_precision": 0.931,
+            "false_alerts_per_cell_day": 0.0091,
+            "flagged_fraction": 0.009,
+            "alerts_per_cell_day": 0.1325,
+            "median_delay_minutes": 60.0
+          },
+          "0.7": {
+            "threshold": 0.3319,
+            "recall": 0.7541,
+            "precision": 0.4012,
+            "f1": 0.5237,
+            "f2": 0.6413,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.101,
+            "false_alerts_per_cell_day": 1.2202,
+            "flagged_fraction": 0.0328,
+            "alerts_per_cell_day": 1.3573,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.1172,
+            "recall": 0.8579,
+            "precision": 0.1163,
+            "f1": 0.2048,
+            "f2": 0.377,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0273,
+            "false_alerts_per_cell_day": 4.5516,
+            "flagged_fraction": 0.1285,
+            "alerts_per_cell_day": 4.6796,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.0423,
+            "recall": 0.9016,
+            "precision": 0.0414,
+            "f1": 0.0791,
+            "f2": 0.1748,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0216,
+            "false_alerts_per_cell_day": 6.2105,
+            "flagged_fraction": 0.3798,
+            "alerts_per_cell_day": 6.3476,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0137,
+            "recall": 0.9809,
+            "precision": 0.0223,
+            "f1": 0.0436,
+            "f2": 0.1023,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0509,
+            "false_alerts_per_cell_day": 2.3855,
+            "flagged_fraction": 0.7658,
+            "alerts_per_cell_day": 2.5134,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 4
+      },
+      {
+        "val_events": 22,
+        "test_events": 28,
+        "test_positive_rows": 383,
+        "test_anomaly_rate": 0.0182,
+        "test_pr_auc": 0.713,
+        "best_round": 292,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8931,
+            "recall": 0.6214,
+            "precision": 0.8947,
+            "f1": 0.7334,
+            "f2": 0.6618,
+            "event_detection_rate": 0.8929,
+            "alert_precision": 0.5909,
+            "false_alerts_per_cell_day": 0.0823,
+            "flagged_fraction": 0.0127,
+            "alerts_per_cell_day": 0.2011,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.389,
+            "recall": 0.7206,
+            "precision": 0.4279,
+            "f1": 0.537,
+            "f2": 0.6339,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.1129,
+            "false_alerts_per_cell_day": 1.0054,
+            "flagged_fraction": 0.0307,
+            "alerts_per_cell_day": 1.1333,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.1416,
+            "recall": 0.7833,
+            "precision": 0.1607,
+            "f1": 0.2667,
+            "f2": 0.4413,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0396,
+            "false_alerts_per_cell_day": 3.3269,
+            "flagged_fraction": 0.0889,
+            "alerts_per_cell_day": 3.464,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.0448,
+            "recall": 0.8668,
+            "precision": 0.0604,
+            "f1": 0.1129,
+            "f2": 0.2361,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.024,
+            "false_alerts_per_cell_day": 5.9363,
+            "flagged_fraction": 0.2618,
+            "alerts_per_cell_day": 6.0825,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0144,
+            "recall": 0.9504,
+            "precision": 0.0309,
+            "f1": 0.0598,
+            "f2": 0.1365,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0254,
+            "false_alerts_per_cell_day": 4.9035,
+            "flagged_fraction": 0.5616,
+            "alerts_per_cell_day": 5.0315,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 5
+      }
+    ],
+    "+ label noise": [
+      {
+        "val_events": 21,
+        "test_events": 27,
+        "test_positive_rows": 278,
+        "test_anomaly_rate": 0.0132,
+        "test_pr_auc": 0.4924,
+        "best_round": 42,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.6661,
+            "recall": 0.5971,
+            "precision": 0.4462,
+            "f1": 0.5108,
+            "f2": 0.5593,
+            "event_detection_rate": 0.963,
+            "alert_precision": 0.2569,
+            "false_alerts_per_cell_day": 0.3701,
+            "flagged_fraction": 0.0177,
+            "alerts_per_cell_day": 0.4981,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.2398,
+            "recall": 0.8453,
+            "precision": 0.0356,
+            "f1": 0.0683,
+            "f2": 0.1523,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0234,
+            "false_alerts_per_cell_day": 5.5248,
+            "flagged_fraction": 0.3143,
+            "alerts_per_cell_day": 5.6573,
+            "median_delay_minutes": 0.0
+          },
+          "0.8": {
+            "threshold": 0.1844,
+            "recall": 0.9245,
+            "precision": 0.0213,
+            "f1": 0.0416,
+            "f2": 0.0975,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0292,
+            "false_alerts_per_cell_day": 4.2589,
+            "flagged_fraction": 0.5747,
+            "alerts_per_cell_day": 4.3869,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.1587,
+            "recall": 0.982,
+            "precision": 0.0158,
+            "f1": 0.0311,
+            "f2": 0.0743,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0603,
+            "false_alerts_per_cell_day": 1.9238,
+            "flagged_fraction": 0.8218,
+            "alerts_per_cell_day": 2.0472,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.1455,
+            "recall": 0.9928,
+            "precision": 0.0138,
+            "f1": 0.0271,
+            "f2": 0.0652,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.2821,
+            "false_alerts_per_cell_day": 0.2559,
+            "flagged_fraction": 0.9548,
+            "alerts_per_cell_day": 0.3564,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 42
+      },
+      {
+        "val_events": 23,
+        "test_events": 24,
+        "test_positive_rows": 307,
+        "test_anomaly_rate": 0.0146,
+        "test_pr_auc": 0.5636,
+        "best_round": 79,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.751,
+            "recall": 0.5928,
+            "precision": 0.4986,
+            "f1": 0.5417,
+            "f2": 0.5712,
+            "event_detection_rate": 0.8333,
+            "alert_precision": 0.2059,
+            "false_alerts_per_cell_day": 0.3702,
+            "flagged_fraction": 0.0174,
+            "alerts_per_cell_day": 0.4662,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.3796,
+            "recall": 0.7068,
+            "precision": 0.1919,
+            "f1": 0.3018,
+            "f2": 0.4599,
+            "event_detection_rate": 0.9583,
+            "alert_precision": 0.0539,
+            "false_alerts_per_cell_day": 2.084,
+            "flagged_fraction": 0.0538,
+            "alerts_per_cell_day": 2.2028,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.1981,
+            "recall": 0.8208,
+            "precision": 0.055,
+            "f1": 0.1031,
+            "f2": 0.2168,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0202,
+            "false_alerts_per_cell_day": 6.4439,
+            "flagged_fraction": 0.2182,
+            "alerts_per_cell_day": 6.5764,
+            "median_delay_minutes": 7.5
+          },
+          "0.9": {
+            "threshold": 0.1431,
+            "recall": 0.899,
+            "precision": 0.0306,
+            "f1": 0.0591,
+            "f2": 0.1345,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0176,
+            "false_alerts_per_cell_day": 6.3799,
+            "flagged_fraction": 0.43,
+            "alerts_per_cell_day": 6.4941,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.1072,
+            "recall": 0.9609,
+            "precision": 0.0212,
+            "f1": 0.0415,
+            "f2": 0.0975,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0277,
+            "false_alerts_per_cell_day": 4.008,
+            "flagged_fraction": 0.6617,
+            "alerts_per_cell_day": 4.1223,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 1
+      },
+      {
+        "val_events": 21,
+        "test_events": 24,
+        "test_positive_rows": 269,
+        "test_anomaly_rate": 0.0128,
+        "test_pr_auc": 0.547,
+        "best_round": 160,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.758,
+            "recall": 0.6097,
+            "precision": 0.5754,
+            "f1": 0.5921,
+            "f2": 0.6025,
+            "event_detection_rate": 0.9167,
+            "alert_precision": 0.2644,
+            "false_alerts_per_cell_day": 0.2925,
+            "flagged_fraction": 0.0136,
+            "alerts_per_cell_day": 0.3976,
+            "median_delay_minutes": 37.5
+          },
+          "0.7": {
+            "threshold": 0.3616,
+            "recall": 0.8141,
+            "precision": 0.1649,
+            "f1": 0.2743,
+            "f2": 0.4555,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0458,
+            "false_alerts_per_cell_day": 2.285,
+            "flagged_fraction": 0.0632,
+            "alerts_per_cell_day": 2.3946,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.1819,
+            "recall": 0.8625,
+            "precision": 0.0613,
+            "f1": 0.1145,
+            "f2": 0.2388,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0232,
+            "false_alerts_per_cell_day": 5.0086,
+            "flagged_fraction": 0.18,
+            "alerts_per_cell_day": 5.1274,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.0558,
+            "recall": 0.9442,
+            "precision": 0.0203,
+            "f1": 0.0398,
+            "f2": 0.0936,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.023,
+            "false_alerts_per_cell_day": 4.6567,
+            "flagged_fraction": 0.5946,
+            "alerts_per_cell_day": 4.7664,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0299,
+            "recall": 0.9814,
+            "precision": 0.015,
+            "f1": 0.0295,
+            "f2": 0.0706,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0638,
+            "false_alerts_per_cell_day": 1.6772,
+            "flagged_fraction": 0.8387,
+            "alerts_per_cell_day": 1.7914,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 2
+      },
+      {
+        "val_events": 22,
+        "test_events": 26,
+        "test_positive_rows": 363,
+        "test_anomaly_rate": 0.0173,
+        "test_pr_auc": 0.6124,
+        "best_round": 132,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8447,
+            "recall": 0.5041,
+            "precision": 0.7888,
+            "f1": 0.6151,
+            "f2": 0.5433,
+            "event_detection_rate": 0.8846,
+            "alert_precision": 0.4706,
+            "false_alerts_per_cell_day": 0.1234,
+            "flagged_fraction": 0.011,
+            "alerts_per_cell_day": 0.2331,
+            "median_delay_minutes": 75.0
+          },
+          "0.7": {
+            "threshold": 0.4705,
+            "recall": 0.6887,
+            "precision": 0.3487,
+            "f1": 0.463,
+            "f2": 0.5763,
+            "event_detection_rate": 0.9615,
+            "alert_precision": 0.1014,
+            "false_alerts_per_cell_day": 1.1745,
+            "flagged_fraction": 0.0341,
+            "alerts_per_cell_day": 1.307,
+            "median_delay_minutes": 45.0
+          },
+          "0.8": {
+            "threshold": 0.2644,
+            "recall": 0.7851,
+            "precision": 0.1237,
+            "f1": 0.2137,
+            "f2": 0.3794,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.033,
+            "false_alerts_per_cell_day": 3.889,
+            "flagged_fraction": 0.1097,
+            "alerts_per_cell_day": 4.0215,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.1048,
+            "recall": 0.9256,
+            "precision": 0.0337,
+            "f1": 0.0651,
+            "f2": 0.1472,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0239,
+            "false_alerts_per_cell_day": 5.589,
+            "flagged_fraction": 0.4742,
+            "alerts_per_cell_day": 5.7261,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0641,
+            "recall": 0.9669,
+            "precision": 0.0226,
+            "f1": 0.0442,
+            "f2": 0.1033,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0392,
+            "false_alerts_per_cell_day": 3.0207,
+            "flagged_fraction": 0.7394,
+            "alerts_per_cell_day": 3.1441,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 3
+      },
+      {
+        "val_events": 21,
+        "test_events": 25,
+        "test_positive_rows": 333,
+        "test_anomaly_rate": 0.0159,
+        "test_pr_auc": 0.5348,
+        "best_round": 72,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.6876,
+            "recall": 0.5435,
+            "precision": 0.5186,
+            "f1": 0.5308,
+            "f2": 0.5384,
+            "event_detection_rate": 0.88,
+            "alert_precision": 0.2525,
+            "false_alerts_per_cell_day": 0.3382,
+            "flagged_fraction": 0.0166,
+            "alerts_per_cell_day": 0.4524,
+            "median_delay_minutes": 52.5
+          },
+          "0.7": {
+            "threshold": 0.2893,
+            "recall": 0.7778,
+            "precision": 0.0928,
+            "f1": 0.1659,
+            "f2": 0.3142,
+            "event_detection_rate": 0.96,
+            "alert_precision": 0.0255,
+            "false_alerts_per_cell_day": 4.186,
+            "flagged_fraction": 0.1328,
+            "alerts_per_cell_day": 4.2957,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.2062,
+            "recall": 0.8288,
+            "precision": 0.0467,
+            "f1": 0.0884,
+            "f2": 0.1905,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0224,
+            "false_alerts_per_cell_day": 5.9729,
+            "flagged_fraction": 0.2814,
+            "alerts_per_cell_day": 6.11,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.1459,
+            "recall": 0.9159,
+            "precision": 0.0278,
+            "f1": 0.0539,
+            "f2": 0.1238,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0255,
+            "false_alerts_per_cell_day": 4.8989,
+            "flagged_fraction": 0.5228,
+            "alerts_per_cell_day": 5.0269,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0977,
+            "recall": 0.961,
+            "precision": 0.0188,
+            "f1": 0.0368,
+            "f2": 0.0871,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0552,
+            "false_alerts_per_cell_day": 2.0336,
+            "flagged_fraction": 0.8112,
+            "alerts_per_cell_day": 2.1524,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 4
+      },
+      {
+        "val_events": 19,
+        "test_events": 25,
+        "test_positive_rows": 350,
+        "test_anomaly_rate": 0.0167,
+        "test_pr_auc": 0.508,
+        "best_round": 151,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8463,
+            "recall": 0.6029,
+            "precision": 0.6614,
+            "f1": 0.6308,
+            "f2": 0.6137,
+            "event_detection_rate": 0.88,
+            "alert_precision": 0.3235,
+            "false_alerts_per_cell_day": 0.2102,
+            "flagged_fraction": 0.0152,
+            "alerts_per_cell_day": 0.3108,
+            "median_delay_minutes": 60.0
+          },
+          "0.7": {
+            "threshold": 0.4537,
+            "recall": 0.7057,
+            "precision": 0.251,
+            "f1": 0.3703,
+            "f2": 0.518,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0748,
+            "false_alerts_per_cell_day": 1.5263,
+            "flagged_fraction": 0.0468,
+            "alerts_per_cell_day": 1.6497,
+            "median_delay_minutes": 45.0
+          },
+          "0.8": {
+            "threshold": 0.2462,
+            "recall": 0.7743,
+            "precision": 0.1078,
+            "f1": 0.1892,
+            "f2": 0.3461,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0317,
+            "false_alerts_per_cell_day": 3.7656,
+            "flagged_fraction": 0.1197,
+            "alerts_per_cell_day": 3.889,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.1017,
+            "recall": 0.8829,
+            "precision": 0.0397,
+            "f1": 0.0761,
+            "f2": 0.1684,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0234,
+            "false_alerts_per_cell_day": 5.3422,
+            "flagged_fraction": 0.3701,
+            "alerts_per_cell_day": 5.4702,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0507,
+            "recall": 0.9429,
+            "precision": 0.0242,
+            "f1": 0.0473,
+            "f2": 0.1099,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0283,
+            "false_alerts_per_cell_day": 4.0809,
+            "flagged_fraction": 0.6482,
+            "alerts_per_cell_day": 4.1997,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 5
+      }
+    ],
+    "+ benign surges (full)": [
+      {
+        "val_events": 20,
+        "test_events": 27,
+        "test_positive_rows": 289,
+        "test_anomaly_rate": 0.0138,
+        "test_pr_auc": 0.4973,
+        "best_round": 73,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.5732,
+            "recall": 0.6021,
+            "precision": 0.3193,
+            "f1": 0.4173,
+            "f2": 0.5115,
+            "event_detection_rate": 0.963,
+            "alert_precision": 0.1415,
+            "false_alerts_per_cell_day": 0.8042,
+            "flagged_fraction": 0.0259,
+            "alerts_per_cell_day": 0.9367,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.2205,
+            "recall": 0.782,
+            "precision": 0.0552,
+            "f1": 0.1031,
+            "f2": 0.2152,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0223,
+            "false_alerts_per_cell_day": 5.6022,
+            "flagged_fraction": 0.195,
+            "alerts_per_cell_day": 5.7301,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.1433,
+            "recall": 0.8685,
+            "precision": 0.0256,
+            "f1": 0.0498,
+            "f2": 0.1146,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.022,
+            "false_alerts_per_cell_day": 5.4925,
+            "flagged_fraction": 0.4663,
+            "alerts_per_cell_day": 5.6159,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.0975,
+            "recall": 0.9273,
+            "precision": 0.0169,
+            "f1": 0.0331,
+            "f2": 0.0786,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0472,
+            "false_alerts_per_cell_day": 2.5818,
+            "flagged_fraction": 0.7567,
+            "alerts_per_cell_day": 2.7097,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0751,
+            "recall": 0.9792,
+            "precision": 0.0151,
+            "f1": 0.0298,
+            "f2": 0.0713,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0957,
+            "false_alerts_per_cell_day": 1.1652,
+            "flagged_fraction": 0.89,
+            "alerts_per_cell_day": 1.2886,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 42
+      },
+      {
+        "val_events": 22,
+        "test_events": 26,
+        "test_positive_rows": 299,
+        "test_anomaly_rate": 0.0142,
+        "test_pr_auc": 0.5426,
+        "best_round": 114,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.6489,
+            "recall": 0.6221,
+            "precision": 0.4009,
+            "f1": 0.4875,
+            "f2": 0.5602,
+            "event_detection_rate": 0.9615,
+            "alert_precision": 0.1711,
+            "false_alerts_per_cell_day": 0.5758,
+            "flagged_fraction": 0.0221,
+            "alerts_per_cell_day": 0.6946,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.3387,
+            "recall": 0.7157,
+            "precision": 0.133,
+            "f1": 0.2243,
+            "f2": 0.3815,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0416,
+            "false_alerts_per_cell_day": 2.9476,
+            "flagged_fraction": 0.0766,
+            "alerts_per_cell_day": 3.0755,
+            "median_delay_minutes": 22.5
+          },
+          "0.8": {
+            "threshold": 0.2163,
+            "recall": 0.7759,
+            "precision": 0.0674,
+            "f1": 0.1241,
+            "f2": 0.2502,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0261,
+            "false_alerts_per_cell_day": 4.9538,
+            "flagged_fraction": 0.1638,
+            "alerts_per_cell_day": 5.0863,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.0897,
+            "recall": 0.903,
+            "precision": 0.0243,
+            "f1": 0.0474,
+            "f2": 0.1098,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0252,
+            "false_alerts_per_cell_day": 5.1183,
+            "flagged_fraction": 0.5286,
+            "alerts_per_cell_day": 5.2508,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0429,
+            "recall": 0.9799,
+            "precision": 0.0162,
+            "f1": 0.0318,
+            "f2": 0.0759,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0774,
+            "false_alerts_per_cell_day": 1.4167,
+            "flagged_fraction": 0.8622,
+            "alerts_per_cell_day": 1.5355,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 1
+      },
+      {
+        "val_events": 22,
+        "test_events": 26,
+        "test_positive_rows": 265,
+        "test_anomaly_rate": 0.0126,
+        "test_pr_auc": 0.6565,
+        "best_round": 140,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.7114,
+            "recall": 0.7019,
+            "precision": 0.5284,
+            "f1": 0.6029,
+            "f2": 0.6586,
+            "event_detection_rate": 0.9615,
+            "alert_precision": 0.27,
+            "false_alerts_per_cell_day": 0.3336,
+            "flagged_fraction": 0.0168,
+            "alerts_per_cell_day": 0.457,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.3285,
+            "recall": 0.8642,
+            "precision": 0.1414,
+            "f1": 0.243,
+            "f2": 0.4272,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0414,
+            "false_alerts_per_cell_day": 2.7511,
+            "flagged_fraction": 0.0771,
+            "alerts_per_cell_day": 2.8699,
+            "median_delay_minutes": 0.0
+          },
+          "0.8": {
+            "threshold": 0.1707,
+            "recall": 0.9208,
+            "precision": 0.0513,
+            "f1": 0.0973,
+            "f2": 0.2099,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0207,
+            "false_alerts_per_cell_day": 5.6256,
+            "flagged_fraction": 0.2262,
+            "alerts_per_cell_day": 5.7444,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.0916,
+            "recall": 0.9509,
+            "precision": 0.0241,
+            "f1": 0.047,
+            "f2": 0.1094,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0209,
+            "false_alerts_per_cell_day": 5.5661,
+            "flagged_fraction": 0.4979,
+            "alerts_per_cell_day": 5.685,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0505,
+            "recall": 0.9925,
+            "precision": 0.016,
+            "f1": 0.0316,
+            "f2": 0.0753,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0455,
+            "false_alerts_per_cell_day": 2.4906,
+            "flagged_fraction": 0.7805,
+            "alerts_per_cell_day": 2.6094,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 2
+      },
+      {
+        "val_events": 20,
+        "test_events": 23,
+        "test_positive_rows": 313,
+        "test_anomaly_rate": 0.0149,
+        "test_pr_auc": 0.4518,
+        "best_round": 141,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.8392,
+            "recall": 0.4952,
+            "precision": 0.6432,
+            "f1": 0.5596,
+            "f2": 0.5191,
+            "event_detection_rate": 0.8261,
+            "alert_precision": 0.42,
+            "false_alerts_per_cell_day": 0.1325,
+            "flagged_fraction": 0.0115,
+            "alerts_per_cell_day": 0.2285,
+            "median_delay_minutes": 75.0
+          },
+          "0.7": {
+            "threshold": 0.4983,
+            "recall": 0.639,
+            "precision": 0.3044,
+            "f1": 0.4124,
+            "f2": 0.5238,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.1066,
+            "false_alerts_per_cell_day": 0.9962,
+            "flagged_fraction": 0.0313,
+            "alerts_per_cell_day": 1.1151,
+            "median_delay_minutes": 45.0
+          },
+          "0.8": {
+            "threshold": 0.2217,
+            "recall": 0.754,
+            "precision": 0.0882,
+            "f1": 0.1579,
+            "f2": 0.3004,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.03,
+            "false_alerts_per_cell_day": 4.1403,
+            "flagged_fraction": 0.1274,
+            "alerts_per_cell_day": 4.2683,
+            "median_delay_minutes": 30.0
+          },
+          "0.9": {
+            "threshold": 0.1009,
+            "recall": 0.8722,
+            "precision": 0.0337,
+            "f1": 0.0649,
+            "f2": 0.146,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0178,
+            "false_alerts_per_cell_day": 6.0368,
+            "flagged_fraction": 0.3856,
+            "alerts_per_cell_day": 6.1465,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.0505,
+            "recall": 0.9553,
+            "precision": 0.0192,
+            "f1": 0.0376,
+            "f2": 0.0888,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0364,
+            "false_alerts_per_cell_day": 2.9065,
+            "flagged_fraction": 0.7417,
+            "alerts_per_cell_day": 3.0161,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 3
+      },
+      {
+        "val_events": 21,
+        "test_events": 27,
+        "test_positive_rows": 365,
+        "test_anomaly_rate": 0.0174,
+        "test_pr_auc": 0.6495,
+        "best_round": 132,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.7226,
+            "recall": 0.5863,
+            "precision": 0.7354,
+            "f1": 0.6524,
+            "f2": 0.6111,
+            "event_detection_rate": 0.8889,
+            "alert_precision": 0.3714,
+            "false_alerts_per_cell_day": 0.2011,
+            "flagged_fraction": 0.0139,
+            "alerts_per_cell_day": 0.3199,
+            "median_delay_minutes": 45.0
+          },
+          "0.7": {
+            "threshold": 0.2242,
+            "recall": 0.8,
+            "precision": 0.1256,
+            "f1": 0.2172,
+            "f2": 0.3858,
+            "event_detection_rate": 0.963,
+            "alert_precision": 0.0318,
+            "false_alerts_per_cell_day": 3.7517,
+            "flagged_fraction": 0.1106,
+            "alerts_per_cell_day": 3.8751,
+            "median_delay_minutes": 30.0
+          },
+          "0.8": {
+            "threshold": 0.1375,
+            "recall": 0.8575,
+            "precision": 0.0613,
+            "f1": 0.1144,
+            "f2": 0.2383,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0206,
+            "false_alerts_per_cell_day": 5.8629,
+            "flagged_fraction": 0.2431,
+            "alerts_per_cell_day": 5.9863,
+            "median_delay_minutes": 15.0
+          },
+          "0.9": {
+            "threshold": 0.0563,
+            "recall": 0.9452,
+            "precision": 0.0246,
+            "f1": 0.0479,
+            "f2": 0.1112,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0324,
+            "false_alerts_per_cell_day": 3.8248,
+            "flagged_fraction": 0.6688,
+            "alerts_per_cell_day": 3.9528,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.036,
+            "recall": 0.9699,
+            "precision": 0.0199,
+            "f1": 0.0391,
+            "f2": 0.0921,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0686,
+            "false_alerts_per_cell_day": 1.7365,
+            "flagged_fraction": 0.8449,
+            "alerts_per_cell_day": 1.8644,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 4
+      },
+      {
+        "val_events": 20,
+        "test_events": 25,
+        "test_positive_rows": 340,
+        "test_anomaly_rate": 0.0162,
+        "test_pr_auc": 0.5803,
+        "best_round": 37,
+        "by_target": {
+          "0.5": {
+            "threshold": 0.6878,
+            "recall": 0.6529,
+            "precision": 0.4221,
+            "f1": 0.5127,
+            "f2": 0.5885,
+            "event_detection_rate": 0.96,
+            "alert_precision": 0.1472,
+            "false_alerts_per_cell_day": 0.6352,
+            "flagged_fraction": 0.025,
+            "alerts_per_cell_day": 0.7449,
+            "median_delay_minutes": 30.0
+          },
+          "0.7": {
+            "threshold": 0.4299,
+            "recall": 0.7529,
+            "precision": 0.1465,
+            "f1": 0.2453,
+            "f2": 0.412,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0428,
+            "false_alerts_per_cell_day": 2.5546,
+            "flagged_fraction": 0.0832,
+            "alerts_per_cell_day": 2.6688,
+            "median_delay_minutes": 15.0
+          },
+          "0.8": {
+            "threshold": 0.349,
+            "recall": 0.7824,
+            "precision": 0.0908,
+            "f1": 0.1627,
+            "f2": 0.3101,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0305,
+            "false_alerts_per_cell_day": 3.9255,
+            "flagged_fraction": 0.1394,
+            "alerts_per_cell_day": 4.0489,
+            "median_delay_minutes": 0.0
+          },
+          "0.9": {
+            "threshold": 0.203,
+            "recall": 0.9176,
+            "precision": 0.0249,
+            "f1": 0.0485,
+            "f2": 0.1124,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0334,
+            "false_alerts_per_cell_day": 3.5737,
+            "flagged_fraction": 0.5961,
+            "alerts_per_cell_day": 3.6971,
+            "median_delay_minutes": 0.0
+          },
+          "0.96": {
+            "threshold": 0.1314,
+            "recall": 0.9971,
+            "precision": 0.0181,
+            "f1": 0.0355,
+            "f2": 0.0843,
+            "event_detection_rate": 1.0,
+            "alert_precision": 0.0842,
+            "false_alerts_per_cell_day": 1.1425,
+            "flagged_fraction": 0.8919,
+            "alerts_per_cell_day": 1.2476,
+            "median_delay_minutes": 0.0
+          }
+        },
+        "seed": 5
+      }
+    ]
+  },
+  "validation_recall_target": "0.5"
+}

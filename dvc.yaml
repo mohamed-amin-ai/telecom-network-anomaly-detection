@@ -8,8 +8,12 @@ stages:
       - data.cells
       - data.periods_days
       - data.freq_minutes
+      - data.profile
+      - data.realism
+      - data.calibrated
     outs:
       - data/raw_kpis.csv
+      - data/events.csv
 
   features:
     cmd: python data/features.py
@@ -30,6 +34,7 @@ stages:
       - split.train_ratio
       - split.val_fraction
       - model
+      - threshold.validation_recall_target
       - threshold.min_recall
     outs:
       - models/model.json
