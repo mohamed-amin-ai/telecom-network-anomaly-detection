@@ -79,6 +79,7 @@ telecom_anomaly/
 ├── docker-compose.airflow.yml  # Airflow (Postgres + webserver + scheduler)
 ├── docker-compose.triton.yml   # Triton Inference Server (see Phase 6 caveat)
 ├── Dockerfile.airflow      # Airflow image with this project's deps installed
+├── k8s/                    # Kubernetes manifests (kustomize base + scaled overlay) — Phase 7
 ├── Makefile                # One-line commands for common workflows
 ├── EXPERIMENTS.md          # Real hyperparameter sweep results + findings
 └── README.md
@@ -171,6 +172,7 @@ Notes:
 | 4 | **Evidently** (data/prediction drift detection) | ✅ done |
 | 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | ✅ done |
 | 6 | **ONNX** + **Triton** (portable, high-throughput serving) | ✅ done |
+| 7 | **Kubernetes** (kustomize manifests for the API; CI renders, validates and smoke-tests on kind) | ✅ written, first cluster run is CI's |
 
 ### Phase 1 — MLflow + DVC
 
@@ -482,6 +484,24 @@ compounded ever since; a leaner production image would split this into
 at only the former. Not done here — flagging it rather than leaving it
 silently implied-fine.
 
+### Phase 7 — Kubernetes
+
+Manifests for the API live in [`k8s/`](k8s/README.md): a Deployment (non-root, read-only root filesystem, startup/readiness/liveness
+probes on `/health`, Prometheus scrape annotations), a Service, a PVC for the inference log, and an optional autoscaled overlay.
+
+```bash
+make k8s-render && make k8s-apply     # then: make k8s-port-forward
+```
+
+**Single replica by design.** Per-cell history for raw readings is held in process memory (`api/live_features.py`), so more
+than one replica makes raw-reading requests answer `425` indefinitely. The `scaled` overlay is only for clients that send
+pre-computed features; scaling the raw-reading path needs a shared history store first.
+
+**Same honesty pattern as earlier phases:** no cluster was available when this was written. Offline tests check the manifests
+against the rest of the repo; a new CI job renders both overlays, schema-validates with kubeconform and deploys to a kind
+cluster, so CI's first run is the first real check. Resource limits are unmeasured starting values. Prometheus/Grafana/Airflow/Triton
+are not ported to Kubernetes.
+
 ---
 
 ## Feature Engineering
@@ -593,4 +613,4 @@ accept it, set a floor the data can support, or gate on incident-level detection
 
 ## Tech Stack
 
-`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana` · `Evidently` · `Airflow` · `ONNX` · `Triton Inference Server`
+`Python` · `XGBoost` · `scikit-learn` · `Pandas` · `NumPy` · `FastAPI` · `Pydantic` · `Uvicorn` · `Docker` · `MLflow` · `DVC` · `Prometheus` · `Grafana` · `Evidently` · `Airflow` · `ONNX` · `Triton Inference Server` · `Kubernetes`

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomaly-api
+  labels:
+    app.kubernetes.io/name: anomaly-api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: anomaly-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

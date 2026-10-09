@@ -80,7 +80,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -229,3 +229,58 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  kubernetes-manifests:
+    name: Kubernetes - render, schema-validate, kind smoke test
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # `kubectl kustomize` is preinstalled on ubuntu runners. Rendering fails on broken
+      # references/patches, which is the cheapest useful check for the overlays.
+      - name: Render base and scaled overlay
+        run: |
+          kubectl kustomize k8s/base > /tmp/base.yaml
+          kubectl kustomize k8s/overlays/scaled > /tmp/scaled.yaml
+
+      - name: Schema-validate with kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary /tmp/base.yaml /tmp/scaled.yaml
+          # ServiceMonitor is a CRD; skip it rather than pull a schema catalog
+          ./kubeconform -strict -summary -ignore-missing-schemas k8s/optional/servicemonitor.yaml
+
+      # Real deploy: build the image from the actual pipeline output, load it into a throwaway
+      # kind cluster, apply the base manifests and require the Deployment to become Ready
+      # (readiness = /health returns 200 inside the cluster).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run data + feature + train pipeline
+        run: |
+          python data/generate_data.py
+          python data/features.py
+          python models/train.py
+      - name: Build image
+        run: docker build -t telecom-anomaly-api:ci .
+      - uses: helm/kind-action@v1
+      - name: Deploy to kind
+        run: |
+          kind load docker-image telecom-anomaly-api:ci
+          sed 's#ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest#telecom-anomaly-api:ci#' /tmp/base.yaml | kubectl apply -f -
+          kubectl -n telecom-anomaly rollout status deployment/anomaly-api --timeout=180s
+      - name: Smoke test through the Service
+        run: |
+          kubectl -n telecom-anomaly port-forward svc/anomaly-api 8000:8000 &
+          sleep 5
+          curl -sf http://localhost:8000/health
+          curl -sf http://localhost:8000/metrics | head -5
+      - name: Dump cluster state on failure
+        if: failure()
+        run: |
+          kubectl -n telecom-anomaly get all,pvc
+          kubectl -n telecom-anomaly describe pods
+          kubectl -n telecom-anomaly logs deployment/anomaly-api --tail=100 || true

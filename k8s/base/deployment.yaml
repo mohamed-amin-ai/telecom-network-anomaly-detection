@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-api
+  labels:
+    app.kubernetes.io/name: anomaly-api
+    app.kubernetes.io/part-of: telecom-anomaly-detection
+spec:
+  # ONE replica on purpose. api/live_features.py keeps each cell's recent readings in process
+  # memory, so a second replica would see only part of a cell's history and keep answering
+  # 425 (cold start) for raw readings. See k8s/README.md before changing this.
+  replicas: 1
+  # Recreate, not RollingUpdate: the log volume is ReadWriteOnce, and a surge pod could not
+  # mount it while the old one is still running.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anomaly-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anomaly-api
+        app.kubernetes.io/part-of: telecom-anomaly-detection
+      annotations:
+        # Picked up by annotation-based Prometheus scrape configs. With the Prometheus
+        # Operator use k8s/optional/servicemonitor.yaml instead.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000          # the image's appuser (Dockerfile: useradd --uid 1000)
+        runAsGroup: 1000
+        fsGroup: 1000            # makes the log volume writable by that user
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest  # pin a commit SHA via the kustomize `images:` block
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          # The image's own HEALTHCHECK is ignored by Kubernetes; these replace it.
+          # The model is loaded at import time, so give startup room before liveness applies.
+          startupProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Starting values, NOT measured. Load-test and adjust.
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: anomaly-api-logs
+        - name: tmp
+          emptyDir: {}
