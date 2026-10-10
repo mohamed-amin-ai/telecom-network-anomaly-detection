@@ -3,11 +3,12 @@ kind: Kustomization
 namespace: telecom-anomaly
 resources:
   - namespace.yaml
-  - pvc.yaml
+  - redis.yaml
   - deployment.yaml
   - service.yaml
+  - pdb.yaml
 # Pin the image to the commit CI built, e.g.:
-#   cd k8s/base && kustomize edit set image ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha>
+#   cd k8s/overlays/full && kustomize edit set image ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha>
 images:
   - name: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection
     newTag: latest

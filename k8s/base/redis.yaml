@@ -1,0 +1,102 @@
+# Shared state for the API replicas: per-cell reading history (api/live_features.py) and the
+# inference log the drift job reads (api/inference_log.py). A cache, not a database:
+#   - no persistence (--save "" --appendonly no). A Redis restart empties it: cells answer 425
+#     until ~20 new readings arrive, and the drift job sees an empty log. Nothing is corrupted.
+#   - one replica, so Redis is a single point of failure for the RAW-READING path only. The API
+#     answers 503 (Retry-After) there; requests that send pre-computed features don't touch Redis.
+#   - noeviction + 256mb: if it ever fills, writes fail loudly (503) instead of Redis silently
+#     evicting history. The log is capped (INFERENCE_LOG_MAX_ROWS, ~30MB) so this is not expected.
+#   - no auth: reachable only by pods labelled telecom-anomaly/redis-client (NetworkPolicy below,
+#     enforced only if the cluster's CNI enforces NetworkPolicy).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: telecom-anomaly-detection
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/part-of: telecom-anomaly-detection
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999        # the official image's redis user
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          args: ["--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec: {command: ["redis-cli", "ping"]}
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            exec: {command: ["redis-cli", "ping"]}
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Starting values, NOT measured.
+          resources:
+            requests: {cpu: 100m, memory: 300Mi}
+            limits: {cpu: 500m, memory: 400Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app.kubernetes.io/name: redis
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-clients
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              telecom-anomaly/redis-client: "true"
+      ports:
+        - protocol: TCP
+          port: 6379

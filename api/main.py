@@ -25,12 +25,15 @@ from pydantic import BaseModel, Field
 
 from api.live_features import (
     CellHistoryStore,
+    HistoryStoreUnavailable,
     UndefinedFeatureError,
     make_raw_row,
     now_iso,
     MIN_HISTORY_ROWS,
 )
+from api.shared_store import build_history_backend
 from api.metrics import (
+    record_history_store_error,
     instrument_app,
     set_model_info,
     record_prediction,
@@ -67,7 +70,7 @@ except FileNotFoundError:
 # Per-cell rolling history used to compute real-time features when the
 # caller sends raw KPIs instead of pre-computed features. See
 # api/live_features.py for why this replaced the old zero-fill fallback.
-history_store = CellHistoryStore()
+history_store = CellHistoryStore(build_history_backend())
 
 # ── App ────────────────────────────────────────────────────────────────────
 
@@ -173,9 +176,20 @@ def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
     except UndefinedFeatureError as e:
         record_undefined_features()
         raise HTTPException(status_code=422, detail=str(e))
+    except HistoryStoreUnavailable as e:
+        record_history_store_error()
+        raise HTTPException(
+            status_code=503,
+            detail=f"History store unavailable ({e}). Retry shortly, or pass pre-computed `features`, "
+                   "which do not use the store.",
+            headers={"Retry-After": "5"},
+        )
 
     if computed is None:
-        rows_so_far = history_store.rows_available(snapshot.cell_id)
+        try:
+            rows_so_far = history_store.rows_available(snapshot.cell_id)
+        except HistoryStoreUnavailable:
+            rows_so_far = "?"
         record_cold_start()
         raise HTTPException(
             status_code=425,  # Too Early
@@ -214,7 +228,10 @@ def run_inference(snapshot: KPISnapshot) -> PredictionResult:
     severity = score_to_severity(prob, THRESHOLD)
 
     record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob)
-    set_cells_tracked(history_store.tracked_cell_count())
+    try:
+        set_cells_tracked(history_store.tracked_cell_count())
+    except HistoryStoreUnavailable:
+        pass   # gauge keeps its last value; a metrics read must not fail a scored request
 
     # Best-effort log of the exact (unscaled) feature vector the model saw
     # — this is what monitoring/drift_check.py compares against training
@@ -250,7 +267,9 @@ def run_inference(snapshot: KPISnapshot) -> PredictionResult:
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": "xgboost", "version": "1.0.0"}
+    # No store round-trip here: this is the liveness/readiness probe, and a Redis outage should
+    # degrade raw-reading requests (503), not take every pod out of rotation.
+    return {"status": "ok", "model": "xgboost", "version": "1.0.0", "history_backend": history_store.backend_name}
 
 
 @app.get("/model/info")

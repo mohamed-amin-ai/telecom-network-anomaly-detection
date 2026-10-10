@@ -72,8 +72,13 @@ def engineer_features(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
             group[f"{kpi}_roc"] = (series - series.shift(1)) / prev
 
         # ── Time features ─────────────────────────────────────────────────
-        group["hour"]       = pd.to_datetime(group["timestamp"]).dt.hour
-        group["day_of_week"] = pd.to_datetime(group["timestamp"]).dt.dayofweek
+        # format="ISO8601": without it pandas infers ONE format from the first value and rejects
+        # the rest, so a live history mixing "...:00Z" (client-supplied) with
+        # "...:00.123456+00:00" (server-assigned, microseconds) raised ValueError. utc=True also lets
+        # naive (training CSV) and tz-aware (live) values coexist; hour/day are read in UTC.
+        ts = pd.to_datetime(group["timestamp"], format="ISO8601", utc=True)
+        group["hour"]       = ts.dt.hour
+        group["day_of_week"] = ts.dt.dayofweek
         group["is_weekend"] = (group["day_of_week"] >= 5).astype(int)
 
         feature_frames.append(group)

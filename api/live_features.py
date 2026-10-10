@@ -17,11 +17,12 @@ Why this exists:
   each cell's buffered history, so the API computes features exactly the
   way training did. No duplicated formulas, no train/serve skew.
 
-Limitation (documented, not hidden):
-  History is kept in-process memory, keyed by cell_id. This is fine for a
-  single-instance demo/portfolio service, but does not survive a restart
-  and won't work across multiple API replicas. A real deployment would
-  back this with a shared store (Redis / feature store) keyed by cell_id.
+Storage:
+  By default history is kept in-process memory, keyed by cell_id: fine for
+  one instance, lost on restart, and wrong across replicas (each would see
+  only a fraction of a cell's readings and keep answering 425). Set
+  REDIS_URL and the store uses RedisHistoryBackend instead, shared by all
+  replicas. See api/shared_store.py.
 """
 
 from collections import deque
@@ -53,25 +54,117 @@ class UndefinedFeatureError(Exception):
     z-score is undefined)."""
 
 
-class CellHistoryStore:
-    """In-memory ring buffer of raw KPI readings, one deque per cell_id."""
+class HistoryStoreUnavailable(Exception):
+    """The shared history backend (Redis) could not be reached or errored.
+    The API maps this to HTTP 503 for raw-reading requests; requests that
+    supply pre-computed features never touch the store and are unaffected."""
+
+
+class MemoryHistoryBackend:
+    """Per-process ring buffer, one deque per cell_id. The default, and what
+    docker-compose uses. NOT shared between processes — see RedisHistoryBackend."""
+
+    name = "memory"
 
     def __init__(self):
         self._history: dict[str, deque] = {}
 
-    def _buffer_for(self, cell_id: str) -> deque:
-        if cell_id not in self._history:
-            self._history[cell_id] = deque(maxlen=MAX_HISTORY_ROWS)
-        return self._history[cell_id]
+    def append(self, cell_id: str, row: dict) -> list[dict]:
+        buf = self._history.setdefault(cell_id, deque(maxlen=MAX_HISTORY_ROWS))
+        buf.append(row)
+        return list(buf)
+
+    def length(self, cell_id: str) -> int:
+        return len(self._history.get(cell_id, ()))
+
+    def cell_count(self) -> int:
+        return len(self._history)
+
+
+class RedisHistoryBackend:
+    """Per-cell history shared by every API replica, so a cell's readings can
+    arrive on any pod and still accumulate into one history.
+
+    Layout: a Redis LIST per cell (`<prefix>:cell:<cell_id>`, JSON rows,
+    trimmed to MAX_HISTORY_ROWS) and a ZSET of cell_id -> last-seen time
+    (`<prefix>:cells`) for the cells_tracked gauge. Keys expire after
+    `ttl_seconds` without a reading, so retired cells don't accumulate.
+
+    append() is one MULTI/EXEC transaction: push, trim and read-back happen
+    atomically, so two pods writing the same cell see a consistent buffer.
+    Rows are scored in timestamp order by engineer_features(), so arrival
+    order across pods doesn't change the features.
+    """
+
+    name = "redis"
+
+    def __init__(self, client, ttl_seconds: int = 86400, key_prefix: str = "anomaly:history", errors=None):
+        self._client = client
+        self._ttl = int(ttl_seconds)
+        self._prefix = key_prefix
+        if errors is None:
+            import redis
+            errors = (redis.RedisError, OSError)
+        self._errors = errors
+
+    def _key(self, cell_id: str) -> str:
+        return f"{self._prefix}:cell:{cell_id}"
+
+    @property
+    def _cells_key(self) -> str:
+        return f"{self._prefix}:cells"
+
+    def append(self, cell_id: str, row: dict) -> list[dict]:
+        import json
+        import time
+        now = time.time()
+        key = self._key(cell_id)
+        try:
+            pipe = self._client.pipeline(transaction=True)
+            pipe.rpush(key, json.dumps(row))
+            pipe.ltrim(key, -MAX_HISTORY_ROWS, -1)
+            pipe.lrange(key, 0, -1)
+            pipe.expire(key, self._ttl)
+            pipe.zadd(self._cells_key, {cell_id: now})
+            pipe.zremrangebyscore(self._cells_key, "-inf", now - self._ttl)
+            results = pipe.execute()
+        except self._errors as e:
+            raise HistoryStoreUnavailable(f"history store unavailable: {e}") from e
+        return [json.loads(x) for x in results[2]]
+
+    def length(self, cell_id: str) -> int:
+        try:
+            return int(self._client.llen(self._key(cell_id)))
+        except self._errors as e:
+            raise HistoryStoreUnavailable(f"history store unavailable: {e}") from e
+
+    def cell_count(self) -> int:
+        import time
+        try:
+            return int(self._client.zcount(self._cells_key, time.time() - self._ttl, "+inf"))
+        except self._errors as e:
+            raise HistoryStoreUnavailable(f"history store unavailable: {e}") from e
+
+
+class CellHistoryStore:
+    """Rolling raw-reading history per cell_id, over a pluggable backend
+    (in-memory by default; Redis for multi-replica deployments)."""
+
+    def __init__(self, backend=None):
+        self._backend = backend if backend is not None else MemoryHistoryBackend()
+
+    @property
+    def backend_name(self) -> str:
+        return self._backend.name
 
     def rows_available(self, cell_id: str) -> int:
-        return len(self._history.get(cell_id, ()))
+        return self._backend.length(cell_id)
 
     def tracked_cell_count(self) -> int:
         """Number of distinct cell_ids with any buffered history at all
         (regardless of whether they've cleared MIN_HISTORY_ROWS yet).
         Used for the cells_tracked Prometheus gauge — see api/metrics.py."""
-        return len(self._history)
+        return self._backend.cell_count()
 
     def add_and_compute(self, cell_id: str, raw_row: dict) -> dict | None:
         """
@@ -81,9 +174,9 @@ class CellHistoryStore:
         Returns the feature dict for the LATEST row, or None if there
         isn't yet enough history for the rolling windows to be valid
         (cold start — caller should backfill more readings first).
+        Raises HistoryStoreUnavailable if a shared backend is down.
         """
-        buf = self._buffer_for(cell_id)
-        buf.append(raw_row)
+        buf = self._backend.append(cell_id, raw_row)
 
         if len(buf) < MIN_HISTORY_ROWS:
             return None

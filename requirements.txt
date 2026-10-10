@@ -15,6 +15,10 @@ dvc-s3>=3.2
 pyyaml>=6.0
 requests>=2.31   # imported directly by scripts/generate_traffic.py + query_triton.py
 
+# Phase 7 — shared state for multi-replica serving (api/shared_store.py). Imported lazily:
+# only needed when REDIS_URL is set.
+redis>=5.0,<6
+
 # Phase 3 — observability
 prometheus-fastapi-instrumentator>=7.0
 prometheus-client>=0.20

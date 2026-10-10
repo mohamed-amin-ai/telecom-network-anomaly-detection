@@ -1,4 +1,4 @@
-.PHONY: k8s-render k8s-apply k8s-delete k8s-port-forward install pipeline repro train mlflow-ui serve docker-build docker-up clean
+.PHONY: k8s-render k8s-secret k8s-apply k8s-apply-base k8s-delete k8s-e2e k8s-port-forward k8s-grafana install pipeline repro train mlflow-ui serve docker-build docker-up clean
 
 install:
 	pip install -r requirements.txt
@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -86,14 +86,31 @@ clean:
 	rm -rf mlruns mlartifacts .pytest_cache **/__pycache__
 
 # ── Kubernetes (see k8s/README.md) ───────────────────────────────────────
+# `full` = API x2 + HPA + Redis + Prometheus + Pushgateway + Grafana + drift CronJob. `base` = API + Redis only.
 k8s-render:
-	kubectl kustomize k8s/base
+	kubectl kustomize k8s/overlays/full
+
+# Grafana's admin password is never in git: GRAFANA_PASSWORD=... make k8s-secret
+k8s-secret:
+	@test -n "$(GRAFANA_PASSWORD)" || (echo "set GRAFANA_PASSWORD" && exit 1)
+	kubectl create namespace telecom-anomaly --dry-run=client -o yaml | kubectl apply -f -
+	kubectl -n telecom-anomaly create secret generic grafana-admin --from-literal=admin-password="$(GRAFANA_PASSWORD)" --dry-run=client -o yaml | kubectl apply -f -
 
 k8s-apply:
+	kubectl apply -k k8s/overlays/full
+
+k8s-apply-base:
 	kubectl apply -k k8s/base
 
 k8s-delete:
-	kubectl delete -k k8s/base
+	kubectl delete -k k8s/overlays/full
+
+# Needs a cluster with the API image loaded (CI runs this on kind): IMAGE=telecom-anomaly-api:ci make k8s-e2e
+k8s-e2e:
+	scripts/k8s_e2e.sh
 
 k8s-port-forward:
 	kubectl -n telecom-anomaly port-forward svc/anomaly-api 8000:8000
+
+k8s-grafana:
+	kubectl -n telecom-anomaly port-forward svc/grafana 3000:3000

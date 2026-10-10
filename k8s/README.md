@@ -1,55 +1,71 @@
 # Kubernetes
 
-Manifests for running the API on a cluster. Plain YAML + kustomize (built into `kubectl`), no Helm.
+Plain YAML + kustomize (built into `kubectl`), no Helm.
 
 ```
 k8s/
-├── base/                 namespace, Deployment, Service, PVC (inference log)  ← what you normally apply
-├── overlays/scaled/      HPA + PDB, 2–6 replicas — read "Scaling" first
-└── optional/             ServiceMonitor (needs the Prometheus Operator CRDs)
+├── base/               namespace, API Deployment (2 replicas), Service, PDB, Redis (+ NetworkPolicy)
+├── overlays/scaled/    + HorizontalPodAutoscaler (2-6 replicas)
+├── monitoring/         Prometheus (+RBAC), Pushgateway, Grafana (2 provisioned dashboards), drift CronJob
+├── overlays/full/      scaled + monitoring  ← what you normally apply
+└── optional/           ServiceMonitor, only if you run the Prometheus Operator instead of monitoring/
 ```
 
 ## Run it
 
 ```bash
-# 1. Pin the image CI built (kubectl alone can't edit kustomize files; use kustomize or edit k8s/base/kustomization.yaml)
-#    images: newTag: <commit sha>        # tags pushed: :latest and :<sha> on ghcr.io
+# 1. Pin the image CI built (ghcr.io tags: :latest and :<commit sha>)
+cd k8s/overlays/full && kustomize edit set image \
+  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha>
 
-# 2. Deploy
-make k8s-render      # inspect what will be applied
+# 2. Grafana's password is never in git
+GRAFANA_PASSWORD='<choose>' make k8s-secret
+
+# 3. Deploy, then look
 make k8s-apply
-kubectl -n telecom-anomaly rollout status deploy/anomaly-api
-
-# 3. Try it
-make k8s-port-forward            # then http://localhost:8000/docs
+kubectl -n telecom-anomaly get pods
+make k8s-port-forward        # API  -> http://localhost:8000/docs
+make k8s-grafana             # UI   -> http://localhost:3000  (user: admin)
 ```
 
-**Local cluster (kind/minikube):** `docker build -t telecom-anomaly-api:local .` (run the pipeline first — the image
-bakes in `models/model.json`, `scaler.pkl`, `metadata.json`), `kind load docker-image telecom-anomaly-api:local`, then set
-the image in the kustomization to `telecom-anomaly-api` / `newTag: local`.
+Only want the API? `make k8s-apply-base` (API + Redis, no monitoring).
+**Private GHCR package:** the image pulls anonymously only if the package is public; otherwise add an `imagePullSecret`.
+The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci make k8s-e2e` (needs the image loaded into the cluster).
 
-**Private GHCR package:** the image is pulled anonymously only if the package is public. Otherwise create a
-`docker-registry` secret and add `imagePullSecrets` to the Deployment.
+## How it fits together
 
-## Scaling — read before turning replicas up
+- **Shared state in Redis.** `REDIS_URL` switches `api/shared_store.py` from per-process memory to Redis for (a) each cell's
+  rolling history and (b) the inference log, so any replica can serve any reading and the drift job reads one log.
+  Without `REDIS_URL` (docker-compose, local dev) nothing changes: memory + a CSV file.
+- **Redis is a cache, not a database:** no persistence, `noeviction` with a 256 MB cap, history keys expire after 24 h
+  without a reading, the inference log keeps the newest 20,000 rows. A Redis restart empties history; each cell then
+  returns `425` until it has 20 new readings again, and the drift job sees an empty log until traffic resumes.
+- **Redis outage:** raw readings answer `503` (after at most a 2 s socket timeout); requests carrying pre-computed
+  features, `/health` and `/metrics` are unaffected, so pods stay in rotation instead of crash-looping.
+- **Scraping:** Prometheus discovers API *pods* through a namespaced Role (not through the Service, which would
+  load-balance each scrape to a random replica). Pushgateway holds the drift job's metrics; Grafana's datasource and dashboards are provisioned from ConfigMaps.
+- **Drift CronJob** (hourly) runs `monitoring/drift_check.py` from the API image: it compares the Redis inference log
+  to `models/reference_features.csv` (written by `train.py`, baked into the image) and pushes `data_drift_*` metrics.
+- The two Grafana dashboards under `k8s/monitoring/grafana/dashboards/` are copies of `grafana/dashboards/` (kustomize can't
+  read outside its directory); `tests/test_k8s_manifests.py` fails if they diverge.
 
-`api/live_features.py` keeps each cell's recent readings **in process memory**. Raw-reading requests need ~20 prior
-readings of the same cell on the *same pod*. With several replicas, requests for one cell are spread across pods, so each
-pod sees a fraction of the history and the API keeps returning `425` (cold start). That is why the base has one replica,
-`strategy: Recreate` (the log volume is ReadWriteOnce), and a restart empties the history.
+## What was verified, and how
 
-- **Pre-computed-feature clients** (`/predict` with features supplied) are stateless: use `overlays/scaled`.
-- **Raw-reading clients** at scale need the history moved to a shared store (e.g. Redis, keyed by `cell_id`) first. Not done.
-- The scaled overlay replaces the log PVC with a per-pod `emptyDir`, so `monitoring/drift_check.py` can no longer read one
-  shared inference log. Shipping the log to shared storage is also not done.
+| Check | Where | Real or stand-in |
+|---|---|---|
+| All four kustomizations render; 23 objects in `full` pass `kubeconform --strict` against the Kubernetes 1.30 schemas | sandbox | real kustomize + kubeconform |
+| History/inference log against a live Redis (incl. two replicas sharing it, trimming, expiry) | sandbox + CI | real redis-server, real redis-py |
+| 2 API processes + Redis + Prometheus + Pushgateway: cells warm up after exactly 20 readings while alternating replicas; every API-dashboard query returns data; `cells_tracked` is shared; Redis down -> 503 / precomputed 200 / `/health` 200; recovery | sandbox | real FastAPI app, real Prometheus 2.55.1, Pushgateway 1.9.0; model is a scikit-learn stand-in for XGBoost |
+| drift job -> Pushgateway -> Prometheus -> the drift dashboard's queries | sandbox | real except **Evidently, which is a stand-in** (KS tests) |
+| Everything inside a cluster (probes, kube-proxy balancing, `kubernetes_sd`, RBAC, NetworkPolicy, PVCs, the CronJob, Grafana provisioning, **real XGBoost and real Evidently**) | CI `kubernetes-manifests` job on kind (`scripts/k8s_e2e.sh`) | **not run yet** — first CI run is the first real check |
 
-## What is and isn't verified
+## Known limits
 
-- Verified offline: YAML parses; `tests/test_k8s_manifests.py` checks selectors, ports, probe paths, image name, mount
-  paths, UID and overlay targets against the rest of the repo.
-- Verified by CI only (first run is the first real check): `kubectl kustomize` renders both overlays, `kubeconform`
-  accepts the schema, and a kind cluster brings the Deployment to Ready and answers `/health` and `/metrics` via the Service.
-- **Not verified anywhere:** CPU/memory requests and limits (250m/512Mi → 1/1Gi) are starting guesses, not measurements;
-  HPA thresholds likewise; no Ingress, TLS, NetworkPolicy or auth is defined; Prometheus, Grafana, Airflow and Triton are
-  **not** ported — Compose still runs them. Scraping works via the pod annotations or `optional/servicemonitor.yaml`
-  (set its `release:` label to your Prometheus release).
+- Resource requests/limits and the HPA's 70% CPU target are starting guesses, not measurements.
+- Redis is a single instance (no HA/Sentinel). The NetworkPolicy only restricts who may reach Redis, and is enforced
+  only if your CNI supports NetworkPolicy (kind's default does not).
+- No Ingress, TLS or API authentication. Grafana is reachable only inside the cluster / by port-forward.
+- Prometheus keeps 15 days on a 5 Gi PVC and needs a default StorageClass; Grafana state (users, edited dashboards) is
+  not persisted — provisioned dashboards reappear on restart, manual edits do not.
+- Airflow and Triton are not ported; Compose still runs them.
+- Evidently's default dataset-drift rule (>= 50% of columns drifted) may be too coarse for 68 features from 5 KPIs.

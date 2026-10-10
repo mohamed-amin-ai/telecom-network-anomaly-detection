@@ -17,6 +17,8 @@ RUN pip install -r requirements.txt
 COPY api/ ./api
 COPY data/ ./data
 COPY models/ ./models
+# drift_check.py runs from this same image as a Kubernetes CronJob (k8s/monitoring/)
+COPY monitoring/ ./monitoring
 
 # Run as a non-root user
 RUN useradd --create-home --uid 1000 appuser

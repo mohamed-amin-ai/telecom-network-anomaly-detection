@@ -98,3 +98,13 @@ def test_rate_of_change_matches_manual_calculation(synthetic_kpi_df):
     actual_roc = cell_a.loc[cell_a["timestamp"] == ts, "latency_ms_roc"].iloc[0]
 
     assert np.isclose(actual_roc, expected_roc, rtol=1e-6)
+
+
+def test_mixed_timestamp_formats_in_one_history_do_not_raise(synthetic_kpi_df):
+    # Live histories mix client-supplied "...:00Z" with server-assigned "...:00.123456+00:00".
+    df = synthetic_kpi_df.copy()
+    ts = df["timestamp"].astype(str).tolist()
+    ts[1] = "2024-01-01T00:15:00.123456+00:00"
+    df["timestamp"] = ts
+    result = engineer_features(df, verbose=False)
+    assert len(result) > 0
