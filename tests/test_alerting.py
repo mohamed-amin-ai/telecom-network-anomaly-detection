@@ -80,11 +80,15 @@ def test_gap_merging_prevents_paging_storms():
 
 def test_grouped_metrics_aggregate_and_convert_to_cell_days():
     # two "cells" of 96 intervals (one day each): cell A has 1 detected event; cell B has 1 false alert
-    a_lab = np.zeros(96, dtype=bool); a_lab[10:15] = True
-    a_pred = np.zeros(96, dtype=bool); a_pred[11] = True
+    a_lab = np.zeros(96, dtype=bool)
+    a_lab[10:15] = True
+    a_pred = np.zeros(96, dtype=bool)
+    a_pred[11] = True
     b_lab = np.zeros(96, dtype=bool)
-    b_pred = np.zeros(96, dtype=bool); b_pred[50] = True
-    labels = np.concatenate([a_lab, b_lab]); pred = np.concatenate([a_pred, b_pred])
+    b_pred = np.zeros(96, dtype=bool)
+    b_pred[50] = True
+    labels = np.concatenate([a_lab, b_lab])
+    pred = np.concatenate([a_pred, b_pred])
     groups = np.array(["A"] * 96 + ["B"] * 96)
 
     m = grouped_event_metrics(labels, pred, groups, intervals_per_day=96, max_gap=2, tolerance=0)

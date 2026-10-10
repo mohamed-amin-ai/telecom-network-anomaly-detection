@@ -19,7 +19,7 @@ K8S = REPO / "k8s"
 BASE = K8S / "base"
 MONITORING = K8S / "monitoring"
 KUSTOMIZATIONS = [BASE, K8S / "overlays" / "scaled", K8S / "overlays" / "full", MONITORING]
-API_IMAGE = "ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection"
+API_IMAGE = "ghcr.io/mohamed-amin-ai/mlops-anomaly"
 
 
 def _load(path: Path) -> list:

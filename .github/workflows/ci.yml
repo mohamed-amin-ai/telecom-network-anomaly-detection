@@ -112,9 +112,15 @@ jobs:
       # see README's DVC section.
       - name: Run data + feature + train pipeline
         run: |
-          python data/generate_data.py
-          python data/features.py
-          python models/train.py
+          set -o pipefail
+          {
+            python data/generate_data.py
+            python data/features.py
+            python models/train.py
+          } 2>&1 | tee pipeline.log || {
+            echo "::error title=pipeline failed::$(tail -n 12 pipeline.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
 
       - name: Run API integration tests
         run: pytest tests/test_api.py -v
@@ -159,7 +165,12 @@ jobs:
         # check the printed "ONNX output(s)" line above the failure and
         # update triton_model_repository/telecom_anomaly_xgb/config.pbtxt's
         # output name to match.
-        run: python models/convert_to_onnx.py
+        run: |
+          set -o pipefail
+          python models/convert_to_onnx.py 2>&1 | tee onnx.log || {
+            echo "::error title=onnx failed::$(tail -n 14 onnx.log | cut -c1-200 | tr '\n' '|' | cut -c1-1500)"
+            exit 1
+          }
 
       - name: Upload ONNX model
         if: always()
@@ -194,7 +205,6 @@ jobs:
           path: mlruns/
           retention-days: 14
           if-no-files-found: warn
-          retention-days: 14
 
   docker-build-and-push:
     name: Build & push Docker image
@@ -218,9 +228,15 @@ jobs:
       # since the dataset is small).
       - name: Run data + feature + train pipeline
         run: |
-          python data/generate_data.py
-          python data/features.py
-          python models/train.py
+          set -o pipefail
+          {
+            python data/generate_data.py
+            python data/features.py
+            python models/train.py
+          } 2>&1 | tee pipeline.log || {
+            echo "::error title=pipeline failed::$(tail -n 12 pipeline.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -273,13 +289,39 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Run data + feature + train pipeline
         run: |
-          python data/generate_data.py
-          python data/features.py
-          python models/train.py
+          set -o pipefail
+          {
+            python data/generate_data.py
+            python data/features.py
+            python models/train.py
+          } 2>&1 | tee pipeline.log || {
+            echo "::error title=pipeline failed::$(tail -n 12 pipeline.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
       - name: Build image
-        run: docker build -t telecom-anomaly-api:ci .
-      - uses: helm/kind-action@v1
-      - name: Load image and run the end-to-end check
         run: |
-          kind load docker-image telecom-anomaly-api:ci
-          IMAGE=telecom-anomaly-api:ci scripts/k8s_e2e.sh
+          set -o pipefail
+          docker build --progress=plain -t telecom-anomaly-api:ci . 2>&1 | tee build.log || {
+            echo "::error title=docker build failed::$(grep -B22 -E 'ResolutionImpossible|^ERROR' build.log | grep -v -E '^[0-9.# ]*$|notice' | cut -c1-160 | tail -n 22 | tr '\n' '|' | cut -c1-1900)"
+            exit 1
+          }
+      - uses: helm/kind-action@v1
+      - name: Load image into kind
+        run: |
+          kind version
+          kind get clusters
+          set -o pipefail
+          # helm/kind-action names its cluster 'chart-testing', not kind's default 'kind'
+          kind load docker-image telecom-anomaly-api:ci --name "$(kind get clusters | head -n 1)" 2>&1 | tee load.log || {
+            echo "::error title=kind load failed::$(tail -n 8 load.log | cut -c1-200 | tr -d '%' | tr '\n' '|')"
+            exit 1
+          }
+      - name: Run the end-to-end check
+        run: |
+          IMAGE=telecom-anomaly-api:ci scripts/k8s_e2e.sh > e2e.log 2>&1 || {
+            kubectl get pods -A --no-headers 2>&1 | grep -v -E 'kube-system|local-path' | awk '{print $2,$3,$4,$5}' >> e2e.log
+            for n in 4 3 2 1; do
+              echo "::error title=e2e log part $n::$(tail -n $((n*8)) e2e.log | head -n 8 | cut -c1-150 | tr -d '%\r' | tr '\n' '|')"
+            done
+            exit 1
+          }

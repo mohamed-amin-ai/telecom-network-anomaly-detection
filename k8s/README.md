@@ -16,7 +16,7 @@ k8s/
 ```bash
 # 1. Pin the image CI built (ghcr.io tags: :latest and :<commit sha>)
 cd k8s/overlays/full && kustomize edit set image \
-  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha>
+  ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha>
 
 # 2. Grafana's password is never in git
 GRAFANA_PASSWORD='<choose>' make k8s-secret

@@ -1,6 +1,6 @@
 # Everything: API (2+ replicas, HPA) + Redis + Prometheus + Pushgateway + Grafana + drift CronJob.
 # Pin the API image ONCE here — it applies to the Deployment and the CronJob:
-#   cd k8s/overlays/full && kustomize edit set image ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha>
+#   cd k8s/overlays/full && kustomize edit set image ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha>
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: telecom-anomaly

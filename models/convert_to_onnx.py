@@ -57,23 +57,29 @@ def load_native_artifacts():
     return model, scaler
 
 
+def _strip_zipmap(onnx_model) -> None:
+    from onnx import TensorProto, helper
+
+    graph = onnx_model.graph
+    for node in [n for n in graph.node if n.op_type == "ZipMap"]:
+        prob, zipped = node.input[0], node.output[0]
+        graph.node.remove(node)
+        for out in [o for o in graph.output if o.name == zipped]:
+            graph.output.remove(out)
+        graph.output.append(helper.make_tensor_value_info(prob, TensorProto.FLOAT, [None, 2]))
+
+
 def convert(model, n_features: int):
     from onnxmltools.convert import convert_xgboost
     from onnxmltools.convert.common.data_types import FloatTensorType
 
     initial_types = [("input", FloatTensorType([None, n_features]))]
-    onnx_model = convert_xgboost(
-        model,
-        initial_types=initial_types,
-        # Disable ZipMap: by default sklearn-API classifiers convert to a
-        # sequence-of-maps output for probabilities, which is awkward for
-        # Triton/any non-Python client to consume. A plain float tensor
-        # (shape [N, 2] for this binary classifier) is what
-        # triton_model_repository/telecom_anomaly_xgb/config.pbtxt
-        # assumes — if you ever remove this option, update that config's
-        # output dims to match a map type instead (a bigger change).
-        options={id(model): {"zipmap": False}},
-    )
+    onnx_model = convert_xgboost(model, initial_types=initial_types)
+    # onnxmltools' convert_xgboost() has no ZipMap option (unlike skl2onnx), and depending on
+    # the version a classifier may end in a ZipMap node, i.e. a sequence-of-maps output that
+    # Triton and non-Python clients cannot consume. Strip it so the output is a plain float
+    # tensor [N, 2], which is what triton_model_repository/.../config.pbtxt assumes.
+    _strip_zipmap(onnx_model)
     return onnx_model
 
 
@@ -160,9 +166,9 @@ def main():
     print(f"  decisions match   : {result['decisions_match']}")
     print(f"  ONNX input name   : {result['input_name']}")
     print(f"  ONNX output(s)    : {result['output_meta']}")
-    print(f"  → if triton_model_repository/telecom_anomaly_xgb/config.pbtxt's "
-          f"input/output names don't match the above, update it to match "
-          f"(see that file's own comments).")
+    print("  → if triton_model_repository/telecom_anomaly_xgb/config.pbtxt's "
+          "input/output names don't match the above, update it to match "
+          "(see that file's own comments).")
 
     if not result["within_tolerance"] or not result["decisions_match"]:
         raise RuntimeError(

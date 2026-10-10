@@ -34,7 +34,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 from sklearn.metrics import average_precision_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 
@@ -63,7 +62,6 @@ def run_one(config: dict, X_train, y_train, X_val, y_val, X_test, y_test, val_re
     neg = (y_train == 0).sum()
     pos = (y_train == 1).sum()
     scale_pos_weight = neg / pos
-    sample_weight = np.where(y_train == 1, scale_pos_weight, 1.0)
 
     t0 = time.time()
     # Follows models/train.py's recipe: stop on VALIDATION PR-AUC (patience 30).

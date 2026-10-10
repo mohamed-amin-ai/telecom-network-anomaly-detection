@@ -181,9 +181,9 @@ def main():
 
     current_df = read_log(feature_cols=feature_cols)
     if current_df is None:
-        print(f"No inference log found yet (expected at api/inference_log.py's LOG_PATH). "
-              f"Nothing to compare against — send some real traffic to the API first "
-              f"(e.g. `make demo-traffic`), then rerun this.")
+        print("No inference log found yet (expected at api/inference_log.py's LOG_PATH). "
+              "Nothing to compare against — send some real traffic to the API first "
+              "(e.g. `make demo-traffic`), then rerun this.")
         return
     if len(current_df) < args.min_current_rows:
         print(f"Only {len(current_df)} rows logged so far, below --min-current-rows "
