@@ -8,7 +8,7 @@
 data:
   seed: 42
   cells: ["CELL_001", "CELL_002", "CELL_003"]
-  periods_days: 365   # was 60. Anomaly EVENTS now scale with this (generate_data.py), so
+  periods_days: 730   # was 60. Anomaly EVENTS now scale with this (generate_data.py), so
                       # validation/test windows hold dozens of events instead of ~2 and ~6.
   freq_minutes: 15
 
@@ -20,19 +20,19 @@ data:
   #
   # "calibrated" = ALIAS for the realistic code path with only `severity_and_ramp` on, every fault
   #               at full strength, and the onset ramp set by data.calibrated.ramp_fraction below.
-  #               That dial and the operating point were chosen by scripts/calibrate_to_original.py
-  #               so a baseline lands near the ORIGINAL project's reported metrics. The match is
-  #               therefore BY CONSTRUCTION — not independent evidence of model quality. This is the
-  #               configured default at the project owner's request.
+  #               The ramp, timeline length and operating point were chosen on DEVELOPMENT seeds by
+  #               scripts/target_window_search.py so results fall in a realistic window (row recall
+  #               95-98%, precision 75-85%), then reported on separate seeds. The window is a target
+  #               set by the project owner, so landing in it is BY CONSTRUCTION — not independent
+  #               evidence of model quality. This is the configured default.
   #
   # SWITCHING PROFILE: also set threshold.validation_recall_target to that level's value
-  # (legacy -> 0.96, calibrated -> 0.95, realistic -> 0.5; each chosen by its study script).
+  # (legacy -> 0.96, calibrated -> 0.965, realistic -> 0.5; each chosen by its study script).
   # A test fails if only one of the two was changed.
   profile: calibrated
   calibrated:
     severity_min: 1.0     # fixed: every fault at full strength
-    ramp_fraction: 0.0      # owner-selected from the calibration dev table (scripts/calibrate_to_original.py);
-                            # 0 = abrupt step change, i.e. clean-level difficulty. The distance rule would have picked 0.1.
+    ramp_fraction: 0.075    # chosen on DEV seeds by scripts/target_window_search.py (see results/target_window_search.json)
 
   realism:
     # Every value below is a judgment call about what real telemetry looks like — NOT calibrated
@@ -84,15 +84,15 @@ threshold:
   #     for the default data profile, then evaluated on separate seeds. See
   #     scripts/recall_target_study.py and EXPERIMENTS.md. A test keeps this equal to the
   #     study's result for the level data.profile selects. F2 rule: 0.96 on the clean benchmark,
-  #     0.5 on the realistic one. For the calibrated profile the target (0.975) is the owner's pick from the
-  #     calibration dev table, chosen so row-level recall sits clearly above precision;
-  #     scripts/calibrate_to_original.py.
+  #     0.5 on the realistic one. For the calibrated profile the target (0.965) comes from
+  #     scripts/target_window_search.py (dev seeds): recall fully inside 95-98% and median precision
+  #     closest to 80%.
   #   min_recall: the production floor a model must meet on the held-out TEST window to be
   #     promoted (models/promote.py). Reachable on most draws of the clean benchmark; NOT
   #     reachable at a usable alert rate on the realistic one — see README "What this means for
   #     promotion". Left unchanged: it is a business requirement, not something to tune to
   #     whatever the model achieves.
-  validation_recall_target: 0.975
+  validation_recall_target: 0.965
   min_recall: 0.93   # production recall floor (missed fault > false alarm)
 
 mlflow:

@@ -653,7 +653,7 @@
     }
   },
   "generated_by": "scripts/calibrate_to_original.py",
-  "periods_days": 365,
+  "periods_days": 730,
   "original_readme_metrics": {
     "recall": 0.9524,
     "precision": 0.7692,
@@ -708,53 +708,23 @@
   "fixed": {
     "severity_min": 1.0
   },
-  "chosen_ramp_fraction": 0.0,
-  "chosen_target": 0.975,
+  "chosen_ramp_fraction": 0.075,
+  "chosen_target": 0.965,
   "eval_summary": {
     "recall": {
-      "min": 0.938,
-      "median": 0.971,
-      "max": 0.992
+      "min": 0.948,
+      "median": 0.964,
+      "max": 0.972
     },
     "precision": {
-      "min": 0.689,
-      "median": 0.909,
-      "max": 0.976
+      "min": 0.598,
+      "median": 0.784,
+      "max": 0.927
     },
     "f1": {
-      "min": 0.81,
-      "median": 0.942,
-      "max": 0.97
-    },
-    "event_detection_rate": {
-      "min": 1.0,
-      "median": 1.0,
-      "max": 1.0
-    },
-    "false_alerts_per_cell_day": {
-      "min": 0.018,
-      "median": 0.151,
-      "max": 0.53
-    },
-    "median_delay_minutes": {
-      "min": 0.0,
-      "median": 0.0,
-      "max": 0.0
-    },
-    "pr_auc": {
-      "min": 0.97,
-      "median": 0.987,
-      "max": 0.996
-    },
-    "test_events": {
-      "min": 25.0,
-      "median": 27.5,
-      "max": 29.0
-    },
-    "test_positive_rows": {
-      "min": 289.0,
-      "median": 337.0,
-      "max": 383.0
+      "min": 0.739,
+      "median": 0.866,
+      "max": 0.938
     }
   },
   "eval_distance_of_medians": 0.141,
@@ -2431,33 +2401,99 @@
     }
   ],
   "selection": {
-    "method": "owner_selected_from_dev_table",
-    "distance_rule_pick": {
-      "ramp_fraction": 0.1,
-      "target": 0.95,
-      "dev_distance": 0.0402
+    "method": "window_search",
+    "window": {
+      "recall": [
+        0.95,
+        0.98
+      ],
+      "precision": [
+        0.75,
+        0.85
+      ]
     },
-    "selected_dev_summary": {
-      "recall": 0.9773,
-      "precision": 0.8039,
-      "f1": 0.8853,
-      "distance": 0.0428
-    },
-    "distance_rule_pick_eval_summary": {
+    "details": "results/target_window_search.json (dev seeds) and results/target_window_eval.json (eval seeds)"
+  },
+  "previous_selection": {
+    "ramp_fraction": 0.0,
+    "target": 0.975,
+    "periods_days": 365,
+    "eval_summary": {
       "recall": {
-        "min": 0.917,
-        "median": 0.941,
-        "max": 0.967
+        "min": 0.938,
+        "median": 0.971,
+        "max": 0.992
       },
       "precision": {
-        "min": 0.494,
-        "median": 0.841,
-        "max": 0.964
+        "min": 0.689,
+        "median": 0.909,
+        "max": 0.976
       },
       "f1": {
-        "min": 0.65,
-        "median": 0.89,
-        "max": 0.94
+        "min": 0.81,
+        "median": 0.942,
+        "max": 0.97
+      },
+      "event_detection_rate": {
+        "min": 1.0,
+        "median": 1.0,
+        "max": 1.0
+      },
+      "false_alerts_per_cell_day": {
+        "min": 0.018,
+        "median": 0.151,
+        "max": 0.53
+      },
+      "median_delay_minutes": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      },
+      "pr_auc": {
+        "min": 0.97,
+        "median": 0.987,
+        "max": 0.996
+      },
+      "test_events": {
+        "min": 25.0,
+        "median": 27.5,
+        "max": 29.0
+      },
+      "test_positive_rows": {
+        "min": 289.0,
+        "median": 337.0,
+        "max": 383.0
+      }
+    },
+    "selection": {
+      "method": "owner_selected_from_dev_table",
+      "distance_rule_pick": {
+        "ramp_fraction": 0.1,
+        "target": 0.95,
+        "dev_distance": 0.0402
+      },
+      "selected_dev_summary": {
+        "recall": 0.9773,
+        "precision": 0.8039,
+        "f1": 0.8853,
+        "distance": 0.0428
+      },
+      "distance_rule_pick_eval_summary": {
+        "recall": {
+          "min": 0.917,
+          "median": 0.941,
+          "max": 0.967
+        },
+        "precision": {
+          "min": 0.494,
+          "median": 0.841,
+          "max": 0.964
+        },
+        "f1": {
+          "min": 0.65,
+          "median": 0.89,
+          "max": 0.94
+        }
       }
     }
   }

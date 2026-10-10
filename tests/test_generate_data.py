@@ -100,14 +100,15 @@ def _with_profile(profile, realism_overrides=None, days=60):
     sys.path.insert(0, str(REPO_ROOT))
     import data.generate_data as gen
 
-    saved = (gen.PROFILE, dict(gen.REALISM), gen.PERIODS)
+    saved = (gen.PROFILE, dict(gen.REALISM), gen.PERIODS, gen.SEED)
     try:
+        gen.SEED = 42    # pinned: these invariants are for seed 42, independent of params.yaml's default seed
         gen.PROFILE, gen.PERIODS = profile, days * 96
         if realism_overrides is not None:
             gen.REALISM.update(realism_overrides)
         return gen.build_dataset_and_events()
     finally:
-        gen.PROFILE, gen.PERIODS = saved[0], saved[2]
+        gen.PROFILE, gen.PERIODS, gen.SEED = saved[0], saved[2], saved[3]
         gen.REALISM.clear(); gen.REALISM.update(saved[1])
 
 
