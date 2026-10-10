@@ -39,6 +39,7 @@ stages:
     outs:
       - models/model.json
       - models/scaler.pkl
+      - models/reference_features.csv
       - models/feature_importance.csv:
           cache: false
     metrics:

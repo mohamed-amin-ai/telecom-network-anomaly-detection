@@ -1,0 +1,47 @@
+# Prometheus config for the Kubernetes deployment (compare prometheus/prometheus.yml, the Compose one).
+# API pods are discovered through the Kubernetes API and scraped one by one (not through the
+# Service, which would load-balance each scrape to a random replica). The namespace below must
+# match k8s/base's namespace (tests/test_k8s_manifests.py checks).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "telecom-anomaly-api"
+    metrics_path: /metrics
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: ["telecom-anomaly"]
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: anomaly-api
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        regex: (.+)
+        target_label: __metrics_path__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - target_label: service
+        replacement: telecom-anomaly-api
+
+  # monitoring/drift_check.py pushes here (it is a batch job, not a scrape target).
+  # honor_labels keeps the job="drift_check" label the push set; the Grafana drift
+  # dashboard filters on it.
+  - job_name: "pushgateway"
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

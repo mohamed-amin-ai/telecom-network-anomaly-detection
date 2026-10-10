@@ -70,6 +70,15 @@ jobs:
     name: Unit tests (no model artifacts needed)
     needs: lint
     runs-on: ubuntu-latest
+    # Real Redis for tests/test_shared_history.py (without it those tests skip).
+    services:
+      redis:
+        image: redis:7.2-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      REDIS_TEST_URL: redis://localhost:6379/15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -80,7 +89,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -169,6 +178,7 @@ jobs:
             models/model.json
             models/scaler.pkl
             models/metadata.json
+            models/reference_features.csv
             models/feature_importance.csv
 
       - name: Upload MLflow tracking store
@@ -231,29 +241,31 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.sha }}
 
   kubernetes-manifests:
-    name: Kubernetes - render, schema-validate, kind smoke test
+    name: Kubernetes - render, schema-validate, end-to-end on kind
     needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       # `kubectl kustomize` is preinstalled on ubuntu runners. Rendering fails on broken
-      # references/patches, which is the cheapest useful check for the overlays.
-      - name: Render base and scaled overlay
+      # references and patches, the cheapest useful check for the overlays.
+      - name: Render every kustomization
         run: |
-          kubectl kustomize k8s/base > /tmp/base.yaml
-          kubectl kustomize k8s/overlays/scaled > /tmp/scaled.yaml
+          for d in base overlays/scaled monitoring overlays/full; do
+            kubectl kustomize "k8s/$d" > "/tmp/$(basename "$d").yaml"
+          done
 
       - name: Schema-validate with kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
-          ./kubeconform -strict -summary /tmp/base.yaml /tmp/scaled.yaml
+          ./kubeconform -strict -summary -kubernetes-version 1.30.0 /tmp/base.yaml /tmp/scaled.yaml /tmp/monitoring.yaml /tmp/full.yaml
           # ServiceMonitor is a CRD; skip it rather than pull a schema catalog
           ./kubeconform -strict -summary -ignore-missing-schemas k8s/optional/servicemonitor.yaml
 
-      # Real deploy: build the image from the actual pipeline output, load it into a throwaway
-      # kind cluster, apply the base manifests and require the Deployment to become Ready
-      # (readiness = /health returns 200 inside the cluster).
+      # Real deploy of the FULL stack from the actual pipeline output: the image contains the
+      # trained model and models/reference_features.csv. scripts/k8s_e2e.sh then checks shared
+      # history across replicas, the drift CronJob (real Evidently), Pushgateway, Prometheus and
+      # Grafana provisioning. Read that script's header for the exact list.
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -267,20 +279,7 @@ jobs:
       - name: Build image
         run: docker build -t telecom-anomaly-api:ci .
       - uses: helm/kind-action@v1
-      - name: Deploy to kind
+      - name: Load image and run the end-to-end check
         run: |
           kind load docker-image telecom-anomaly-api:ci
-          sed 's#ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest#telecom-anomaly-api:ci#' /tmp/base.yaml | kubectl apply -f -
-          kubectl -n telecom-anomaly rollout status deployment/anomaly-api --timeout=180s
-      - name: Smoke test through the Service
-        run: |
-          kubectl -n telecom-anomaly port-forward svc/anomaly-api 8000:8000 &
-          sleep 5
-          curl -sf http://localhost:8000/health
-          curl -sf http://localhost:8000/metrics | head -5
-      - name: Dump cluster state on failure
-        if: failure()
-        run: |
-          kubectl -n telecom-anomaly get all,pvc
-          kubectl -n telecom-anomaly describe pods
-          kubectl -n telecom-anomaly logs deployment/anomaly-api --tail=100 || true
+          IMAGE=telecom-anomaly-api:ci scripts/k8s_e2e.sh

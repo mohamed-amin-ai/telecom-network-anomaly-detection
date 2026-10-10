@@ -24,6 +24,12 @@ MODEL_DIR   = Path(__file__).parent
 PARAMS_PATH = Path(__file__).parent.parent / "params.yaml"
 
 
+# Fixed-seed sample of the training features, written by models/train.py and read by
+# monitoring/drift_check.py (so the drift job doesn't need data/features.csv).
+REFERENCE_FILENAME = "reference_features.csv"
+REFERENCE_SAMPLE_ROWS = 3000
+
+
 def load_params() -> dict:
     with open(PARAMS_PATH) as f:
         return yaml.safe_load(f)

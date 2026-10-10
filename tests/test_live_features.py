@@ -52,10 +52,9 @@ def _series(n=80, seed=0, zero_packet_loss_at=()):
 def _replay_into_store(df, upto):
     """Feed rows [0, upto) into a fresh store's buffer, return the store."""
     store = CellHistoryStore()
-    buf = store._buffer_for("C1")
     for j in range(max(0, upto - (MAX_HISTORY_ROWS - 1)), upto):
         r = df.iloc[j]
-        buf.append(make_raw_row(str(r.timestamp), "C1", {k: r[k] for k in KPI_COLS}))
+        store._backend.append("C1", make_raw_row(str(r.timestamp), "C1", {k: r[k] for k in KPI_COLS}))
     return store
 
 

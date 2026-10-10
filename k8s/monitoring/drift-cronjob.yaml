@@ -1,0 +1,68 @@
+# Runs monitoring/drift_check.py from the API image: reads the shared inference log from Redis,
+# compares it with models/reference_features.csv (a train-split sample baked into the image) using
+# Evidently, and pushes the result to the Pushgateway. Airflow's retrain DAG is NOT ported; this is
+# only the drift check. Evidently's result shape is unverified until its first real run
+# (see the banner in monitoring/drift_check.py) — check the first Job's logs.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: drift-check
+  labels:
+    app.kubernetes.io/name: drift-check
+    app.kubernetes.io/part-of: telecom-anomaly-detection
+spec:
+  schedule: "0 * * * *"          # hourly
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: drift-check
+            app.kubernetes.io/part-of: telecom-anomaly-detection
+            telecom-anomaly/redis-client: "true"
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: drift-check
+              image: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest
+              command: ["python", "monitoring/drift_check.py", "--pushgateway-url", "http://pushgateway:9091"]
+              env:
+                - name: REDIS_URL
+                  value: redis://redis:6379/0
+                # Read-only root filesystem: libraries that cache under $HOME (Evidently's plotting
+                # stack, matplotlib) must be pointed at the writable /tmp volume.
+                - name: HOME
+                  value: /tmp
+                - name: MPLCONFIGDIR
+                  value: /tmp/mpl
+              resources:
+                requests: {cpu: 250m, memory: 512Mi}
+                limits: {cpu: "1", memory: 2Gi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: reports
+                  mountPath: /app/monitoring/reports
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: reports
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}

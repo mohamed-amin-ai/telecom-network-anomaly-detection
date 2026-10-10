@@ -50,7 +50,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
-from models.common import load_params, load_data, time_split
+from models.common import MODEL_DIR, REFERENCE_FILENAME, load_params, load_data, time_split
 from api.inference_log import read_log
 
 REPORTS_DIR = Path(__file__).parent / "reports"
@@ -141,22 +141,43 @@ def _push_to_gateway(summary: dict, reference_rows: int, current_rows: int, push
     push_to_gateway(pushgateway_url, job="drift_check", registry=registry)
 
 
+def load_reference(reference_path):
+    """Reference (training) feature distribution.
+
+    Preferred: models/reference_features.csv, a fixed-seed sample of the train split written by
+    models/train.py and shipped in the image — it is what the Kubernetes CronJob uses, where
+    data/features.csv does not exist. Fallback (local dev): the train split of data/features.csv.
+    Returns (DataFrame restricted to the feature columns, feature column list)."""
+    import pandas as pd
+
+    path = Path(reference_path) if reference_path else MODEL_DIR / REFERENCE_FILENAME
+    if path.exists():
+        reference = pd.read_csv(path)
+        return reference, list(reference.columns)
+    if reference_path:
+        raise FileNotFoundError(f"--reference {reference_path} does not exist")
+    params = load_params()
+    df = load_data()
+    feature_cols = get_feature_columns(df)
+    train_df, _ = time_split(df, params["split"]["train_ratio"])
+    return train_df[feature_cols], feature_cols
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pushgateway-url", default="http://localhost:9091")
     parser.add_argument("--min-current-rows", type=int, default=30,
                          help="Skip the check (rather than run on too little data) below this many logged rows.")
+    parser.add_argument("--reference", default=None,
+                         help="CSV of reference feature rows (default: models/reference_features.csv, "
+                              "else the train split of data/features.csv).")
     parser.add_argument("--skip-push", action="store_true",
                          help="Compute and save the HTML report but don't push to Pushgateway (e.g. local debugging).")
     args = parser.parse_args()
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    params = load_params()
-    df = load_data()
-    feature_cols = get_feature_columns(df)
-    train_df, _ = time_split(df, params["split"]["train_ratio"])
-    reference = train_df[feature_cols]
+    reference, feature_cols = load_reference(args.reference)
 
     current_df = read_log(feature_cols=feature_cols)
     if current_df is None:

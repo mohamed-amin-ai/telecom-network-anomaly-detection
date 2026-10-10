@@ -17,6 +17,7 @@ data/features.csv
 data/events.csv
 models/model.json
 models/scaler.pkl
+models/reference_features.csv
 models/metadata.json
 models/feature_importance.csv
 

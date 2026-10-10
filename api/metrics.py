@@ -63,6 +63,11 @@ UNDEFINED_FEATURE_RESPONSES_TOTAL = Counter(
     "undefined (e.g. previous packet_loss_pct was exactly 0). Distinct from cold starts.",
 )
 
+HISTORY_STORE_ERRORS_TOTAL = Counter(
+    "history_store_errors_total",
+    "Total 503 responses because the shared history store (Redis) was unreachable or errored.",
+)
+
 CELLS_TRACKED = Gauge(
     "cells_tracked",
     "Number of distinct cell_ids currently held in the in-process history "
@@ -102,6 +107,10 @@ def record_cold_start() -> None:
 
 def record_undefined_features() -> None:
     UNDEFINED_FEATURE_RESPONSES_TOTAL.inc()
+
+
+def record_history_store_error() -> None:
+    HISTORY_STORE_ERRORS_TOTAL.inc()
 
 
 def set_cells_tracked(count: int) -> None:

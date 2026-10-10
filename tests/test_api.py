@@ -29,7 +29,7 @@ def client(require_model_artifacts):
 
     # Each test gets a clean in-memory history so cold-start/warm-start
     # behavior doesn't leak between tests sharing the module-level store.
-    history_store._history.clear()
+    history_store._backend._history.clear()   # default backend is in-memory
     return TestClient(app)
 
 
@@ -40,6 +40,17 @@ SAMPLE_KPIS = {
     "sinr_db": 15.0,
     "connected_users": 50,
 }
+
+
+def _varied(i: int) -> dict:
+    """KPIs that change on every reading. Identical readings give a rolling std of exactly 0,
+    so the z-score is 0/0 = NaN and the API (correctly) answers 422 — a perfectly constant
+    KPI is not a realistic warm-up input."""
+    return {
+        "latency_ms": 45.5 + 0.1 * i, "throughput_mbps": 90.0 - 0.2 * i,
+        "packet_loss_pct": 0.5 + 0.01 * i, "sinr_db": 15.0 + 0.05 * (i % 7),
+        "connected_users": 50 + (i % 5),
+    }
 
 
 def _snapshot(cell_id: str, **overrides) -> dict:
@@ -79,6 +90,7 @@ def test_predict_warms_up_after_enough_history(client):
         last_resp = client.post("/predict", json=_snapshot(
             cell_id,
             timestamp=f"2024-01-01T{i:02d}:00:00Z" if i < 24 else None,
+            **_varied(i),
         ))
     assert last_resp.status_code == 200
     body = last_resp.json()
@@ -158,16 +170,16 @@ def test_reading_after_a_zero_packet_loss_reading_is_422_not_stale_features(clie
     for i in range(30):   # warm up with strictly positive, varying packet loss
         r = client.post("/predict", json=_snapshot(
             cell_id, timestamp=f"2024-01-01T{i // 4:02d}:{(i % 4) * 15:02d}:00Z",
-            packet_loss_pct=0.3 + 0.01 * i, latency_ms=40 + i * 0.1,
+            **{**_varied(i), "packet_loss_pct": 0.3 + 0.01 * i},
         ))
     assert r.status_code == 200
 
     zero = client.post("/predict", json=_snapshot(
-        cell_id, timestamp="2024-01-01T08:00:00Z", packet_loss_pct=0.0))
+        cell_id, timestamp="2024-01-01T08:00:00Z", **{**_varied(30), "packet_loss_pct": 0.0}))
     assert zero.status_code == 200      # the zero reading itself is fine (prev was > 0)
 
     after = client.post("/predict", json=_snapshot(
-        cell_id, timestamp="2024-01-01T08:15:00Z", packet_loss_pct=0.4))
+        cell_id, timestamp="2024-01-01T08:15:00Z", **{**_varied(31), "packet_loss_pct": 0.4}))
     assert after.status_code == 422
     assert "undefined" in after.json()["detail"].lower()
 

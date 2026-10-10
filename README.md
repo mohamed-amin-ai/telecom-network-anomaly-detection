@@ -79,7 +79,7 @@ telecom_anomaly/
 ├── docker-compose.airflow.yml  # Airflow (Postgres + webserver + scheduler)
 ├── docker-compose.triton.yml   # Triton Inference Server (see Phase 6 caveat)
 ├── Dockerfile.airflow      # Airflow image with this project's deps installed
-├── k8s/                    # Kubernetes manifests (kustomize base + scaled overlay) — Phase 7
+├── k8s/                    # Kubernetes (kustomize): API + Redis + monitoring + drift CronJob — Phase 7
 ├── Makefile                # One-line commands for common workflows
 ├── EXPERIMENTS.md          # Real hyperparameter sweep results + findings
 └── README.md
@@ -172,7 +172,7 @@ Notes:
 | 4 | **Evidently** (data/prediction drift detection) | ✅ done |
 | 5 | **Airflow** (scheduled retrain → drift-check → promote DAG) | ✅ done |
 | 6 | **ONNX** + **Triton** (portable, high-throughput serving) | ✅ done |
-| 7 | **Kubernetes** (kustomize manifests for the API; CI renders, validates and smoke-tests on kind) | ✅ written, first cluster run is CI's |
+| 7 | **Kubernetes** (kustomize: API + Redis + monitoring stack + drift CronJob; CI validates and runs it end to end on kind) | ✅ written; first real cluster run is CI's |
 
 ### Phase 1 — MLflow + DVC
 
@@ -486,21 +486,27 @@ silently implied-fine.
 
 ### Phase 7 — Kubernetes
 
-Manifests for the API live in [`k8s/`](k8s/README.md): a Deployment (non-root, read-only root filesystem, startup/readiness/liveness
-probes on `/health`, Prometheus scrape annotations), a Service, a PVC for the inference log, and an optional autoscaled overlay.
+Manifests in [`k8s/`](k8s/README.md) (kustomize): the API on 2+ replicas with an autoscaler, a **Redis** that holds the shared
+per-cell history and inference log, Prometheus + Pushgateway + Grafana (both dashboards provisioned), and an hourly
+drift-check CronJob. Pods run non-root with a read-only root filesystem.
 
 ```bash
-make k8s-render && make k8s-apply     # then: make k8s-port-forward
+GRAFANA_PASSWORD='<choose>' make k8s-secret && make k8s-apply     # then: make k8s-port-forward / make k8s-grafana
 ```
 
-**Single replica by design.** Per-cell history for raw readings is held in process memory (`api/live_features.py`), so more
-than one replica makes raw-reading requests answer `425` indefinitely. The `scaled` overlay is only for clients that send
-pre-computed features; scaling the raw-reading path needs a shared history store first.
+**What changed in the code:** `REDIS_URL` moves per-cell history and the inference log from process memory/a local CSV into
+Redis (`api/shared_store.py`); unset, nothing changes. This is what lets replicas share state: previously a second replica
+would see only part of a cell's readings and answer `425` forever. A Redis outage returns `503` for raw readings only.
 
-**Same honesty pattern as earlier phases:** no cluster was available when this was written. Offline tests check the manifests
-against the rest of the repo; a new CI job renders both overlays, schema-validates with kubeconform and deploys to a kind
-cluster, so CI's first run is the first real check. Resource limits are unmeasured starting values. Prometheus/Grafana/Airflow/Triton
-are not ported to Kubernetes.
+**Bugs found while validating** (both fixed, with regression tests): (1) a cell whose readings mix client-supplied timestamps
+(`...Z`) with server-assigned ones (microseconds) crashed feature computation; (2) the API tests posted perfectly constant KPIs,
+whose z-score is undefined, so a warm-up test could not pass on current pandas.
+
+**Verified here vs. not** — in the sandbox: all manifests render and pass `kubeconform --strict`; the Redis code runs against a
+live Redis; two real API processes sharing it, with real Prometheus and Pushgateway, pass the shared-history, dashboard-query,
+drift-metrics and Redis-outage checks (model and Evidently are stand-ins there). **Not run anywhere yet:** an actual cluster —
+the CI job `kubernetes-manifests` (`scripts/k8s_e2e.sh` on kind, with real XGBoost and Evidently) is the first real check.
+Resource limits are unmeasured guesses. Airflow and Triton are not ported. Details and limits: [`k8s/README.md`](k8s/README.md).
 
 ---
 

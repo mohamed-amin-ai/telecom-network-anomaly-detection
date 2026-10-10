@@ -6,14 +6,14 @@ metadata:
     app.kubernetes.io/name: anomaly-api
     app.kubernetes.io/part-of: telecom-anomaly-detection
 spec:
-  # ONE replica on purpose. api/live_features.py keeps each cell's recent readings in process
-  # memory, so a second replica would see only part of a cell's history and keep answering
-  # 425 (cold start) for raw readings. See k8s/README.md before changing this.
-  replicas: 1
-  # Recreate, not RollingUpdate: the log volume is ReadWriteOnce, and a surge pod could not
-  # mount it while the old one is still running.
+  # More than one replica is only correct because REDIS_URL (below) moves per-cell history and the
+  # inference log into the shared Redis (api/shared_store.py). Without it every replica would hold
+  # a fraction of a cell's readings and keep answering 425. tests/test_k8s_manifests.py enforces
+  # "replicas > 1 requires REDIS_URL".
+  replicas: 2
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
   selector:
     matchLabels:
       app.kubernetes.io/name: anomaly-api
@@ -22,6 +22,7 @@ spec:
       labels:
         app.kubernetes.io/name: anomaly-api
         app.kubernetes.io/part-of: telecom-anomaly-detection
+        telecom-anomaly/redis-client: "true"     # lets the redis NetworkPolicy admit this pod
       annotations:
         # Picked up by annotation-based Prometheus scrape configs. With the Prometheus
         # Operator use k8s/optional/servicemonitor.yaml instead.
@@ -37,6 +38,14 @@ spec:
         fsGroup: 1000            # makes the log volume writable by that user
         seccompProfile:
           type: RuntimeDefault
+      # Spread replicas over nodes when possible (soft: a single-node cluster still schedules both).
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: anomaly-api
       containers:
         - name: api
           image: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest  # pin a commit SHA via the kustomize `images:` block
@@ -44,6 +53,9 @@ spec:
           ports:
             - name: http
               containerPort: 8000
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379/0
           # The image's own HEALTHCHECK is ignored by Kubernetes; these replace it.
           # The model is loaded at import time, so give startup room before liveness applies.
           startupProbe:
@@ -69,13 +81,8 @@ spec:
             capabilities:
               drop: ["ALL"]
           volumeMounts:
-            - name: logs
-              mountPath: /app/logs
             - name: tmp
               mountPath: /tmp
       volumes:
-        - name: logs
-          persistentVolumeClaim:
-            claimName: anomaly-api-logs
         - name: tmp
           emptyDir: {}

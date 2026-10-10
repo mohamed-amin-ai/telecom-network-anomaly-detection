@@ -16,7 +16,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "targets": [
-        { "expr": "cells_tracked", "legendFormat": "cells", "refId": "A" }
+        { "expr": "max(cells_tracked)", "legendFormat": "cells", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } },
@@ -30,7 +30,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
       "targets": [
-        { "expr": "model_threshold_info", "legendFormat": "threshold", "refId": "A" }
+        { "expr": "max(model_threshold_info)", "legendFormat": "threshold", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {

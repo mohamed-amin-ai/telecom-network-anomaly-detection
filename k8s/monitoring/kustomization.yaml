@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: telecom-anomaly
+resources:
+  - prometheus.yaml
+  - pushgateway.yaml
+  - grafana.yaml
+  - drift-cronjob.yaml
+configMapGenerator:
+  - name: prometheus-config
+    files: [prometheus.yml]
+  - name: grafana-datasources
+    files: [grafana/datasources/prometheus.yml]
+  - name: grafana-dashboard-provider
+    files: [grafana/provider/dashboards.yml]
+  - name: grafana-dashboards
+    files:
+      - grafana/dashboards/telecom-anomaly-api.json
+      - grafana/dashboards/drift-monitoring.json
+images:
+  - name: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection
+    newTag: latest

@@ -42,7 +42,10 @@ import joblib
 # Allow imports from parent dir
 sys.path.append(str(Path(__file__).parent.parent))
 from data.features import get_feature_columns
-from models.common import MODEL_DIR, load_params, load_data, three_way_time_split, tune_threshold
+from models.common import (
+    MODEL_DIR, REFERENCE_FILENAME, REFERENCE_SAMPLE_ROWS,
+    load_params, load_data, three_way_time_split, tune_threshold,
+)
 
 
 def main():
@@ -212,6 +215,14 @@ def main():
 
         model.save_model(MODEL_DIR / "model.json")
         joblib.dump(scaler, MODEL_DIR / "scaler.pkl")
+
+        # Reference sample for monitoring/drift_check.py. The API image ships models/ but not
+        # data/features.csv, so the drift job (a Kubernetes CronJob) needs its reference
+        # distribution next to the model. Unscaled, because the inference log is unscaled.
+        # A fixed-seed sample of the TRAIN split only — never validation or test rows.
+        train_df[feature_cols].sample(
+            n=min(REFERENCE_SAMPLE_ROWS, len(train_df)), random_state=0
+        ).sort_index().to_csv(MODEL_DIR / REFERENCE_FILENAME, index=False)
 
         metadata = {
             "feature_cols": feature_cols,
