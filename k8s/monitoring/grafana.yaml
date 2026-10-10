@@ -6,6 +6,16 @@
 # Grafana state (users, UI-made dashboards) is on an emptyDir and is lost on restart; the
 # provisioned dashboards are not. readOnlyRootFilesystem is left off: Grafana writes outside
 # /var/lib/grafana at startup and I could not verify a read-only setup without a cluster.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -76,7 +86,8 @@ spec:
               readOnly: true
       volumes:
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: grafana-data
         - name: dashboards
           configMap:
             name: grafana-dashboards

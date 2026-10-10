@@ -11,6 +11,7 @@
 #   3. both API pods really received traffic (otherwise (2) proves nothing)
 #   4. the drift CronJob runs from the same image against the shared inference log and succeeds
 #   5. Pushgateway holds its metrics; Prometheus scrapes both API pods and the drift job's metrics
+#   (API-key auth is on for the run: unauthenticated /predict -> 401, /metrics open)
 #   6. Grafana provisioned both dashboards and its Prometheus datasource is healthy
 set -euo pipefail
 
@@ -48,6 +49,10 @@ step "Deploy k8s/overlays/full with image $IMAGE"
 kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "$NS" create secret generic grafana-admin --from-literal=admin-password="$GRAFANA_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
+# Turn API-key auth on, so steps 2-3 also prove an authenticated client works across replicas
+API_KEY=${API_KEY:-$(python3 -c 'import secrets; print(secrets.token_urlsafe(16))')}
+kubectl -n "$NS" create secret generic api-keys --from-literal=keys="$API_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
 kubectl kustomize k8s/overlays/full | sed "s#${REMOTE_IMAGE}#${IMAGE}#g" | kubectl apply -f -
 
 step "1. Workloads Ready"
@@ -60,7 +65,7 @@ step "2-3. Shared history across replicas"
 # New pod each time so every request opens a fresh connection from inside the cluster (kube-proxy
 # then picks a backend per connection). kubectl port-forward would pin to ONE pod, hiding the problem.
 kubectl -n "$NS" run traffic --rm -i --restart=Never --image="$IMAGE" --image-pull-policy=IfNotPresent \
-  -- python - --url http://anomaly-api:8000 --cells 3 --readings 32 \
+  --env=API_KEY="$API_KEY" -- python - --url http://anomaly-api:8000 --cells 3 --readings 32 \
   < scripts/k8s_traffic.py || fail "cells did not warm up across replicas"
 for pod in $(kubectl -n "$NS" get pods -l app.kubernetes.io/name=anomaly-api -o name); do
   n=$(kubectl -n "$NS" logs "$pod" | grep -c 'POST /predict' || true)
@@ -70,6 +75,10 @@ done
 port_forward anomaly-api 18000 8000
 [ "$(curl -s http://127.0.0.1:18000/health | python3 -c 'import json,sys; print(json.load(sys.stdin)["history_backend"])')" = redis ] \
   || fail "/health does not report the redis history backend"
+
+[ "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18000/predict -H 'Content-Type: application/json' -d '{}')" = 401 ] \
+  || fail "/predict without a key should be 401"
+[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18000/metrics)" = 200 ] || fail "/metrics must stay open"
 
 step "4. Drift CronJob (real Evidently, shared inference log in Redis)"
 kubectl -n "$NS" delete job drift-smoke --ignore-not-found

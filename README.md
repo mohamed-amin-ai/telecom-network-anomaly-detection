@@ -506,7 +506,7 @@ whose z-score is undefined, so a warm-up test could not pass on current pandas.
 live Redis; two real API processes sharing it, with real Prometheus and Pushgateway, pass the shared-history, dashboard-query,
 drift-metrics and Redis-outage checks (model and Evidently are stand-ins there). **Not run anywhere yet:** an actual cluster —
 the CI job `kubernetes-manifests` (`scripts/k8s_e2e.sh` on kind, with real XGBoost and Evidently) is the first real check.
-Resource limits are unmeasured guesses. Airflow and Triton are not ported. Details and limits: [`k8s/README.md`](k8s/README.md).
+API and Redis resource limits are measured (`scripts/measure_resources.py`, on the stand-in model); the monitoring pods' are guesses. Optional API-key auth (`API_KEYS`) and an HTTPS Ingress are included. Airflow and Triton are not ported. Details and limits: [`k8s/README.md`](k8s/README.md).
 
 ---
 
