@@ -48,7 +48,7 @@ spec:
               app.kubernetes.io/name: anomaly-api
       containers:
         - name: api
-          image: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest  # pin a commit SHA via the kustomize `images:` block
+          image: ghcr.io/mohamed-amin-ai/mlops-anomaly:latest  # pin a commit SHA via the kustomize `images:` block
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

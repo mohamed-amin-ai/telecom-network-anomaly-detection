@@ -81,7 +81,9 @@ def run(seeds, params):
 def summarize(all_rows, configured):
     summary = {}
     for name, rows in all_rows.items():
-        at = lambda key: spread([r["by_target"][configured][key] for r in rows])
+        def at(key, rows=rows):
+            return spread([r["by_target"][configured][key] for r in rows])
+
         summary[name] = {
             "test_pr_auc": spread([r["test_pr_auc"] for r in rows]),
             "recall": at("recall"), "precision": at("precision"), "f1": at("f1"),
@@ -94,7 +96,9 @@ def summarize(all_rows, configured):
     tradeoff = {}
     for t in sorted({*OPERATING_POINTS, float(configured)}):
         k = str(t)
-        g = lambda key: spread([r["by_target"][k][key] for r in all_rows[full]])
+        def g(key, k=k):
+            return spread([r["by_target"][k][key] for r in all_rows[full]])
+
         tradeoff[k] = {"recall": g("recall"), "precision": g("precision"), "f2": g("f2"),
                        "event_detection_rate": g("event_detection_rate"),
                        "false_alerts_per_cell_day": g("false_alerts_per_cell_day"),
@@ -125,7 +129,7 @@ def main():
         print(f"{name:24s} {fmt(s['test_pr_auc']):>20s} {fmt(s['recall']):>20s} {fmt(s['precision']):>20s} "
               f"{fmt(s['event_detection_rate']):>20s} {fmt(s['false_alerts_per_cell_day']):>22s}")
 
-    print(f"\n=== Operating points, FULL realistic profile — median (min-max) ===")
+    print("\n=== Operating points, FULL realistic profile — median (min-max) ===")
     print(f"{'val target':>10s} {'row recall':>20s} {'row precision':>20s} {'incident detect':>20s} {'false alerts/cell-day':>22s} {'delay (min)':>14s}")
     for t, s in tradeoff.items():
         print(f"{t:>10s} {fmt(s['recall']):>20s} {fmt(s['precision']):>20s} {fmt(s['event_detection_rate']):>20s} "

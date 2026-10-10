@@ -64,7 +64,8 @@ def test_early_stopping_standin_stops_before_the_round_cap_on_noise():
 
 def test_predict_best_uses_the_requested_round_not_the_final_model():
     rng = np.random.default_rng(1)
-    X = rng.normal(size=(2000, 5)); y = (X[:, 0] + 0.3 * rng.normal(size=2000) > 1).astype(int)
+    X = rng.normal(size=(2000, 5))
+    y = (X[:, 0] + 0.3 * rng.normal(size=2000) > 1).astype(int)
     params = {"max_depth": 3, "learning_rate": 0.2, "n_estimators": 60, "early_stopping_rounds": 5, "random_state": 0}
     model, _ = fit_stand_in(X[:1500], y[:1500], X[1500:], y[1500:], params)
     early, final = predict_best(model, X[1500:], 3), model.predict_proba(X[1500:])[:, 1]
@@ -91,4 +92,5 @@ def test_levels_configure_the_generator_and_are_restorable():
         assert not any(gen.REALISM[f] for f in ("nonstationarity", "label_noise", "benign_surges"))
     finally:
         gen.PROFILE, gen.PERIODS, gen.SEED = saved[0], saved[2], saved[3]
-        gen.REALISM.clear(); gen.REALISM.update(saved[1])
+        gen.REALISM.clear()
+        gen.REALISM.update(saved[1])

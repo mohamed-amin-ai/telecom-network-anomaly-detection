@@ -37,7 +37,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: drift-check
-              image: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest
+              image: ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
               command: ["python", "monitoring/drift_check.py", "--pushgateway-url", "http://pushgateway:9091"]
               env:
                 - name: REDIS_URL

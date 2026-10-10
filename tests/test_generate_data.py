@@ -109,7 +109,8 @@ def _with_profile(profile, realism_overrides=None, days=60):
         return gen.build_dataset_and_events()
     finally:
         gen.PROFILE, gen.PERIODS, gen.SEED = saved[0], saved[2], saved[3]
-        gen.REALISM.clear(); gen.REALISM.update(saved[1])
+        gen.REALISM.clear()
+        gen.REALISM.update(saved[1])
 
 
 ALL_ON = {"nonstationarity": True, "severity_and_ramp": True, "label_noise": True, "benign_surges": True}

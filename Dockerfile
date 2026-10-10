@@ -11,7 +11,8 @@ WORKDIR /app
 
 # Install deps first so this layer is cached unless requirements.txt changes
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# the base image ships an old pip whose resolver fails on the opentelemetry pins that the CI runner resolves fine
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy only what the service actually needs at runtime
 COPY api/ ./api

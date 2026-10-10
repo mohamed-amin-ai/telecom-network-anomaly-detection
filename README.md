@@ -219,7 +219,7 @@ The model, API and results above are unchanged in purpose; the MLOps layer below
 |---|---|
 | Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.33** false alerts per cell per day |
 | Detector ranking quality | PR-AUC **0.977** |
-| Automated tests | **136** passing |
+| Automated tests | **137** passing |
 | Serving (per replica) | **~27 req/s**, p95 latency **191 ms**, **181 MiB** memory |
 | Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them |
 | Resilience | Redis outage → raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without restart |
