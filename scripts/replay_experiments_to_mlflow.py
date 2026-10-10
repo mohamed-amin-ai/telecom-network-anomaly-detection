@@ -53,6 +53,13 @@ def main():
             })
             mlflow.log_params(run["params"])
             mlflow.log_params({f"dataset_{k}": v for k, v in data["dataset"].items()})
+            # The benchmark setting the sweep was run under, so runs from different settings can be told apart.
+            mlflow.log_params({
+                "data_profile": params["data"]["profile"],
+                "data_seed": params["data"]["seed"],
+                "data_periods_days": params["data"]["periods_days"],
+                "data_ramp_fraction": params["data"].get("calibrated", {}).get("ramp_fraction"),
+            })
             mlflow.log_metrics({
                 k: v for k, v in run["metrics"].items()
                 if isinstance(v, (int, float))

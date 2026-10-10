@@ -2,7 +2,7 @@
 
 An end-to-end ML system that detects anomalies in telecom network KPIs (latency, throughput, packet loss) in real time, deployed as a production-ready REST API.
 
-**Key result: 97.1% recall on detecting network faults before service degradation.**
+**Key result: 97.0% recall on detecting network faults before service degradation.**
 
 ---
 
@@ -159,7 +159,7 @@ Total: **68 features** across 5 KPIs.
 | Max depth | 6 |
 | Learning rate | 0.05 |
 | Class imbalance | Handled via `scale_pos_weight` |
-| Threshold | Tuned on validation set to reach a 97.5% recall target |
+| Threshold | Tuned on validation set to reach a 96.5% recall target |
 | Train/test split | Time-based 80/20 (no shuffle) |
 
 ### Why XGBoost?
@@ -188,13 +188,13 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 | Metric | Value |
 |---|---|
-| Recall | **97.1%** — catches 97 of every 100 faults |
-| Precision | **90.9%** — ~9% false alarm rate, acceptable for NOC operations |
-| F1 Score | **0.942** |
+| Recall | **97.0%** — catches 97 of every 100 faults |
+| Precision | **79.5%** — ~20% false alarm rate, acceptable for NOC operations |
+| F1 Score | **0.874** |
 
 *Results on held-out test set (last 20% of time window, never seen during training).*
-*Threshold tuned to a 97.5% recall target on the validation set, with a 93% recall floor required on the test set for a model to be promoted — missing a fault is more costly than a false alarm in NOC operations.*
-*Median over 10 independent synthetic datasets; individual runs range from 93.8–99.2% recall and 68.9–97.6% precision.*
+*Threshold tuned to a 96.5% recall target on the validation set, with a 93% recall floor required on the test set for a model to be promoted — missing a fault is more costly than a false alarm in NOC operations.*
+*Default dataset (`data.seed: 42`). Across 10 independent synthetic datasets the median is 96.4% recall / 78.4% precision, and individual runs range from 94.8–97.2% recall and 59.8–92.7% precision.*
 
 ---
 
@@ -217,8 +217,8 @@ The model, API and results above are unchanged in purpose; the MLOps layer below
 
 | Area | Result |
 |---|---|
-| Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.15** false alerts per cell per day |
-| Detector ranking quality | PR-AUC **0.987** |
+| Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.33** false alerts per cell per day |
+| Detector ranking quality | PR-AUC **0.977** |
 | Automated tests | **136** passing |
 | Serving (per replica) | **~27 req/s**, p95 latency **191 ms**, **181 MiB** memory |
 | Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them |
