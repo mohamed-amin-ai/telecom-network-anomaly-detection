@@ -184,3 +184,29 @@ def test_reading_after_a_zero_packet_loss_reading_is_422_not_stale_features(clie
     assert "undefined" in after.json()["detail"].lower()
 
     assert "undefined_feature_responses_total" in client.get("/metrics").text
+
+
+# ── API-key auth (api/auth.py) ─────────────────────────────────────────────
+
+def test_routes_are_open_when_no_api_keys_are_configured(client, monkeypatch):
+    monkeypatch.delenv("API_KEYS", raising=False) if hasattr(monkeypatch, "delenv") else monkeypatch.setenv("API_KEYS", "")
+    assert client.get("/model/info").status_code == 200
+
+
+def test_prediction_routes_require_a_configured_key(client, monkeypatch):
+    monkeypatch.setenv("API_KEYS", "alpha, beta")
+    body = _snapshot("AUTH_CELL")
+    for method, path, payload in (("post", "/predict", body), ("post", "/predict/batch", {"snapshots": [body]}), ("get", "/model/info", None)):
+        call = getattr(client, method)
+        kw = {"json": payload} if payload is not None else {}
+        assert call(path, **kw).status_code == 401, path
+        assert call(path, headers={"X-API-Key": "wrong"}, **kw).status_code == 401, path
+        # either configured key is accepted (425 = authenticated but the cell has no history yet)
+        assert call(path, headers={"X-API-Key": "beta"}, **kw).status_code in (200, 425), path
+    assert client.post("/predict", json=body).headers["www-authenticate"] == "ApiKey"
+
+
+def test_health_and_metrics_stay_open_when_keys_are_configured(client, monkeypatch):
+    monkeypatch.setenv("API_KEYS", "alpha")
+    assert client.get("/health").status_code == 200       # kubelet probes carry no key
+    assert client.get("/metrics").status_code == 200      # Prometheus scrapes inside the cluster

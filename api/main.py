@@ -20,7 +20,7 @@ from typing import Any, Optional
 import joblib
 import numpy as np
 import xgboost as xgb
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from api.live_features import (
@@ -31,6 +31,7 @@ from api.live_features import (
     now_iso,
     MIN_HISTORY_ROWS,
 )
+from api.auth import require_api_key
 from api.shared_store import build_history_backend
 from api.metrics import (
     record_history_store_error,
@@ -272,7 +273,7 @@ def health():
     return {"status": "ok", "model": "xgboost", "version": "1.0.0", "history_backend": history_store.backend_name}
 
 
-@app.get("/model/info")
+@app.get("/model/info", dependencies=[Depends(require_api_key)])
 def model_info():
     return {
         "threshold":    THRESHOLD,
@@ -283,12 +284,12 @@ def model_info():
     }
 
 
-@app.post("/predict", response_model=PredictionResult)
+@app.post("/predict", response_model=PredictionResult, dependencies=[Depends(require_api_key)])
 def predict(snapshot: KPISnapshot):
     return run_inference(snapshot)
 
 
-@app.post("/predict/batch", response_model=BatchResult)
+@app.post("/predict/batch", response_model=BatchResult, dependencies=[Depends(require_api_key)])
 def predict_batch(request: BatchRequest):
     if len(request.snapshots) > 500:
         raise HTTPException(status_code=400, detail="Max batch size is 500.")

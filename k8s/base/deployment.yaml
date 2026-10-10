@@ -56,6 +56,14 @@ spec:
           env:
             - name: REDIS_URL
               value: redis://redis:6379/0
+            # Optional shared-secret auth for /predict, /predict/batch, /model/info (api/auth.py).
+            # Secret absent => routes stay open. Create:  kubectl -n telecom-anomaly create secret generic api-keys --from-literal=keys='k1,k2'
+            - name: API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: keys
+                  optional: true
           # The image's own HEALTHCHECK is ignored by Kubernetes; these replace it.
           # The model is loaded at import time, so give startup room before liveness applies.
           startupProbe:
@@ -73,8 +81,13 @@ spec:
             failureThreshold: 3
           # Starting values, NOT measured. Load-test and adjust.
           resources:
-            requests: {cpu: 250m, memory: 512Mi}
-            limits: {cpu: "1", memory: 1Gi}
+            # Measured with scripts/measure_resources.py (scikit-learn stand-in model, 4 concurrent
+            # clients, warmed cells): ~180 MiB RSS, ~42 ms CPU per scored request, one process
+            # saturates ~1 core at ~26 req/s (feature engineering over the cell history dominates).
+            # Memory: ~2.8x headroom over the peak. CPU limit 1 = what one uvicorn process can use.
+            # The HPA's 70% target is of this 500m request. RE-MEASURE with the real XGBoost image.
+            requests: {cpu: 500m, memory: 256Mi}
+            limits: {cpu: "1", memory: 512Mi}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

@@ -15,6 +15,7 @@ Standard library only, so it can be piped into any image that has python:
 
 import argparse
 import json
+import os
 import random
 import sys
 import urllib.error
@@ -41,7 +42,8 @@ def make_reading(cell_id: str, i: int, rng: random.Random, start: datetime) -> d
 
 def post(url: str, payload: dict) -> int:
     req = urllib.request.Request(url, data=json.dumps(payload).encode(),
-                                 headers={"Content-Type": "application/json", "Connection": "close"}, method="POST")
+                                 headers={"Content-Type": "application/json", "Connection": "close",
+                                      **({"X-API-Key": os.environ["API_KEY"]} if os.environ.get("API_KEY") else {})}, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             resp.read()

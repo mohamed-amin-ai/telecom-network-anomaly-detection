@@ -1,0 +1,32 @@
+# Public HTTPS entry for the API. Needs an ingress controller (ingress-nginx assumed) and, for the
+# certificate, either cert-manager (annotation below) or a pre-made TLS Secret named `anomaly-api-tls`.
+#   kubectl apply -f k8s/optional/ingress.yaml        # edit the host first
+#
+# Only the paths listed here are routed, so /metrics is NOT reachable from outside (Prometheus
+# scrapes it inside the cluster). Grafana and Prometheus have no Ingress on purpose: use port-forward.
+# Turn on API keys (see api/auth.py) before exposing /predict publicly; TLS alone does not authenticate anyone.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anomaly-api
+  namespace: telecom-anomaly
+  labels:
+    app.kubernetes.io/name: anomaly-api
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod      # remove if you provide the Secret yourself
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m       # batch of 500 snapshots is well under this
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [anomaly.example.com]
+      secretName: anomaly-api-tls
+  rules:
+    - host: anomaly.example.com
+      http:
+        paths:
+          - {path: /predict, pathType: Prefix, backend: {service: {name: anomaly-api, port: {name: http}}}}
+          - {path: /model,   pathType: Prefix, backend: {service: {name: anomaly-api, port: {name: http}}}}
+          - {path: /health,  pathType: Exact,  backend: {service: {name: anomaly-api, port: {name: http}}}}
+          - {path: /docs,    pathType: Exact,  backend: {service: {name: anomaly-api, port: {name: http}}}}
+          - {path: /openapi.json, pathType: Exact, backend: {service: {name: anomaly-api, port: {name: http}}}}

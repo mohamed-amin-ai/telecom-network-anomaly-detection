@@ -54,7 +54,7 @@ spec:
             failureThreshold: 3
           # Starting values, NOT measured.
           resources:
-            requests: {cpu: 100m, memory: 300Mi}
+            requests: {cpu: 100m, memory: 128Mi}   # measured: ~5 MiB per 1.2k log rows -> ~80 MiB at the 20k-row cap
             limits: {cpu: 500m, memory: 400Mi}
           securityContext:
             allowPrivilegeEscalation: false

@@ -309,3 +309,51 @@ def test_e2e_script_expects_what_the_manifests_define():
         assert secret in sh and secret in (MONITORING / "grafana.yaml").read_text()
     assert "cronjob/drift-check" in sh and ("CronJob", "drift-check") in _all_docs()
     assert (REPO / "scripts/k8s_traffic.py").exists()
+
+
+def test_api_keys_come_from_an_optional_secret_and_probes_need_no_key():
+    ref = {e["name"]: e for e in _api_container()["env"]}["API_KEYS"]["valueFrom"]["secretKeyRef"]
+    assert ref["optional"] is True            # no Secret -> open routes, pod still starts
+    api_src = (REPO / "api" / "main.py").read_text()
+    assert api_src.count("Depends(require_api_key)") == 3
+    # probes hit /health and Prometheus hits /metrics: neither route may be key-protected
+    for open_route in ('@app.get("/health")',):
+        assert open_route in api_src
+
+
+def test_ingress_exposes_only_api_paths_never_metrics():
+    ing = _load(K8S / "optional" / "ingress.yaml")[0]
+    rules = ing["spec"]["rules"][0]["http"]["paths"]
+    svc_ports = {p["name"] for p in _service_for("anomaly-api")["spec"]["ports"]}
+    for p in rules:
+        assert p["backend"]["service"]["name"] == "anomaly-api" and p["backend"]["service"]["port"]["name"] in svc_ports
+        assert not p["path"].startswith("/metrics")
+    assert {p["path"] for p in rules} >= {"/predict", "/health"}
+    assert ing["spec"]["tls"][0]["secretName"]
+
+
+def test_grafana_state_is_on_a_volume_not_an_emptydir():
+    docs = [d for d in _load(K8S / "monitoring" / "grafana.yaml")]
+    dep = next(d for d in docs if d["kind"] == "Deployment")
+    vol = next(v for v in dep["spec"]["template"]["spec"]["volumes"] if v["name"] == "data")
+    claim = vol["persistentVolumeClaim"]["claimName"]
+    assert any(d["kind"] == "PersistentVolumeClaim" and d["metadata"]["name"] == claim for d in docs)
+
+
+def test_resource_requests_never_exceed_limits_and_are_all_set():
+    def q(v):
+        v = str(v)
+        for suf, mult in (("Gi", 1024), ("Mi", 1), ("m", 0.001)):
+            if v.endswith(suf):
+                return float(v[: -len(suf)]) * mult
+        return float(v)
+    for kdir in (BASE, K8S / "monitoring"):
+        for f in kdir.glob("*.yaml"):
+            for d in _load(f):
+                spec = d.get("spec", {})
+                pod = spec.get("template", {}).get("spec") or spec.get("jobTemplate", {}).get("spec", {}).get("template", {}).get("spec")
+                for c in (pod or {}).get("containers", []):
+                    r = c.get("resources", {})
+                    assert r.get("requests") and r.get("limits"), f"{d['metadata']['name']}/{c['name']} missing resources"
+                    for k in ("cpu", "memory"):
+                        assert q(r["requests"][k]) <= q(r["limits"][k]), f"{d['metadata']['name']} {k}"

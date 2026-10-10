@@ -8,7 +8,7 @@ k8s/
 ├── overlays/scaled/    + HorizontalPodAutoscaler (2-6 replicas)
 ├── monitoring/         Prometheus (+RBAC), Pushgateway, Grafana (2 provisioned dashboards), drift CronJob
 ├── overlays/full/      scaled + monitoring  ← what you normally apply
-└── optional/           ServiceMonitor, only if you run the Prometheus Operator instead of monitoring/
+└── optional/           ingress.yaml (HTTPS entry for the API), servicemonitor.yaml (only with the Prometheus Operator)
 ```
 
 ## Run it
@@ -27,6 +27,13 @@ kubectl -n telecom-anomaly get pods
 make k8s-port-forward        # API  -> http://localhost:8000/docs
 make k8s-grafana             # UI   -> http://localhost:3000  (user: admin)
 ```
+
+**Optional hardening:**
+- *API keys:* `kubectl -n telecom-anomaly create secret generic api-keys --from-literal=keys='k1,k2'`, then restart the API
+  pods. `/predict`, `/predict/batch` and `/model/info` then need header `X-API-Key`; `/health` and `/metrics` stay open
+  (probes and Prometheus carry no key). No Secret means open routes. Comma-separated keys allow rotation without downtime.
+- *HTTPS:* edit the host in `k8s/optional/ingress.yaml` and apply it (ingress-nginx + cert-manager assumed). It routes only
+  API paths, so `/metrics` is not reachable from outside. TLS alone does not authenticate anyone: turn on API keys too.
 
 Only want the API? `make k8s-apply-base` (API + Redis, no monitoring).
 **Private GHCR package:** the image pulls anonymously only if the package is public; otherwise add an `imagePullSecret`.
@@ -57,15 +64,30 @@ The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci make k8s-e2e` (need
 | History/inference log against a live Redis (incl. two replicas sharing it, trimming, expiry) | sandbox + CI | real redis-server, real redis-py |
 | 2 API processes + Redis + Prometheus + Pushgateway: cells warm up after exactly 20 readings while alternating replicas; every API-dashboard query returns data; `cells_tracked` is shared; Redis down -> 503 / precomputed 200 / `/health` 200; recovery | sandbox | real FastAPI app, real Prometheus 2.55.1, Pushgateway 1.9.0; model is a scikit-learn stand-in for XGBoost |
 | drift job -> Pushgateway -> Prometheus -> the drift dashboard's queries | sandbox | real except **Evidently, which is a stand-in** (KS tests) |
+| Resource sizing (above) | sandbox | measured, but on the stand-in model |
+| API-key auth: 401 without a key, either of two keys accepted, `/health` and `/metrics` open | sandbox (real FastAPI) | real |
 | Everything inside a cluster (probes, kube-proxy balancing, `kubernetes_sd`, RBAC, NetworkPolicy, PVCs, the CronJob, Grafana provisioning, **real XGBoost and real Evidently**) | CI `kubernetes-manifests` job on kind (`scripts/k8s_e2e.sh`) | **not run yet** — first CI run is the first real check |
+
+## Resource sizing
+
+Measured with `scripts/measure_resources.py` (4 concurrent clients, warmed cells, scikit-learn stand-in model):
+
+| | measured | set to |
+|---|---|---|
+| API memory | 175 MiB idle, 181 MiB peak | request 256 Mi, limit 512 Mi |
+| API CPU | **41 ms per scored request**; one process saturates ~1 core at ~27 req/s; p50 147 ms, p95 191 ms at that load | request 500m, limit 1 |
+| Redis memory | 4.9 MiB per ~1.2k inference-log rows, so ~80 MiB at the 20k-row cap | request 128 Mi, limit 400 Mi (`maxmemory` 256 MB) |
+
+The HPA's 70% target applies to the 500m request. **Finding:** the cost is dominated by recomputing features over the cell's
+history on every request, not by the model, so capacity scales by adding replicas (the HPA does) rather than by a bigger
+model host. Re-run the script with the real XGBoost image: its predict step differs from the stand-in. Prometheus, Grafana,
+Pushgateway and the drift job (whose Evidently run here was a stand-in) are **not measured**; their values are guesses.
 
 ## Known limits
 
-- Resource requests/limits and the HPA's 70% CPU target are starting guesses, not measurements.
 - Redis is a single instance (no HA/Sentinel). The NetworkPolicy only restricts who may reach Redis, and is enforced
-  only if your CNI supports NetworkPolicy (kind's default does not).
-- No Ingress, TLS or API authentication. Grafana is reachable only inside the cluster / by port-forward.
-- Prometheus keeps 15 days on a 5 Gi PVC and needs a default StorageClass; Grafana state (users, edited dashboards) is
-  not persisted — provisioned dashboards reappear on restart, manual edits do not.
+  only if your CNI supports NetworkPolicy (kind's default does not). No default-deny policy for the rest of the namespace.
+- API-key auth is a shared secret: no per-client identity, quotas or rate limiting.
+- Prometheus keeps 15 days on a 5 Gi PVC; Grafana state is on a 1 Gi PVC. Both need a default StorageClass.
 - Airflow and Triton are not ported; Compose still runs them.
 - Evidently's default dataset-drift rule (>= 50% of columns drifted) may be too coarse for 68 features from 5 KPIs.
