@@ -239,3 +239,43 @@ def test_model_registry_name_and_recall_floor_used_by_code_exist_in_params():
     # point sits far below a 0.93 row-level recall floor; see the README's
     # "What this means for promotion" and EXPERIMENTS.md.
     assert "val_fraction" in params["split"] and "train_ratio" in params["split"]
+
+
+def test_serving_requirements_are_an_exact_subset_of_the_full_requirements():
+    """The image installs requirements-serving.txt; it must never pin anything differently from
+    requirements.txt (which CI and the tests run against), nor miss a runtime import."""
+    def pins(path):
+        out = {}
+        for line in (REPO / path).read_text().splitlines():
+            line = line.split("#")[0].strip()
+            if line:
+                out[re.match(r"[A-Za-z0-9_.-]+", line).group(0).lower().replace("_", "-")] = line
+        return out
+    full, serving = pins("requirements.txt"), pins("requirements-serving.txt")
+    # the image uses the CPU-only xgboost wheel: same releases, different distribution name
+    serving = {("xgboost" if k == "xgboost-cpu" else k): v.replace("xgboost-cpu", "xgboost") for k, v in serving.items()}
+    assert {k: v.replace("xgboost>=2.1", "xgboost>=2.0") for k, v in serving.items()}.items() <= full.items(), \
+        {k: (v, full.get(k)) for k, v in serving.items() if full.get(k) != v}
+    # what the API / drift job import at runtime must be installable from the serving file
+    for needed in ("fastapi", "uvicorn", "xgboost", "scikit-learn", "joblib", "pandas", "numpy", "pyyaml",
+                   "pydantic", "redis", "prometheus-client", "prometheus-fastapi-instrumentator", "evidently"):
+        assert needed in serving, f"{needed} missing from requirements-serving.txt"
+    for training_only in ("mlflow", "dvc", "onnxruntime", "onnxmltools"):
+        assert training_only not in serving
+
+
+def test_airflow_requirements_are_an_exact_subset_and_exclude_dvc_and_onnx():
+    def pins(path):
+        out = {}
+        for line in (REPO / path).read_text().splitlines():
+            line = line.split("#")[0].strip()
+            if line:
+                out[re.match(r"[A-Za-z0-9_.-]+", line).group(0).lower().replace("_", "-")] = line
+        return out
+    full, air = pins("requirements.txt"), pins("requirements-airflow.txt")
+    assert air.items() <= full.items(), {k: (v, full.get(k)) for k, v in air.items() if full.get(k) != v}
+    for needed in ("mlflow", "xgboost", "evidently", "pandas", "scikit-learn", "pyyaml"):
+        assert needed in air
+    for excluded in ("dvc", "dvc-s3", "onnxruntime", "onnxmltools", "onnx"):
+        assert excluded not in air
+    assert "requirements-airflow.txt" in (REPO / "Dockerfile.airflow").read_text()
