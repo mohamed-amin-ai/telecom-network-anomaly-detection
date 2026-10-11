@@ -66,8 +66,16 @@ def main():
     feature_vector, feature_cols = get_one_real_row()
     print(f"Using 1 real held-out row across {len(feature_cols)} features.")
 
+    # The ONNX model was converted from a model trained on SCALED features (api/main.py applies
+    # models/scaler.pkl before predicting), so Triton clients must send scaled input too. Sending the
+    # raw vector made this parity check disagree with the API.
+    import joblib
+    from models.common import MODEL_DIR
+    scaler = joblib.load(MODEL_DIR / "scaler.pkl")
+    scaled_vector = scaler.transform([feature_vector])[0].tolist()
+
     infer_url = f"{args.triton_url}/v2/models/{args.model_name}/infer"
-    request_body = build_infer_request(feature_vector)
+    request_body = build_infer_request(scaled_vector)
 
     try:
         resp = requests.post(infer_url, json=request_body, timeout=10)
