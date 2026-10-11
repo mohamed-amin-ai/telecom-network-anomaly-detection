@@ -79,14 +79,13 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 3
-          # Starting values, NOT measured. Load-test and adjust.
           resources:
-            # Measured with scripts/measure_resources.py (scikit-learn stand-in model, 4 concurrent
-            # clients, warmed cells): ~180 MiB RSS, ~42 ms CPU per scored request, one process
-            # saturates ~1 core at ~26 req/s (feature engineering over the cell history dominates).
-            # Memory: ~2.8x headroom over the peak. CPU limit 1 = what one uvicorn process can use.
-            # The HPA's 70% target is of this 500m request. RE-MEASURE with the real XGBoost image.
-            requests: {cpu: 500m, memory: 256Mi}
+            # Measured with scripts/measure_resources.py on the REAL XGBoost image (4 concurrent clients,
+            # warmed cells, shared CI runner): 233 MiB idle / 240 MiB peak RSS, 24-53 ms CPU per scored
+            # request, one process serves 23-50 req/s (feature engineering over the cell history dominates).
+            # Memory request 320Mi (~1.3x peak), limit 512Mi (~2.1x). CPU limit 1 = what one uvicorn process
+            # can use. The HPA's 70% target is of the 500m CPU request; its scale-out was verified on kind.
+            requests: {cpu: 500m, memory: 320Mi}
             limits: {cpu: "1", memory: 512Mi}
           securityContext:
             allowPrivilegeEscalation: false
