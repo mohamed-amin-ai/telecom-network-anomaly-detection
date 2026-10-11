@@ -221,7 +221,7 @@ The model, API and results above are unchanged in purpose; the MLOps layer below
 | Detector ranking quality | PR-AUC **0.967** |
 | Automated tests | **144** passing |
 | Serving (one process, with Redis) | **24–50 req/s**, p95 latency **124–237 ms**, **240 MiB** peak memory (shared CI runners; run-to-run spread ~2×) |
-| Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them |
+| Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; under sustained load the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
 | Resilience | Redis outage → raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without restart |
 | Drift detection (real Evidently 0.4.33, run in CI) | Held-out traffic flags **0 / 68** features; a latency-only 2× shift flags **11 / 68**; a multi-KPI congestion incident flags **55 / 68** (81%) and sets the dataset-drift flag |
 | Security | Optional API-key auth on prediction routes; non-root, read-only containers; optional HTTPS Ingress |

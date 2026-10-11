@@ -66,8 +66,8 @@ spec:
             periodSeconds: 20
             failureThreshold: 3
           resources:
-            requests: {cpu: 100m, memory: 192Mi}
-            limits: {cpu: 500m, memory: 512Mi}
+            requests: {cpu: 50m, memory: 128Mi}     # measured peak 3m / 68 MiB
+            limits: {cpu: 300m, memory: 256Mi}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

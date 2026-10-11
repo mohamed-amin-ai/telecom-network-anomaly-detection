@@ -14,3 +14,14 @@ spec:
       resource:
         name: cpu
         target: {type: Utilization, averageUtilization: 70}
+  # Explicit scaling behaviour (instead of the defaults), verified by the evaluation workflow:
+  # scale out quickly, scale in slowly so a short lull does not drop capacity.
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - {type: Pods, value: 2, periodSeconds: 30}
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      policies:
+        - {type: Pods, value: 1, periodSeconds: 60}

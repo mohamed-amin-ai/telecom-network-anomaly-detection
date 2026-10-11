@@ -105,6 +105,28 @@ def build(data: dict) -> str:
             md += ["## Evidently drift detection", "", table([(k, v["dataset_drift"], f"{v['drifted_columns']}/{v['columns']}", v["drift_share"])
                                                               for k, v in t["drift_demo"]["scenarios"].items()],
                                                              ["scenario", "dataset drift", "features flagged", "share"]), ""]
+        if "k8s_hpa" in t:
+            k = t["k8s_hpa"]
+            lt = k.get("loadtest") or {}
+            md += ["## Kubernetes: HPA scale-out / scale-in (kind, metrics-server)", "", table([
+                ("HPA (min / max / CPU target)", f"{k['hpa']['min']} / {k['hpa']['max']} / {k['hpa']['target_cpu_pct']}%"),
+                ("load generator (24 threads, 240 s)", f"{lt.get('rps')} req/s, p50 {lt.get('p50_ms')} ms, p95 {lt.get('p95_ms')} ms, errors {lt.get('errors')}"),
+                ("seconds from load start to first scale-out decision", k.get("seconds_from_load_start_to_first_scale_decision")),
+                ("max desired / max ready replicas", f"{k['max_desired_replicas']} / {k['max_ready_replicas']}"),
+                ("peak average CPU utilisation (of the 500m request)", f"{k['peak_cpu_util_pct']}%"),
+                ("max Pending API pods (insufficient CPU on the runner)", k["max_pending_pods"]),
+                ("peak memory of one API pod (MiB)", k["peak_memory_mi_per_api_pod"]),
+                ("seconds from load end to first scale-in", k.get("seconds_from_load_end_to_first_scale_in")),
+                ("seconds from load end back at min replicas", k.get("seconds_from_load_end_to_back_at_min"))], ["measure", "value"]), ""]
+            comps = k.get("components_cpu_m_mem_mi") or {}
+            md += ["## Kubernetes: per-component footprint (peak CPU millicores / memory MiB)", "", table(
+                [(n, *(f"{v[ph]['cpu_m_max']}m / {v[ph]['mem_mi_max']} Mi" for ph in ("idle", "under_load", "after_load"))) for n, v in sorted(comps.items())],
+                ["component", "idle", "under load", "after load"]), ""]
+            pr, dj = k.get("prometheus") or {}, k.get("drift_job") or {}
+            md += [table([("Prometheus head series", pr.get("head_series")), ("samples / s", pr.get("samples_per_second")),
+                          ("TSDB on disk (KiB) after the run", pr.get("disk_kib")), ("estimated disk for 15 d retention (MiB)", pr.get("estimated_disk_mib_for_15d")),
+                          ("drift job result", " ".join(dj.get("result") or [])), ("drift job peak CPU / memory", f"{dj.get('cpu_m_max')}m / {dj.get('mem_mi_max')} Mi")],
+                         ["measure", "value"]), ""]
         if "triton" in t:
             x = t["triton"]
             md += ["## Triton (CPU) vs XGBoost", "", table([

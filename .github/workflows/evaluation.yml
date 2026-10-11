@@ -157,9 +157,36 @@ jobs:
           path: eval/airflow
           retention-days: 14
 
+  kubernetes:
+    name: Kubernetes (HPA scale-out and scale-in, monitoring stack footprint on kind)
+    needs: core
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EVAL_DIR: eval/k8s
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: handoff
+          path: .
+      - run: docker build -t eval-api:ci .
+      - uses: helm/kind-action@v1
+      - name: Load image, deploy the scaled overlay, drive load, record the HPA
+        run: |
+          kind load docker-image eval-api:ci --name "$(kind get clusters | head -n 1)"
+          scripts/eval/ci_step.sh k8s_hpa env IMAGE=eval-api:ci bash scripts/eval/k8s_hpa_eval.sh
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-k8s
+          path: eval/k8s
+          retention-days: 14
+
   publish:
     name: Publish report
-    needs: [core, triton, airflow]
+    needs: [core, triton, airflow, kubernetes]
     if: always()
     runs-on: ubuntu-latest
     permissions:

@@ -33,7 +33,7 @@ spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
-      storage: 5Gi
+      storage: 2Gi   # measured ~160 MiB for 15 d at ~87 samples/s
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -82,8 +82,8 @@ spec:
             periodSeconds: 20
             failureThreshold: 3
           resources:
-            requests: {cpu: 100m, memory: 256Mi}
-            limits: {cpu: "1", memory: 1Gi}
+            requests: {cpu: 50m, memory: 128Mi}     # measured peak 8m / 35 MiB (1.3k series, ~87 samples/s)
+            limits: {cpu: 500m, memory: 512Mi}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
