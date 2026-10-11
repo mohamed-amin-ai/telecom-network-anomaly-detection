@@ -1,0 +1,181 @@
+name: Full evaluation
+
+# Runs every tool in the project for real and records MEASURED results (no pass/fail gate on the
+# numbers). Output is published to the `evaluation-results` branch as full_evaluation.md + JSON.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/eval*", "scripts/eval/**", ".github/workflows/evaluation.yml", "requirements.txt", "params.yaml"]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  core:
+    name: Core tools (DVC, MLflow, model, API, ONNX, Docker, Evidently)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EVAL_DIR: eval/core
+      REDIS_URL: redis://127.0.0.1:6379/12
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: DVC (reproduce, no-op reproduce, change one param)
+        run: scripts/eval/ci_step.sh dvc bash scripts/eval/dvc_eval.sh
+      - name: MLflow (runs, registry, round-trip, promotion gate)
+        run: scripts/eval/ci_step.sh mlflow python scripts/eval_tools.py mlflow
+      - name: MLflow replay of the experiment sweeps
+        run: scripts/eval/ci_step.sh mlflow_replay python scripts/replay_experiments_to_mlflow.py
+      - name: Held-out performance and incident-level alerting
+        run: scripts/eval/ci_step.sh events python scripts/eval_tools.py events
+      - name: ONNX conversion + benchmark
+        run: |
+          scripts/eval/ci_step.sh onnx_convert python models/convert_to_onnx.py
+          scripts/eval/ci_step.sh onnx python scripts/eval_tools.py onnx
+      - name: FastAPI (endpoints, serving parity, auth)
+        run: scripts/eval/ci_step.sh api python scripts/eval_tools.py api
+      - name: API under load
+        run: scripts/eval/ci_step.sh load python scripts/measure_resources.py
+      - name: Evidently drift detection
+        run: |
+          scripts/eval/ci_step.sh drift_demo python scripts/drift_demo.py
+          cp results/drift_demo.json eval/core/drift_demo.json || true
+      - name: Docker image
+        run: scripts/eval/ci_step.sh docker bash scripts/eval/docker_eval.sh
+
+      - name: Hand artifacts to the other jobs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: handoff
+          path: |
+            models/model.json
+            models/scaler.pkl
+            models/metadata.json
+            models/reference_features.csv
+            models/model.onnx
+            data/features.csv
+          retention-days: 3
+      - name: Upload core results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-core
+          path: eval/core
+          retention-days: 14
+
+  triton:
+    name: Triton (CPU) serving the ONNX model
+    needs: core
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EVAL_DIR: eval/triton
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: handoff
+          path: .
+      - name: Free disk space (the Triton image is large)
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android && df -h / | tail -1
+      - name: Start Triton and measure
+        run: |
+          mkdir -p triton_model_repository/telecom_anomaly_xgb/1
+          cp models/model.onnx triton_model_repository/telecom_anomaly_xgb/1/model.onnx
+          scripts/eval/ci_step.sh triton_up bash -c '
+            docker run -d --name triton -p 8003:8000 -p 8005:8002 \
+              -v "$PWD/triton_model_repository:/models:ro" \
+              nvcr.io/nvidia/tritonserver:24.09-py3 \
+              tritonserver --model-repository=/models --strict-model-config=false \
+              --model-control-mode=explicit --load-model=telecom_anomaly_xgb
+            for i in $(seq 1 90); do curl -sf http://127.0.0.1:8003/v2/health/ready && echo ready && exit 0; sleep 3; done
+            docker logs triton | tail -n 40; exit 1'
+          scripts/eval/ci_step.sh triton python scripts/eval_tools.py triton
+          docker logs triton > eval/triton/logs/triton_server.log 2>&1 || true
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-triton
+          path: eval/triton
+          retention-days: 14
+
+  airflow:
+    name: Airflow (real image, real DAG run, drift-triggered retrain)
+    needs: core
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EVAL_DIR: eval/airflow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: handoff
+          path: .
+      - name: Build the project's Airflow image
+        run: scripts/eval/ci_step.sh airflow_image docker build -f Dockerfile.airflow -t eval-airflow .
+      - name: Run the DAG twice (healthy traffic, then a congestion incident)
+        run: |
+          docker network create evalnet
+          docker run -d --name pushgateway --network evalnet -p 9091:9091 prom/pushgateway:v1.9.0
+          chmod -R a+rwX .
+          RUN='docker run --rm --network evalnet -v '"$PWD"':/opt/project -w /opt/project -e PYTHONPATH=/opt/project
+               -e AIRFLOW__CORE__LOAD_EXAMPLES=false -e AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/project/airflow_eval.db -e AIRFLOW__CORE__DAGS_FOLDER=/opt/project/airflow/dags eval-airflow'
+          scripts/eval/ci_step.sh airflow_db_migrate $RUN airflow db migrate
+          $RUN python scripts/eval/make_drift_log.py healthy
+          scripts/eval/ci_step.sh airflow_idle $RUN airflow dags test telecom_anomaly_pipeline 2024-06-01
+          $RUN python scripts/eval/make_drift_log.py shifted
+          scripts/eval/ci_step.sh airflow_drift $RUN airflow dags test telecom_anomaly_pipeline 2024-06-02
+          curl -s http://127.0.0.1:9091/metrics | grep -E '^(data_drift_share|data_drift_detected|data_drift_columns_drifted)' > eval/airflow/pushgateway_metrics.txt || true
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-airflow
+          path: eval/airflow
+          retention-days: 14
+
+  publish:
+    name: Publish report
+    needs: [core, triton, airflow]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: eval-*
+          path: eval_all
+      - name: Build and publish
+        run: |
+          for d in eval_all/*; do mv "$d" "eval_all/${d#eval_all/eval-}"; done 2>/dev/null || true
+          python scripts/eval_report.py eval_all full_evaluation.md
+          cat full_evaluation.md
+          mkdir -p /tmp/out && cp full_evaluation.md /tmp/out/ && cp -r eval_all /tmp/out/eval
+          cd /tmp/out && git init -q -b evaluation-results
+          git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "Full evaluation from run ${GITHUB_RUN_ID} (${GITHUB_SHA})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" evaluation-results

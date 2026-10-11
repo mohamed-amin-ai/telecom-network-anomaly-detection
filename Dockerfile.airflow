@@ -23,5 +23,13 @@ FROM apache/airflow:2.10.4-python3.12
 COPY requirements.txt /requirements.txt
 
 USER airflow
+# Do NOT pass Airflow's constraints file here. It pins packages (pyarrow==18.1.0, gunicorn==23.0.0, ...) above
+# the upper bounds of mlflow==2.14.1 (pyarrow<16, gunicorn<23), so the combination is unresolvable — found by
+# building this image in CI. The base image already has Airflow installed with its own constraints; installing
+# the project's requirements on top lets pip downgrade only the few packages mlflow needs, and `pip check`
+# below records whether anything Airflow depends on ended up inconsistent.
+# The base image ships opentelemetry-exporter-otlp-proto-grpc 1.25.0, while evidently pulls in the -http exporter,
+# which needs the SAME version of the shared -common package; move the grpc exporter to the SDK's 1.27.0 too.
 RUN pip install --no-cache-dir -r /requirements.txt \
-    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.4/constraints-3.12.txt"
+      "opentelemetry-exporter-otlp-proto-grpc==1.27.0" "opentelemetry-exporter-otlp-proto-http==1.27.0" \
+ && (pip check > /tmp/pip_check.txt 2>&1 || true; cat /tmp/pip_check.txt)
