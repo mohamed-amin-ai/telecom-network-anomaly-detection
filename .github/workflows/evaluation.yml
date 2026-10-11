@@ -39,6 +39,10 @@ jobs:
         run: scripts/eval/ci_step.sh mlflow_replay python scripts/replay_experiments_to_mlflow.py
       - name: Held-out performance and incident-level alerting
         run: scripts/eval/ci_step.sh events python scripts/eval_tools.py events
+      - name: Precision/recall trade-off of the real model
+        run: scripts/eval/ci_step.sh curve python scripts/eval_tools.py curve
+      - name: Real XGBoost across 10 independent datasets
+        run: scripts/eval/ci_step.sh spread python scripts/eval_tools.py spread
       - name: ONNX conversion + benchmark
         run: |
           scripts/eval/ci_step.sh onnx_convert python models/convert_to_onnx.py

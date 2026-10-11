@@ -142,7 +142,7 @@ def f_beta(precision: float, recall: float, beta: float = 2.0) -> float:
     return (1 + beta**2) * precision * recall / denom if denom > 0 else 0.0
 
 
-def evaluate_current_dataset(params: dict, targets) -> dict:
+def evaluate_current_dataset(params: dict, targets, backend: str = "stand_in") -> dict:
     """Build the dataset the generator is CURRENTLY configured for, train the
     baseline once, and score every recall target on the held-out test set."""
     df = engineer_features(gen.build_dataset(), verbose=False)
@@ -153,8 +153,21 @@ def evaluate_current_dataset(params: dict, targets) -> dict:
     Xtr, Xva, Xte = sc.fit_transform(tr[cols].values), sc.transform(va[cols].values), sc.transform(te[cols].values)
     ytr, yva, yte = (d["anomaly"].values for d in (tr, va, te))
 
-    model, best_round = fit_stand_in(Xtr, ytr, Xva, yva, params["model"])
-    pv, pt = predict_best(model, Xva, best_round), predict_best(model, Xte, best_round)
+    if backend == "xgboost":
+        # Exactly models/train.py's recipe (needs the real library; used by scripts/eval_tools.py spread in CI).
+        import xgboost as xgb
+        mp = params["model"]
+        model = xgb.XGBClassifier(
+            n_estimators=mp["n_estimators"], max_depth=mp["max_depth"], learning_rate=mp["learning_rate"],
+            subsample=mp["subsample"], colsample_bytree=mp["colsample_bytree"],
+            scale_pos_weight=(ytr == 0).sum() / max(1, (ytr == 1).sum()), eval_metric="aucpr",
+            early_stopping_rounds=mp["early_stopping_rounds"], random_state=mp["random_state"], n_jobs=-1)
+        model.fit(Xtr, ytr, eval_set=[(Xva, yva)], verbose=False)
+        best_round = int(model.best_iteration)
+        pv, pt = model.predict_proba(Xva)[:, 1], model.predict_proba(Xte)[:, 1]
+    else:
+        model, best_round = fit_stand_in(Xtr, ytr, Xva, yva, params["model"])
+        pv, pt = predict_best(model, Xva, best_round), predict_best(model, Xte, best_round)
 
     cells_te = te["cell_id"].values
     minutes_per_interval = 24 * 60 / gen.INTERVALS_PER_DAY

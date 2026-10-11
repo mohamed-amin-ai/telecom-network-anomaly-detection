@@ -84,15 +84,17 @@ threshold:
   #     for the default data profile, then evaluated on separate seeds. See
   #     scripts/recall_target_study.py and EXPERIMENTS.md. A test keeps this equal to the
   #     study's result for the level data.profile selects. F2 rule: 0.96 on the clean benchmark,
-  #     0.5 on the realistic one. For the calibrated profile the target (0.965) comes from
-  #     scripts/target_window_search.py (dev seeds): recall fully inside 95-98% and median precision
-  #     closest to 80%.
+  #     0.5 on the realistic one. For the calibrated profile the target is 0.945: read off the REAL XGBoost
+  #     precision/recall curve (results in the "evaluation-results" branch; scripts/eval_tools.py curve)
+  #     with thresholds tuned on validation only. The curve has a sharp knee near recall 0.94-0.95:
+  #     target 0.93 -> precision ~0.93, 0.945 -> ~0.80, 0.965 -> ~0.43. The previous 0.965 had been
+  #     calibrated on a scikit-learn stand-in whose curve has no such knee.
   #   min_recall: the production floor a model must meet on the held-out TEST window to be
   #     promoted (models/promote.py). Reachable on most draws of the clean benchmark; NOT
   #     reachable at a usable alert rate on the realistic one — see README "What this means for
   #     promotion". Left unchanged: it is a business requirement, not something to tune to
   #     whatever the model achieves.
-  validation_recall_target: 0.965
+  validation_recall_target: 0.945
   min_recall: 0.93   # production recall floor (missed fault > false alarm)
 
 mlflow:

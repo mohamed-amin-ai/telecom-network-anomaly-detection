@@ -58,6 +58,21 @@ def build(data: dict) -> str:
                           ("median detection delay (intervals)", e["incident_level"].get("median_delay_intervals")),
                           ("false alerts / cell / day", e["incident_level"].get("false_alerts_per_cell_day")),
                           ("threshold", e["threshold"])], ["metric", "value"]), ""]
+        if "curve" in t:
+            c = t["curve"]
+            md += ["## Precision/recall trade-off (threshold tuned on validation, applied to test)", "",
+                   table([(k, v["threshold"], f"{v['val']['recall']} / {v['val']['precision']}", f"{v['test']['recall']} / {v['test']['precision']}",
+                           v["test"]["f1"], v["event_detection_rate"], v["false_alerts_per_cell_day"])
+                          for k, v in c["by_validation_target"].items()],
+                         ["recall target", "threshold", "val recall / precision", "test recall / precision", "test F1",
+                          "incidents detected", "false alerts/cell/day"]), "",
+                   "Best precision any threshold could reach on test at a given recall: "
+                   + ", ".join(f"recall >= {k}: {v}" for k, v in c["test_best_possible_precision_at_recall"].items()), ""]
+        if "spread" in t:
+            sp = t["spread"]
+            md += [f"## Real XGBoost across {len(sp['seeds'])} independent datasets (recall target {sp['target']})", "",
+                   table([(k, v["min"], v["median"], v["max"]) for k, v in sp["summary"].items()], ["metric", "min", "median", "max"]), "",
+                   table([(sd, r["recall"], r["precision"], r["f1"]) for sd, r in sp["per_seed"].items()], ["seed", "recall", "precision", "F1"]), ""]
         if "api" in t:
             a = t["api"]
             md += ["## FastAPI", "", table([(k, v) for k, v in a["checks"].items()], ["check", "passed"]), ""]
