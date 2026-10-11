@@ -219,14 +219,14 @@ The model, API and results above are unchanged in purpose; the MLOps layer below
 |---|---|
 | Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.33** false alerts per cell per day |
 | Detector ranking quality | PR-AUC **0.977** |
-| Automated tests | **137** passing |
+| Automated tests | **142** passing |
 | Serving (per replica) | **~27 req/s**, p95 latency **191 ms**, **181 MiB** memory |
 | Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them |
 | Resilience | Redis outage → raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without restart |
-| Drift detection | Unshifted traffic flags **1 / 68** features; a 1-σ shift flags **68 / 68** and sets the dataset-drift flag |
+| Drift detection (real Evidently 0.4.33, run in CI) | Held-out traffic flags **0 / 68** features; a latency-only 2× shift flags **11 / 68**; a multi-KPI congestion incident flags **55 / 68** (81%) and sets the dataset-drift flag |
 | Security | Optional API-key auth on prediction routes; non-root, read-only containers; optional HTTPS Ingress |
 
-*Figures measured on the project's synthetic benchmark with a scikit-learn gradient-boosting stand-in for XGBoost (drift checks with a KS-test stand-in for Evidently); a run with XGBoost will differ slightly. Full tables: [EXPERIMENTS.md](EXPERIMENTS.md); deployment: [k8s/README.md](k8s/README.md).*
+*Figures measured on the project's synthetic benchmark with a scikit-learn gradient-boosting stand-in for XGBoost (the drift figures are from real Evidently); a run with XGBoost will differ slightly. Full tables: [EXPERIMENTS.md](EXPERIMENTS.md); deployment: [k8s/README.md](k8s/README.md).*
 
 ---
 
