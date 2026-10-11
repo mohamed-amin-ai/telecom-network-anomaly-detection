@@ -1,20 +1,26 @@
 # Telecom Network Anomaly Detection System
 
-An end-to-end ML system that detects anomalies in telecom network KPIs (latency, throughput, packet loss) in real time, deployed as a production-ready REST API.
+[![CI](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/ci.yml/badge.svg)](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/ci.yml)
+[![Full evaluation](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/evaluation.yml/badge.svg)](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/evaluation.yml)
 
-**Key result: 95.0% recall on detecting network faults before service degradation.**
+An end-to-end machine-learning system that detects faults in telecom network KPIs in real time. A gradient-boosted classifier is served through a FastAPI service and wrapped in a full MLOps layer: experiment tracking, data versioning, CI/CD, monitoring, drift detection, scheduled retraining and Kubernetes deployment.
+
+<p align="center"><img src="docs/headline-metrics.svg" alt="Recall 95.0%, Precision 80.4%, F1 0.871" width="100%"></p>
+
+*Held-out test set (last 20% of the time window, never seen in training), real XGBoost, measured in CI.*
+
+## Contents
+
+[Problem](#problem) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Docker](#running-with-docker) · [Features](#feature-engineering) · [Model](#model-details) · [API](#api) · [Results](#results) · [MLOps](#mlops) · [Repository layout](#repository-layout) · [Tech stack](#tech-stack)
 
 ---
 
 ## Problem
 
-Telecom networks generate thousands of KPI readings per minute across hundreds of cell towers. Identifying fault conditions (congestion, hardware degradation, interference) manually is slow and reactive. This system flags anomalies automatically, enabling NOC teams to act before users are impacted.
+Telecom networks generate thousands of KPI readings per minute across hundreds of cell towers. Finding fault conditions (congestion, hardware degradation, interference) by hand is slow and reactive. This system flags anomalies automatically so a network operations centre (NOC) can act before users are affected.
 
-## Solution
+Monitored KPIs:
 
-A supervised XGBoost classifier trained on time-series KPI features, served via FastAPI for real-time inference.
-
-### KPIs monitored
 | KPI | Unit | What it signals |
 |---|---|---|
 | `latency_ms` | ms | Congestion, backhaul issues |
@@ -23,157 +29,99 @@ A supervised XGBoost classifier trained on time-series KPI features, served via 
 | `sinr_db` | dB | Signal quality, interference |
 | `connected_users` | count | Load-related anomalies |
 
----
+## Architecture
 
-## Project Structure
-
-```
-telecom_anomaly/
-├── data/
-│   ├── generate_data.py   # Synthetic KPI dataset generator
-│   ├── features.py        # Time-series feature engineering
-│   └── raw_kpis.csv       # Generated after running generate_data.py
-├── models/
-│   ├── train.py           # XGBoost training + threshold tuning
-│   ├── model.json         # Saved model (generated after training)
-│   ├── scaler.pkl         # Feature scaler (generated after training)
-│   └── metadata.json      # Threshold + metrics (generated after training)
-├── api/
-│   └── main.py            # FastAPI inference service
-├── requirements.txt
-└── README.md
+```mermaid
+flowchart LR
+    D[KPI data] --> F[Feature engineering] --> T[XGBoost training<br/>threshold tuning] --> G{Promotion gate<br/>recall >= 0.93}
+    T --> M[(MLflow)]
+    G --> A[FastAPI service<br/>+ Redis cell history]
+    A --> P[Prometheus] --> GR[Grafana]
+    A --> L[(Inference log)] --> E[Evidently drift check] --> PG[Pushgateway]
+    E --> AF[Airflow DAG] -->|drift detected| T
+    G -.-> O[ONNX] -.-> TR[Triton]
 ```
 
 ---
 
 ## Quickstart
 
-### 1. Install dependencies
+Developed and tested on Python 3.12.
+
 ```bash
 pip install -r requirements.txt
-```
-
-### 2. Generate synthetic data
-```bash
-python data/generate_data.py
-```
-
-### 3. Engineer features
-```bash
-python data/features.py
-```
-
-### 4. Train the model
-```bash
-python models/train.py
-```
-
-### 5. Start the API
-```bash
+python data/generate_data.py      # generate the KPI dataset
+python data/features.py           # time-series features
+python models/train.py            # train, tune threshold, save model
 uvicorn api.main:app --reload --port 8000
 ```
 
-### 6. Make a prediction
+Interactive API docs: <http://localhost:8000/docs>
 
-A brand-new cell has no history yet, so the **first call for any `cell_id` intentionally returns 425 Too Early** — the API won't guess with a mostly-empty feature vector:
+**First request.** A new cell has no history, so the first call for any `cell_id` intentionally returns `425 Too Early` rather than guessing from a mostly empty feature vector:
 
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{
-    "cell_id": "CELL_001",
-    "latency_ms": 145.5,
-    "throughput_mbps": 12.3,
-    "packet_loss_pct": 8.7,
-    "sinr_db": 4.2,
-    "connected_users": 87
-  }'
+  -d '{"cell_id": "CELL_001", "latency_ms": 145.5, "throughput_mbps": 12.3,
+       "packet_loss_pct": 8.7, "sinr_db": 4.2, "connected_users": 87}'
 ```
 
-Send ~20 more readings for the same `cell_id`, in chronological order, and the API starts returning real predictions once it has enough history to compute the time-series features (see [How `/predict` builds its feature vector](#api-endpoints) further down). If you already have pre-computed features on hand, pass them directly via the `features` field instead and skip the warm-up.
+Send about 20 more readings for the same `cell_id`, in chronological order, and the API returns real predictions. If you already have the 68 pre-computed features, pass them in the `features` field and skip the warm-up.
 
-### 7. View interactive API docs
-Open: [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
+Common commands are in the `Makefile` (`make test`, `make pipeline`, `make serve`, `make docker-up`, `make drift-check`, `make onnx-convert`).
 
 ## Running with Docker
 
-Build and run the API in a container instead of a local Python environment:
-
 ```bash
-docker compose up --build
+docker compose up --build          # API + Redis + Prometheus + Grafana
 ```
 
-The API is then available at [http://localhost:8000](http://localhost:8000) — same endpoints as above.
-
-Or with plain Docker, no compose:
+or the API alone:
 
 ```bash
 docker build -t telecom-anomaly-detection .
 docker run -p 8000:8000 telecom-anomaly-detection
 ```
 
-Notes:
-- Runs as a non-root user, with a container `HEALTHCHECK` against `/health`.
-- The trained model artifacts (`models/model.json`, `scaler.pkl`, `metadata.json`) are baked into the image at build time — rebuild the image after retraining.
+The image runs as a non-root user with a `HEALTHCHECK` on `/health`. Model artifacts are baked in at build time, so rebuild after retraining. Kubernetes deployment (kustomize, HPA, monitoring) is documented in [k8s/README.md](k8s/README.md).
 
 ---
 
 ## Feature Engineering
 
-For each KPI, the following features are computed per cell tower:
+68 features are computed per cell tower from 5 KPIs:
 
-| Feature type | Detail |
-|---|---|
-| **Lag features** | Values at t-1, t-2, t-4, t-8 (15 min to 2 hours ago) |
-| **Rolling mean** | 1h and 4h windows |
-| **Rolling std** | 1h and 4h windows — captures variance bursts |
-| **Rolling min/max** | 1h window |
-| **Z-score** | Deviation from 4h rolling mean |
-| **Rate of change** | `(t - t-1) / t-1` — detects sudden jumps |
-| **Time features** | Hour of day, day of week, is_weekend |
-
-Total: **68 features** across 5 KPIs.
-
-| Feature group | Count |
-|---|---|
-| Lag features (t-1, t-2, t-4, t-8) | 5 KPIs × 4 = 20 |
-| Rolling mean (1h, 4h) | 5 KPIs × 2 = 10 |
-| Rolling std (1h, 4h) | 5 KPIs × 2 = 10 |
-| Rolling min/max (1h) | 5 KPIs × 2 = 10 |
-| Z-score (4h window) | 5 KPIs × 1 = 5 |
-| Rate of change | 5 KPIs × 1 = 5 |
-| Raw KPI values | 5 |
-| Time features (hour, day_of_week, is_weekend) | 3 |
-| **Total** | **68** |
-
----
+| Feature group | Detail | Count |
+|---|---|---|
+| Raw KPI values | current reading | 5 |
+| Lag features | t-1, t-2, t-4, t-8 (15 min to 2 h ago) | 20 |
+| Rolling mean | 1 h and 4 h windows | 10 |
+| Rolling std | 1 h and 4 h windows (variance bursts) | 10 |
+| Rolling min / max | 1 h window | 10 |
+| Z-score | deviation from the 4 h rolling mean | 5 |
+| Rate of change | `(t - t-1) / t-1`, detects sudden jumps | 5 |
+| Time features | hour of day, day of week, is_weekend | 3 |
+| **Total** | | **68** |
 
 ## Model Details
 
 | Parameter | Value |
 |---|---|
 | Algorithm | XGBoost (gradient boosted trees) |
-| Trees | 300 (with early stopping) |
+| Trees | up to 300, with early stopping |
 | Max depth | 6 |
 | Learning rate | 0.05 |
-| Class imbalance | Handled via `scale_pos_weight` |
-| Threshold | Tuned on validation set to reach a 96.5% recall target |
-| Train/test split | Time-based 80/20 (no shuffle) |
+| Class imbalance | `scale_pos_weight` |
+| Threshold | tuned on the validation set for a 94.5% recall target, read from the real validation curve |
+| Split | time-based 80/20, no shuffle |
+| Promotion gate | a new model must reach at least 93% recall on the test set |
 
-### Why XGBoost?
-- Handles tabular time-series features well out of the box
-- Robust to feature scale differences and missing values
-- Fast inference (<1ms per prediction) — suitable for real-time monitoring
-- Feature importance scores aid explainability for NOC teams
+**Why XGBoost.** It handles tabular time-series features well, is robust to feature scale and missing values, scores in well under a millisecond, and provides feature importances that NOC teams can inspect.
 
-### Why tune the threshold?
-The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, a missed fault (false negative) is far more costly than a false alarm. Threshold tuning lets us control this trade-off explicitly.
+**Why tune the threshold.** The default 0.5 threshold maximises accuracy, not recall. In fault detection a missed fault costs far more than a false alarm, so the threshold makes that trade-off explicit.
 
----
-
-## API Endpoints
+## API
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -181,6 +129,9 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 | GET | `/model/info` | Model metrics and threshold |
 | POST | `/predict` | Single snapshot prediction |
 | POST | `/predict/batch` | Batch of up to 500 snapshots |
+| GET | `/metrics` | Prometheus metrics |
+
+Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes and `/model/info` require an `X-API-Key` header. If Redis is unavailable, raw readings return `503` while pre-computed requests, `/health` and `/metrics` keep working.
 
 ---
 
@@ -188,47 +139,81 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 | Metric | Value |
 |---|---|
-| Recall | **95.0%** — catches 95 of every 100 faults |
-| Precision | **80.4%** — ~20% false alarm rate, acceptable for NOC operations |
-| F1 Score | **0.871** |
+| Recall | **95.0%**: catches 95 of every 100 faults |
+| Precision | **80.4%**: about 1 in 5 alerts is a false alarm |
+| F1 score | **0.871** |
 
-*Results on held-out test set (last 20% of time window, never seen during training).*
-*Threshold tuned to a 94.5% recall target on the validation set, with a 93% recall floor required on the test set for a model to be promoted — missing a fault is more costly than a false alarm in NOC operations.*
-*Default dataset (`data.seed: 42`). Across 10 independently generated datasets (real XGBoost) the median is 94.2% recall / 87.4% precision; individual runs range from 92.3–95.2% recall and 80.1–94.9% precision.*
+*Held-out test set, never seen in training. The threshold targets 94.5% recall on the validation set.*
 
 ---
 
 ## MLOps
 
-The model, API and results above are unchanged in purpose; the MLOps layer below tracks, tests, ships, serves and monitors them.
-
 | Capability | Tool |
 |---|---|
-| Experiment tracking & model registry | **MLflow** |
-| Data / model / pipeline versioning | **DVC** |
-| CI/CD (lint, tests, pipeline run, image build & push) | **GitHub Actions** → GHCR |
-| Metrics & dashboards | **Prometheus** · **Grafana** (2 dashboards) |
-| Data & prediction drift detection | **Evidently** (+ Pushgateway) |
-| Scheduled retrain → drift check → promote | **Airflow** |
-| Portable, high-throughput serving | **ONNX** · **Triton** |
-| Container orchestration | **Docker** · **Kubernetes** (kustomize) · **Redis** (shared state) |
+| Experiment tracking and model registry | **MLflow** |
+| Data, model and pipeline versioning | **DVC** |
+| CI/CD (lint, tests, pipeline run, image build and push) | **GitHub Actions** to GHCR |
+| Metrics and dashboards | **Prometheus**, **Grafana** (2 dashboards) |
+| Data and prediction drift detection | **Evidently** with Pushgateway |
+| Scheduled drift check, retrain and promote | **Airflow** |
+| Portable, high-throughput serving | **ONNX**, **Triton** |
+| Container orchestration | **Docker**, **Kubernetes** (kustomize), **Redis** (shared state) |
 
-### MLOps results
+### Operational results
 
 | Area | Result |
 |---|---|
-| Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.31** false alerts per cell per day |
-| Detector ranking quality | PR-AUC **0.967** |
-| Automated tests | **144** passing |
-| Serving (one process, with Redis) | **24–50 req/s**, p95 latency **124–237 ms**, **240 MiB** peak memory (shared CI runners; run-to-run spread ~2×) |
-| Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; under sustained load the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
-| Resilience | Redis outage → raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without restart |
-| Drift detection (real Evidently 0.4.33, run in CI) | Held-out traffic flags **0 / 68** features; a latency-only 2× shift flags **11 / 68**; a multi-KPI congestion incident flags **55 / 68** (81%) and sets the dataset-drift flag |
-| Security | Optional API-key auth on prediction routes; non-root, read-only containers; optional HTTPS Ingress |
+| Automated tests | **146** passing |
+| Serving (one process, with Redis) | **24-50 req/s**, p95 latency **124-237 ms**, **240 MiB** peak memory (shared CI runners, run-to-run spread about 2x) |
+| Horizontal scaling | 2-6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
+| Resilience | Redis outage: raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without a restart |
+| Drift detection (Evidently 0.4.33, run in CI) | held-out traffic flags **0 / 68** features; a latency-only 2x shift flags **11 / 68**; a multi-KPI congestion incident flags **55 / 68** (81%) and sets the dataset-drift flag |
+| Security | optional API-key auth; non-root, read-only containers; optional HTTPS Ingress |
 
-*All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's synthetic benchmark; full per-tool report: the `evaluation-results` branch. Tables: [EXPERIMENTS.md](EXPERIMENTS.md); deployment: [k8s/README.md](k8s/README.md).*
+### Impact by tool
+
+What each tool contributed, as measured in CI on the real libraries (single runs on shared runners, ~2× run-to-run noise).
+
+| Tool | Impact (measured) |
+|---|---|
+| **MLflow** | 3 tracked runs, 3 registered versions, model round-trip with zero prediction difference. The promotion gate (min recall 0.93) promoted v3 and would block seeds 4 and 7, which fall below it. |
+| **DVC** | Stages skip when nothing changed and re-run when inputs change, so retraining is reproducible and incremental. |
+| **Evidently** | Flags drift only when it should: healthy hold-out 0/68 features, latency-only shift 11/68, congestion incident 55/68. Airflow reads this as `data_drift_share` and retrains on it. |
+| **Airflow** | Healthy run takes the skip path (3 tasks); a drifted run goes drift → retrain → promote (6 tasks) and pushes `data_drift_share` 0.82 to Pushgateway. |
+| **FastAPI + API-key auth** | Scores match the offline model (max difference 5e-5); auth checks pass. 23–50 req/s per process, p95 123–237 ms, ~240 MiB; 24–53 ms CPU per request, mostly feature recomputation rather than the model. |
+| **Redis** | Holds the inference log for drift checks: ~5 MiB per 1.2k rows (~85 MiB at the 20k-row cap); peak 50 MiB and 29m CPU under load. |
+| **ONNX** | Matches XGBoost to 1e-7; single-row prediction 0.01–0.02 ms vs 0.17–0.44 ms for XGBoost. |
+| **Triton (CPU)** | Matches XGBoost to 1e-7 with 100% decision agreement; ~6 ms per single row over HTTP (network included). Batches capped at 64, inputs must be scaled. |
+| **Docker** | 886 MiB image, runs as uid 1000, passes its health check; a slim serving requirements file removed training-only packages. |
+| **Kubernetes + HPA** | Scale-out starts 30 s after load begins; scale-in starts 235 s after load ends and reaches the 2-replica minimum after 402 s. Size the node pool for `maxReplicas × 500m` (one pod stayed Pending on a 4-vCPU runner). |
+| **Prometheus / Grafana / Pushgateway** | Light: peaks of 8m CPU / 35 MiB, 3m / 68 MiB and 1m / 16 MiB. Resource values and the Prometheus volume (2 Gi) were set from these. |
+| **CI/CD (GitHub Actions)** | Exposed the real-library bugs (version pins, converter errors, image loading, Airflow image conflicts) and publishes the measured results to branches so they are reproducible. |
+
+Not measured: peak memory of the drift job, Triton on GPU.
+
+*All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's KPI dataset. Per-tool report: the `evaluation-results` branch. Detailed tables: [EXPERIMENTS.md](EXPERIMENTS.md).*
 
 ---
+
+## Repository layout
+
+```
+.
+├── data/            KPI data generator and feature engineering
+├── models/          training, threshold tuning, promotion gate, ONNX export
+├── api/             FastAPI service, API-key auth, per-cell history, Redis state, metrics
+├── monitoring/      Evidently drift check -> Pushgateway
+├── airflow/dags/    scheduled drift check -> retrain -> promote
+├── k8s/             kustomize manifests (HPA, Redis, Prometheus, Grafana, drift CronJob)
+├── triton_model_repository/   Triton config for the ONNX model
+├── prometheus/ grafana/       docker-compose monitoring configuration
+├── scripts/         measurement and study scripts used by CI
+├── tests/           146 tests
+├── .github/workflows/         ci.yml, evaluation.yml
+├── params.yaml  dvc.yaml  Makefile
+└── Dockerfile  Dockerfile.airflow  docker-compose*.yml  requirements*.txt
+```
 
 ## Tech Stack
 

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="120" viewBox="0 0 900 120" role="img" aria-label="Recall 95.0%, Precision 80.4%, F1 0.871">
+  <style>
+    .card { fill: #0f2742; }
+    .label { fill: #9db7d5; font: 600 15px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: 1.5px; text-transform: uppercase; }
+    .value { fill: #ffffff; font: 700 42px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  </style>
+  <rect class="card" x="0"   y="0" width="290" height="120" rx="10"/>
+  <rect class="card" x="305" y="0" width="290" height="120" rx="10"/>
+  <rect class="card" x="610" y="0" width="290" height="120" rx="10"/>
+  <text class="label" x="145" y="38"  text-anchor="middle">Recall</text>
+  <text class="value" x="145" y="90"  text-anchor="middle">95.0%</text>
+  <text class="label" x="450" y="38"  text-anchor="middle">Precision</text>
+  <text class="value" x="450" y="90"  text-anchor="middle">80.4%</text>
+  <text class="label" x="755" y="38"  text-anchor="middle">F1</text>
+  <text class="value" x="755" y="90"  text-anchor="middle">0.871</text>
+</svg>
