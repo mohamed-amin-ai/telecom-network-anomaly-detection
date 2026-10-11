@@ -1,0 +1,18 @@
+# Runtime dependencies of the API image (and the drift CronJob that runs from the same image).
+# A strict subset of requirements.txt — same pins, minus training/MLOps-only tooling (mlflow, dvc, dvc-s3,
+# onnxmltools/onnx/onnxruntime, setuptools, requests). tests/test_repo_consistency.py enforces the subset.
+# Measured: the full requirements.txt image was 2.1 GB (scripts/eval/docker_eval.sh).
+
+numpy>=1.26
+pandas>=2.1
+scikit-learn==1.6.1
+xgboost-cpu>=2.1,<3  # same xgboost releases, without the bundled GPU/NCCL libraries (~300 MB smaller)
+fastapi>=0.110
+uvicorn>=0.29
+joblib>=1.3
+pydantic>=2.6
+pyyaml>=6.0
+redis>=5.0,<6
+prometheus-fastapi-instrumentator>=7.0
+prometheus-client>=0.20
+evidently==0.4.33

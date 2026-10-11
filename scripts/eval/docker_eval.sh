@@ -14,12 +14,14 @@ done
 uid=$(docker exec "$cid" id -u)
 code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:18030/health)
 mem=$(docker stats --no-stream --format '{{.MemUsage}}' "$cid")
+top=$(docker exec "$cid" sh -c "du -sm /usr/local/lib/python3.12/site-packages/* 2>/dev/null | sort -rn | head -14" | tr '\n' ';' | tr -s '\t' ' ')
 docker rm -f "$cid" > /dev/null
-python3 - "$EVAL_DIR" "$((t1-t0))" "$size" "$layers" "$health" "$secs" "$uid" "$code" "$mem" <<'PY'
+python3 - "$EVAL_DIR" "$((t1-t0))" "$size" "$layers" "$health" "$secs" "$uid" "$code" "$mem" "$top" <<'PY'
 import json, sys
-d, build, size, layers, health, secs, uid, code, mem = sys.argv[1:10]
+d, build, size, layers, health, secs, uid, code, mem, top = sys.argv[1:11]
 json.dump({"build_seconds_cold": int(build), "image_mib": round(int(size) / 2**20, 1), "layers": int(layers),
            "healthcheck_status": health, "seconds_to_healthy": int(secs), "runs_as_uid": int(uid),
-           "health_http": int(code), "container_memory_idle": mem}, open(f"{d}/docker.json", "w"), indent=2)
+           "health_http": int(code), "container_memory_idle": mem,
+           "largest_site_packages_mib": [t.strip() for t in top.split(";") if t.strip()]}, open(f"{d}/docker.json", "w"), indent=2)
 PY
 cat "$EVAL_DIR/docker.json"
