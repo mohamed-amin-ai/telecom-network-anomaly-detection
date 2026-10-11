@@ -367,3 +367,26 @@ ability to run XGBoost or ONNX conversion here.
 through the API's feature path reproduced `features.csv` exactly (max absolute
 difference 1.9e-11), i.e. the "no train/serve skew" claim in `live_features.py`
 holds for every row that is scoreable.
+
+
+## Real XGBoost measurements (CI) — supersede the stand-in headline numbers
+
+Everything above this section was produced with a scikit-learn gradient-boosting stand-in because XGBoost could not
+be installed where those studies ran. The CI evaluation (`.github/workflows/evaluation.yml`, results on the
+`evaluation-results` branch) re-measured the project with the real model. The stand-in was **not** a faithful proxy
+for the precision/recall trade-off:
+
+| Recall target (validation) | Stand-in (previous default 0.965) | Real XGBoost, test: recall / precision |
+|---|---|---|
+| 0.93 | — | 0.930 / 0.934 |
+| 0.945 | — | **0.950 / 0.804** (new default) |
+| 0.95 | — | 0.962 / 0.622 |
+| 0.965 | 0.970 / 0.795 | 0.973 / 0.428 |
+| 0.98 | — | 0.979 / 0.335 |
+
+The real model's precision-recall curve has a sharp knee near recall 0.94-0.95 that the stand-in's curve lacks, so a
+target calibrated on the stand-in (0.965) landed far past the knee. The default is now **0.945**, read off the real
+curve with thresholds tuned on validation only. Across 10 independent datasets at that target (real XGBoost):
+recall median 94.2% (92.3-95.2%), precision median 87.4% (80.1-94.9%), every incident detected, median 0.19 false
+alerts per cell per day. Seed 42 (the default dataset) is one of the harder draws (F1 0.871; the 10-seed median is 0.907).
+Two of the ten draws land below the 0.93 promotion floor on test recall (seeds 4 and 7), so the gate would decline those.

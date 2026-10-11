@@ -367,8 +367,64 @@ def cmd_triton():
     save("triton", out)
 
 
+# ── curve ───────────────────────────────────────────────────────────────────────────────────
+
+def cmd_curve():
+    """Precision/recall trade-off of the REAL model. Thresholds are chosen on validation only."""
+    from sklearn.metrics import average_precision_score, precision_recall_curve
+
+    import data.generate_data as gen
+    from models.alerting import grouped_event_metrics
+    from models.common import load_data, load_params, three_way_time_split, tune_threshold
+
+    meta, model, scaler, cols, _ = load_artifacts()
+    params = load_params()
+    df = load_data()
+    _, va, te = three_way_time_split(df, params["split"]["train_ratio"], params["split"]["val_fraction"])
+    pv = model.predict_proba(scaler.transform(va[cols].to_numpy(dtype=float)))[:, 1]
+    pt = model.predict_proba(scaler.transform(te[cols].to_numpy(dtype=float)))[:, 1]
+    yv, yt = va["anomaly"].to_numpy(), te["anomaly"].to_numpy()
+
+    rows = {}
+    for target in (0.90, 0.93, 0.935, 0.94, 0.945, 0.95, 0.955, 0.96, 0.965, 0.98):
+        thr, *_ = tune_threshold(yv, pv, target)
+        tv, tt = confusion_scores(yv, pv >= thr), confusion_scores(yt, pt >= thr)
+        ev = grouped_event_metrics(yt, pt >= thr, te["cell_id"].to_numpy(), intervals_per_day=gen.INTERVALS_PER_DAY)
+        rows[str(target)] = {"threshold": round(thr, 5), "val": {k: tv[k] for k in ("recall", "precision", "f1")},
+                             "test": {k: tt[k] for k in ("recall", "precision", "f1")},
+                             "event_detection_rate": round(float(ev["detection_rate"]), 4),
+                             "false_alerts_per_cell_day": round(float(ev["false_alerts_per_cell_day"]), 3)}
+    pr_p, pr_r, _ = precision_recall_curve(yt, pt)
+    oracle = {str(r): round(float(pr_p[:-1][pr_r[:-1] >= r].max()), 4) for r in (0.80, 0.90, 0.93, 0.95, 0.97, 0.98, 0.99)
+              if (pr_r[:-1] >= r).any()}
+    save("curve", {"by_validation_target": rows, "test_best_possible_precision_at_recall": oracle,
+                   "val_pr_auc": round(float(average_precision_score(yv, pv)), 4),
+                   "test_pr_auc": round(float(average_precision_score(yt, pt)), 4),
+                   "positive_rate": {"val": round(float(yv.mean()), 4), "test": round(float(yt.mean()), 4)}})
+
+
+# ── spread ──────────────────────────────────────────────────────────────────────────────────
+
+def cmd_spread():
+    """Real XGBoost on 10 independently generated datasets, at the configured recall target."""
+    from scripts.study_common import apply_level, configured_level, evaluate_current_dataset, spread
+    from models.common import load_params
+
+    params = load_params()
+    target = params["threshold"]["validation_recall_target"]
+    rows = {}
+    for seed in (42, 1, 2, 3, 4, 5, 6, 7, 8, 9):
+        apply_level(configured_level(), days=params["data"]["periods_days"], seed=seed)
+        r = evaluate_current_dataset(params, [target], backend="xgboost")
+        rows[str(seed)] = {"pr_auc": r["test_pr_auc"], **r["by_target"][str(target)]}
+        print(seed, rows[str(seed)]["recall"], rows[str(seed)]["precision"])
+    keys = ("recall", "precision", "f1", "event_detection_rate", "false_alerts_per_cell_day", "pr_auc")
+    save("spread", {"target": target, "seeds": list(rows), "per_seed": rows,
+                    "summary": {k: spread([rows[s][k] for s in rows]) for k in keys}})
+
+
 if __name__ == "__main__":
-    cmds = {"api": cmd_api, "onnx": cmd_onnx, "mlflow": cmd_mlflow, "events": cmd_events, "triton": cmd_triton}
+    cmds = {"api": cmd_api, "onnx": cmd_onnx, "mlflow": cmd_mlflow, "events": cmd_events, "triton": cmd_triton, "curve": cmd_curve, "spread": cmd_spread}
     if len(sys.argv) != 2 or sys.argv[1] not in cmds:
         sys.exit(__doc__)
     cmds[sys.argv[1]]()

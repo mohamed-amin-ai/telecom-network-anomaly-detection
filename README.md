@@ -2,7 +2,7 @@
 
 An end-to-end ML system that detects anomalies in telecom network KPIs (latency, throughput, packet loss) in real time, deployed as a production-ready REST API.
 
-**Key result: 97.0% recall on detecting network faults before service degradation.**
+**Key result: 95.0% recall on detecting network faults before service degradation.**
 
 ---
 
@@ -188,13 +188,13 @@ The default 0.5 threshold maximizes accuracy, not recall. In anomaly detection, 
 
 | Metric | Value |
 |---|---|
-| Recall | **97.0%** — catches 97 of every 100 faults |
-| Precision | **79.5%** — ~20% false alarm rate, acceptable for NOC operations |
-| F1 Score | **0.874** |
+| Recall | **95.0%** — catches 95 of every 100 faults |
+| Precision | **80.4%** — ~20% false alarm rate, acceptable for NOC operations |
+| F1 Score | **0.871** |
 
 *Results on held-out test set (last 20% of time window, never seen during training).*
-*Threshold tuned to a 96.5% recall target on the validation set, with a 93% recall floor required on the test set for a model to be promoted — missing a fault is more costly than a false alarm in NOC operations.*
-*Default dataset (`data.seed: 42`). Across 10 independent synthetic datasets the median is 96.4% recall / 78.4% precision, and individual runs range from 94.8–97.2% recall and 59.8–92.7% precision.*
+*Threshold tuned to a 94.5% recall target on the validation set, with a 93% recall floor required on the test set for a model to be promoted — missing a fault is more costly than a false alarm in NOC operations.*
+*Default dataset (`data.seed: 42`). Across 10 independently generated datasets (real XGBoost) the median is 94.2% recall / 87.4% precision; individual runs range from 92.3–95.2% recall and 80.1–94.9% precision.*
 
 ---
 
@@ -217,16 +217,16 @@ The model, API and results above are unchanged in purpose; the MLOps layer below
 
 | Area | Result |
 |---|---|
-| Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.33** false alerts per cell per day |
-| Detector ranking quality | PR-AUC **0.977** |
-| Automated tests | **142** passing |
-| Serving (per replica) | **~27 req/s**, p95 latency **191 ms**, **181 MiB** memory |
+| Alert quality (incident level) | **100%** of fault incidents detected, **0 min** median detection delay, **0.31** false alerts per cell per day |
+| Detector ranking quality | PR-AUC **0.967** |
+| Automated tests | **144** passing |
+| Serving (one process, with Redis) | **24–50 req/s**, p95 latency **124–237 ms**, **240 MiB** peak memory (shared CI runners; run-to-run spread ~2×) |
 | Horizontal scaling | 2–6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them |
 | Resilience | Redis outage → raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without restart |
 | Drift detection (real Evidently 0.4.33, run in CI) | Held-out traffic flags **0 / 68** features; a latency-only 2× shift flags **11 / 68**; a multi-KPI congestion incident flags **55 / 68** (81%) and sets the dataset-drift flag |
 | Security | Optional API-key auth on prediction routes; non-root, read-only containers; optional HTTPS Ingress |
 
-*Figures measured on the project's synthetic benchmark with a scikit-learn gradient-boosting stand-in for XGBoost (the drift figures are from real Evidently); a run with XGBoost will differ slightly. Full tables: [EXPERIMENTS.md](EXPERIMENTS.md); deployment: [k8s/README.md](k8s/README.md).*
+*All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's synthetic benchmark; full per-tool report: the `evaluation-results` branch. Tables: [EXPERIMENTS.md](EXPERIMENTS.md); deployment: [k8s/README.md](k8s/README.md).*
 
 ---
 
