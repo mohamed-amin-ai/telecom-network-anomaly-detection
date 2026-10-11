@@ -59,7 +59,9 @@ REPORTS_DIR = Path(__file__).parent / "reports"
 # Evidently's result dict — see the module docstring above.
 CANDIDATE_KEYS = {
     "dataset_drift": ["dataset_drift"],
-    "drift_share": ["drift_share", "share_of_drifted_columns"],
+    # NOT "drift_share": in Evidently 0.4.x that key is the dataset-drift THRESHOLD (default 0.5), not
+    # the measured share. The measured share is derived below from the two column counts.
+    "drift_share": ["share_of_drifted_columns"],
     "number_of_columns": ["number_of_columns"],
     "number_of_drifted_columns": ["number_of_drifted_columns"],
     "drift_by_columns": ["drift_by_columns"],
@@ -83,7 +85,7 @@ def _extract_drift_summary(result: dict) -> dict:
                     found[field] = metric_result[key]
                     break
 
-    required = ["dataset_drift", "drift_share", "number_of_columns", "number_of_drifted_columns"]
+    required = ["dataset_drift", "number_of_columns", "number_of_drifted_columns"]
     missing = [f for f in required if f not in found]
     if missing:
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -99,6 +101,10 @@ def _extract_drift_summary(result: dict) -> dict:
             f"CANDIDATE_KEYS at the top of monitoring/drift_check.py. "
             f"See this file's module docstring for context."
         )
+    # Always derive the share from the counts: one source of truth, and immune to the key above
+    # meaning something else in another Evidently version.
+    found["drift_share"] = (found["number_of_drifted_columns"] / found["number_of_columns"]
+                            if found["number_of_columns"] else 0.0)
     # drift_by_columns is optional (only used for the per-column gauges)
     found.setdefault("drift_by_columns", {})
     return found
