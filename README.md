@@ -74,7 +74,7 @@ Common commands are in the `Makefile` (`make test`, `make pipeline`, `make serve
 ## Running with Docker
 
 ```bash
-docker compose up --build          # API + Redis + Prometheus + Grafana
+docker compose up --build          # API + Prometheus + Pushgateway + Grafana
 ```
 
 or the API alone:
@@ -164,7 +164,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 
 | Area | Result |
 |---|---|
-| Automated tests | **146** passing |
+| Automated tests | **156** passing |
 | Serving (one process, with Redis) | **292 req/s**, p95 latency **19 ms**, **237 MiB** peak memory after optimisation, against 24 req/s and 229 ms before (same load, same CI runner; run-to-run spread about 2x) |
 | Horizontal scaling | 2-6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
 | Resilience | Redis outage: raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without a restart |
@@ -178,7 +178,7 @@ What each tool contributed, as measured in CI on the real libraries (single runs
 | Tool | Impact (measured) |
 |---|---|
 | **MLflow** | 3 tracked runs, 3 registered versions, model round-trip with zero prediction difference. The promotion gate (min recall 0.93) promoted v3 and would block seeds 4 and 7, which fall below it. |
-| **DVC** | Stages skip when nothing changed and re-run when inputs change, so retraining is reproducible and incremental. |
+| **DVC** | A second `dvc repro` with no changes skips all three stages; changing a training parameter re-runs only `train` and skips data generation and feature engineering, so retraining is reproducible and incremental. |
 | **Evidently** | Flags drift only when it should: healthy hold-out 0/68 features, latency-only shift 11/68, congestion incident 55/68. Airflow reads this as `data_drift_share` and retrains on it. |
 | **Airflow** | Healthy run takes the skip path (3 tasks); a drifted run goes drift → retrain → promote (6 tasks) and pushes `data_drift_share` 0.82 to Pushgateway. |
 | **FastAPI + API-key auth** | Scores match the offline model (max difference 5e-5); auth checks pass. After optimisation one process serves 292 req/s at p95 19 ms using 4.3 ms of CPU per request (was 24 req/s, p95 229 ms, 51.5 ms), about 237 MiB. |
@@ -192,7 +192,9 @@ What each tool contributed, as measured in CI on the real libraries (single runs
 | **Prometheus / Grafana / Pushgateway** | Light: peaks of 5m CPU / 35 MiB, 3m / 67 MiB and 1m / 16 MiB. Resource values and the Prometheus volume (2 Gi) were set from these. |
 | **CI/CD (GitHub Actions)** | Exposed the real-library bugs (version pins, converter errors, image loading, Airflow image conflicts) and publishes the measured results to branches so they are reproducible. |
 
-The drift job peaked at 999m CPU and 284 MiB and finished in 22 s. Not measured: Triton on GPU.
+The drift job peaked at 999m CPU and 284 MiB and finished in 22 s.
+
+Not measured yet: Triton on GPU.
 
 *All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's KPI dataset. Per-tool report: the `evaluation-results` branch. Detailed tables: [EXPERIMENTS.md](EXPERIMENTS.md).*
 
@@ -211,7 +213,7 @@ The drift job peaked at 999m CPU and 284 MiB and finished in 22 s. Not measured:
 ├── triton_model_repository/   Triton config for the ONNX model
 ├── prometheus/ grafana/       docker-compose monitoring configuration
 ├── scripts/         measurement and study scripts used by CI
-├── tests/           146 tests
+├── tests/           156 tests
 ├── .github/workflows/         ci.yml, evaluation.yml
 ├── params.yaml  dvc.yaml  Makefile
 └── Dockerfile  Dockerfile.airflow  docker-compose*.yml  requirements*.txt
