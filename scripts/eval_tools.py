@@ -8,6 +8,8 @@ Measured evaluation of each tool in the project, run against the REAL libraries 
   python scripts/eval_tools.py mlflow   # MLflow: runs, registry, promotion gate, load-back
   python scripts/eval_tools.py events   # incident-level alerting metrics on the held-out window
   python scripts/eval_tools.py triton   # Triton (CPU) vs XGBoost: parity + HTTP latency
+  python scripts/eval_tools.py compact  # smaller models: recall vs size/latency
+  python scripts/eval_tools.py stages   # per-stage cost: original vs optimised path
 """
 
 import json
@@ -423,8 +425,113 @@ def cmd_spread():
                     "summary": {k: spread([rows[s][k] for s in rows]) for k in keys}})
 
 
+# ── compact ─────────────────────────────────────────────────────────────────────────────────
+
+def cmd_compact():
+    """Smaller models (fewer / shallower trees) on the same data: does recall hold, and what do they save?"""
+    import time
+
+    import xgboost as xgb
+    from sklearn.preprocessing import StandardScaler
+
+    from data.features import get_feature_columns
+    from models.common import load_data, load_params, three_way_time_split, tune_threshold
+
+    params = load_params()
+    mp, target = params["model"], params["threshold"]["validation_recall_target"]
+    df = load_data()
+    cols = get_feature_columns(df)
+    tr, va, te = three_way_time_split(df, params["split"]["train_ratio"], params["split"]["val_fraction"])
+    scaler = StandardScaler().fit(tr[cols].values)
+    Xtr, Xva, Xte = (scaler.transform(d[cols].values) for d in (tr, va, te))
+    ytr, yva, yte = (d["anomaly"].values for d in (tr, va, te))
+    spw = (ytr == 0).sum() / (ytr == 1).sum()
+    rows = {}
+    for depth, trees in ((6, 300), (6, 150), (6, 100), (5, 300), (4, 300), (4, 150), (3, 300)):
+        m = xgb.XGBClassifier(n_estimators=trees, max_depth=depth, learning_rate=mp["learning_rate"],
+                              subsample=mp["subsample"], colsample_bytree=mp["colsample_bytree"], scale_pos_weight=spw,
+                              eval_metric="aucpr", early_stopping_rounds=mp["early_stopping_rounds"],
+                              random_state=mp["random_state"], n_jobs=-1)
+        m.fit(Xtr, ytr, eval_set=[(Xva, yva)], verbose=False)
+        pv, pt = m.predict_proba(Xva)[:, 1], m.predict_proba(Xte)[:, 1]
+        thr, *_ = tune_threshold(yva, pv, target)
+        sc = confusion_scores(yte, pt >= thr)
+        one = Xte[:1]
+        times = []
+        for _ in range(300):
+            t = time.perf_counter()
+            m.predict_proba(one)
+            times.append(time.perf_counter() - t)
+        path = EVAL_DIR / f"compact_{depth}_{trees}.json"
+        EVAL_DIR.mkdir(parents=True, exist_ok=True)
+        m.save_model(path)
+        size = path.stat().st_size
+        path.unlink()
+        rows[f"depth{depth}_trees{trees}"] = {
+            "max_depth": depth, "n_estimators_cap": trees, "trees_used": int(m.best_iteration) + 1,
+            "recall": sc["recall"], "precision": sc["precision"], "f1": sc["f1"],
+            "model_json_kib": round(size / 1024), "predict_one_ms_median": round(1000 * sorted(times)[150], 3)}
+        print(depth, trees, rows[f"depth{depth}_trees{trees}"])
+    save("compact", {"target": target, "rows": rows})
+
+
+# ── stages ──────────────────────────────────────────────────────────────────────────────────
+
+def cmd_stages():
+    """Per-stage cost of one scored request, original code path vs the optimised one."""
+    import random
+    import time
+
+    from api import live_features as lf
+    from api.scorer import make_scaler_fn
+
+    def bench(fn, reps):
+        fn()
+        t = time.perf_counter()
+        for _ in range(reps):
+            fn()
+        return round(1000 * (time.perf_counter() - t) / reps, 4)
+
+    rng = random.Random(1)
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+    def row(i):
+        from datetime import timedelta
+        return lf.make_raw_row((t0 + timedelta(minutes=15 * i)).isoformat(), "S", {
+            "latency_ms": 40 + rng.random() * 10, "throughput_mbps": 80 + rng.random() * 5,
+            "packet_loss_pct": 0.5 + rng.random(), "sinr_db": 15 + rng.random() * 3, "connected_users": 50 + rng.randint(0, 20)})
+
+    rows = [row(i) for i in range(500)]
+    out = {}
+    for label, fast in (("features_pandas_ms", False), ("features_numpy_ms", True)):
+        lf.USE_FAST_FEATURES = fast
+        store = lf.CellHistoryStore()
+        for r in rows[:40]:
+            store.add_and_compute("S", r)
+        it = iter(rows[40:])
+        out[label] = bench(lambda: store.add_and_compute("S", next(it)), 400)
+
+    meta, model, scaler, cols, test_df = load_artifacts()
+    x = test_df[cols].to_numpy(dtype=float)[:1]
+    fn = make_scaler_fn(scaler)
+    out["scaler_sklearn_ms"] = bench(lambda: scaler.transform(x), 2000)
+    out["scaler_numpy_ms"] = bench(lambda: fn(x), 2000)
+    xs = scaler.transform(x)
+    out["xgboost_predict_ms"] = bench(lambda: model.predict_proba(xs), 1000)
+    onnx_path = REPO / "models" / "model.onnx"
+    if onnx_path.exists():
+        import onnxruntime as ort
+        opts = ort.SessionOptions()
+        opts.intra_op_num_threads = opts.inter_op_num_threads = 1
+        sess = ort.InferenceSession(str(onnx_path), opts, providers=["CPUExecutionProvider"])
+        name = sess.get_inputs()[0].name
+        xf = xs.astype(np.float32)
+        out["onnx_predict_ms"] = bench(lambda: sess.run(None, {name: xf}), 5000)
+    save("stages", out)
+
+
 if __name__ == "__main__":
-    cmds = {"api": cmd_api, "onnx": cmd_onnx, "mlflow": cmd_mlflow, "events": cmd_events, "triton": cmd_triton, "curve": cmd_curve, "spread": cmd_spread}
+    cmds = {"api": cmd_api, "onnx": cmd_onnx, "mlflow": cmd_mlflow, "events": cmd_events, "triton": cmd_triton, "curve": cmd_curve, "spread": cmd_spread, "compact": cmd_compact, "stages": cmd_stages}
     if len(sys.argv) != 2 or sys.argv[1] not in cmds:
         sys.exit(__doc__)
     cmds[sys.argv[1]]()

@@ -89,7 +89,7 @@ jobs:
       # Only the pure transformation/split/threshold logic — no trained
       # model required, so this runs on every PR regardless of whether
       # the pipeline below has been executed yet.
-      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py tests/test_replay_mlflow.py tests/test_drift_demo.py tests/test_drift_check.py tests/test_eval_report.py -v
+      - run: pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_live_features_fast.py tests/test_scorer.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py tests/test_replay_mlflow.py tests/test_drift_demo.py tests/test_drift_check.py tests/test_eval_report.py -v
 
   pipeline-and-integration-tests:
     name: Run real pipeline + API integration tests
@@ -284,14 +284,25 @@ jobs:
           # token needed or stored anywhere for this workflow.
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
+      - name: Build and push the API image
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: api
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Build and push the drift-check image (API code + Evidently)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: drift
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-drift:latest
+            ghcr.io/${{ github.repository }}-drift:${{ github.sha }}
 
   kubernetes-manifests:
     name: Kubernetes - render, schema-validate, end-to-end on kind
@@ -342,6 +353,8 @@ jobs:
             echo "::error title=docker build failed::$(grep -B22 -E 'ResolutionImpossible|^ERROR' build.log | grep -v -E '^[0-9.# ]*$|notice' | cut -c1-160 | tail -n 22 | tr '\n' '|' | cut -c1-1900)"
             exit 1
           }
+      - name: Build the drift-check image
+        run: docker build --target drift -t telecom-anomaly-drift:ci . > drift-build.log 2>&1 || { tail -n 20 drift-build.log; exit 1; }
       - uses: helm/kind-action@v1
       - name: Load image into kind
         run: |
@@ -349,13 +362,14 @@ jobs:
           kind get clusters
           set -o pipefail
           # helm/kind-action names its cluster 'chart-testing', not kind's default 'kind'
+          kind load docker-image telecom-anomaly-drift:ci --name "$(kind get clusters | head -n 1)"
           kind load docker-image telecom-anomaly-api:ci --name "$(kind get clusters | head -n 1)" 2>&1 | tee load.log || {
             echo "::error title=kind load failed::$(tail -n 8 load.log | cut -c1-200 | tr -d '%' | tr '\n' '|')"
             exit 1
           }
       - name: Run the end-to-end check
         run: |
-          IMAGE=telecom-anomaly-api:ci scripts/k8s_e2e.sh > e2e.log 2>&1 || {
+          IMAGE=telecom-anomaly-api:ci DRIFT_IMAGE=telecom-anomaly-drift:ci scripts/k8s_e2e.sh > e2e.log 2>&1 || {
             kubectl get pods -A --no-headers 2>&1 | grep -v -E 'kube-system|local-path' | awk '{print $2,$3,$4,$5}' >> e2e.log
             for n in 4 3 2 1; do
               echo "::error title=e2e log part $n::$(tail -n $((n*8)) e2e.log | head -n 8 | cut -c1-150 | tr -d '%\r' | tr '\n' '|')"

@@ -8,6 +8,8 @@ EVAL_DIR=${EVAL_DIR:-eval/k8s}
 IMAGE=${IMAGE:-eval-api:ci}
 NS=telecom-anomaly
 REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
+DRIFT_IMAGE=${DRIFT_IMAGE:-eval-drift:ci}
+REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:latest
 mkdir -p "$EVAL_DIR"
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml > /dev/null
 kubectl -n kube-system patch deployment metrics-server --type=json \
@@ -16,7 +18,7 @@ kubectl -n kube-system rollout status deploy/metrics-server --timeout=180s || ex
 
 kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f - > /dev/null
 kubectl -n $NS create secret generic grafana-admin --from-literal=admin-password=eval-only-password --dry-run=client -o yaml | kubectl apply -f - > /dev/null
-kubectl kustomize k8s/overlays/full | sed "s#${REMOTE_IMAGE}#${IMAGE}#g" | kubectl apply -f - > /dev/null
+kubectl kustomize k8s/overlays/full | sed -e "s#${REMOTE_DRIFT_IMAGE}#${DRIFT_IMAGE}#g" -e "s#${REMOTE_IMAGE}#${IMAGE}#g" | kubectl apply -f - > /dev/null
 for d in redis anomaly-api pushgateway prometheus grafana; do
   kubectl -n $NS rollout status deploy/$d --timeout=300s || exit 1
 done

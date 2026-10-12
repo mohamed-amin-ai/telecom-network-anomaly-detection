@@ -1,4 +1,5 @@
-# Runtime dependencies of the API image (and the drift CronJob that runs from the same image).
+# Runtime dependencies of the API image. Evidently (which drags in plotly, statsmodels, pyarrow, ...) is NOT here:
+# only the drift CronJob needs it, and it gets it from requirements-drift.txt in its own image target.
 # A strict subset of requirements.txt — same pins, minus training/MLOps-only tooling (mlflow, dvc, dvc-s3,
 # onnxmltools/onnx/onnxruntime, setuptools, requests). tests/test_repo_consistency.py enforces the subset.
 # Measured: the full requirements.txt image was 2.1 GB (scripts/eval/docker_eval.sh).
@@ -15,4 +16,3 @@ pyyaml>=6.0
 redis>=5.0,<6
 prometheus-fastapi-instrumentator>=7.0
 prometheus-client>=0.20
-evidently==0.4.33

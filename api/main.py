@@ -32,6 +32,7 @@ from api.live_features import (
     MIN_HISTORY_ROWS,
 )
 from api.auth import require_api_key
+from api.scorer import Scorer
 from api.shared_store import build_history_backend
 from api.metrics import (
     record_history_store_error,
@@ -56,6 +57,8 @@ try:
 
     with open(MODEL_DIR / "metadata.json") as f:
         metadata = json.load(f)
+
+    scorer = Scorer(model, scaler, MODEL_DIR)
 
     FEATURE_COLS = metadata["feature_cols"]
     THRESHOLD    = metadata["threshold"]
@@ -223,8 +226,7 @@ def score_to_severity(score: float, threshold: float) -> str:
 
 def run_inference(snapshot: KPISnapshot) -> PredictionResult:
     X, feature_source = build_feature_vector(snapshot)
-    X_scaled = scaler.transform(X)
-    prob = float(model.predict_proba(X_scaled)[0, 1])
+    prob = scorer.probability(X)
     is_anomaly = prob >= THRESHOLD
     severity = score_to_severity(prob, THRESHOLD)
 

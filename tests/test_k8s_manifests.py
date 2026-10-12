@@ -20,6 +20,7 @@ BASE = K8S / "base"
 MONITORING = K8S / "monitoring"
 KUSTOMIZATIONS = [BASE, K8S / "overlays" / "scaled", K8S / "overlays" / "full", MONITORING]
 API_IMAGE = "ghcr.io/mohamed-amin-ai/mlops-anomaly"
+DRIFT_IMAGE = API_IMAGE + "-drift"      # same code plus Evidently (Dockerfile target `drift`)
 
 
 def _load(path: Path) -> list:
@@ -95,15 +96,16 @@ def test_every_resource_file_is_in_its_kustomization():
 def test_all_kustomizations_share_one_namespace_and_one_api_image():
     namespaces = {_kustomization(d)["namespace"] for d in KUSTOMIZATIONS}
     assert len(namespaces) == 1, namespaces
-    for kdir in (BASE, MONITORING):
-        assert _kustomization(kdir)["images"][0]["name"] == API_IMAGE
-    for doc in (_api(), _docs(MONITORING)[("CronJob", "drift-check")]):
-        assert _pod_spec(doc)["containers"][0]["image"].rsplit(":", 1)[0] == API_IMAGE
+    for kdir, image in ((BASE, API_IMAGE), (MONITORING, DRIFT_IMAGE)):
+        assert _kustomization(kdir)["images"][0]["name"] == image
+    for doc, image in ((_api(), API_IMAGE), (_docs(MONITORING)[("CronJob", "drift-check")], DRIFT_IMAGE)):
+        assert _pod_spec(doc)["containers"][0]["image"].rsplit(":", 1)[0] == image
 
 
 def test_image_name_matches_what_ci_pushes():
     ci = (REPO / ".github/workflows/ci.yml").read_text()
     assert "ghcr.io/${{ github.repository }}" in ci
+    assert "ghcr.io/${{ github.repository }}-drift" in ci and "target: drift" in ci
     assert API_IMAGE.startswith("ghcr.io/") and API_IMAGE == API_IMAGE.lower()
 
 

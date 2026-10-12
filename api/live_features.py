@@ -27,19 +27,96 @@ Storage:
 
 from collections import deque
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 import sys
 
+import numpy as np
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent))
-from data.features import engineer_features, KPI_COLS, LAG_STEPS, LONG_WINDOW
+from data.features import engineer_features, KPI_COLS, LAG_STEPS, LONG_WINDOW, SHORT_WINDOW
 
 # Enough history so the most recent row survives engineer_features' dropna:
 # needs LONG_WINDOW (16) prior points for the rolling window's min_periods,
 # plus the max lag (8) already falls inside that. Keep a safety margin.
 MIN_HISTORY_ROWS = LONG_WINDOW + 4          # 20 rows before we can score
 MAX_HISTORY_ROWS = LONG_WINDOW + max(LAG_STEPS) + 10   # buffer cap per cell
+
+
+def fast_latest_features(buf: list[dict], target_timestamp: str) -> dict | None:
+    """Features of ONE reading (the one stamped `target_timestamp`) from a cell's buffered history,
+    computed with plain NumPy instead of running data/features.py's full DataFrame pipeline.
+
+    It follows engineer_features() exactly (same lags, same shift(1)-based rolling windows with the
+    same min_periods, ddof=1 std, zero-std and zero-previous -> undefined), and returns None whenever
+    it cannot be sure it would match: duplicate or non-string timestamps, the target missing, or any
+    feature undefined. The caller then falls back to engineer_features(), which also raises the
+    detailed UndefinedFeatureError, so behaviour is unchanged in every edge case. Equality with the
+    original is checked by tests/test_live_features_fast.py.
+    """
+    if not all(isinstance(r.get("timestamp"), str) for r in buf):
+        return None
+    rows = sorted(buf, key=lambda r: r["timestamp"])
+    stamps = [r["timestamp"] for r in rows]
+    if len(set(stamps)) != len(stamps):
+        return None
+    try:
+        i = stamps.index(target_timestamp)
+    except ValueError:
+        return None
+
+    def window(x, w, min_periods):
+        vals = x[max(0, i - w):i]                 # == series.shift(1).rolling(w) evaluated at row i
+        vals = vals[~np.isnan(vals)]
+        return vals if len(vals) >= min_periods else None
+
+    out: dict = {}
+    for kpi in KPI_COLS:
+        x = np.array([float(r[kpi]) for r in rows])
+        cur = x[i]
+        out[kpi] = cur
+        for lag in LAG_STEPS:
+            if i - lag < 0:
+                return None
+            out[f"{kpi}_lag{lag}"] = x[i - lag]
+        stats_4h = None
+        for w, label in ((SHORT_WINDOW, "1h"), (LONG_WINDOW, "4h")):
+            vals = window(x, w, w // 2)
+            if vals is None or len(vals) < 2:
+                return None
+            if vals.max() == vals.min():
+                return None       # flat window: pandas' rolling std carries ~1e-7 noise, so use the original path
+            mean, std = vals.mean(), vals.std(ddof=1)
+            out[f"{kpi}_roll_mean_{label}"] = mean
+            out[f"{kpi}_roll_std_{label}"] = std
+            if label == "4h":
+                stats_4h = (mean, std)
+        vals = window(x, SHORT_WINDOW, 2)
+        if vals is None:
+            return None
+        out[f"{kpi}_roll_min_1h"] = vals.min()
+        out[f"{kpi}_roll_max_1h"] = vals.max()
+        mean4, std4 = stats_4h
+        if std4 == 0:
+            return None
+        out[f"{kpi}_zscore"] = (cur - mean4) / std4
+        prev = x[i - 1]
+        if prev == 0:
+            return None
+        out[f"{kpi}_roc"] = (cur - prev) / prev
+
+    if any(np.isnan(v) for v in out.values()):
+        return None
+    ts = pd.to_datetime(target_timestamp, format="ISO8601", utc=True)
+    out["hour"] = ts.hour
+    out["day_of_week"] = ts.dayofweek
+    out["is_weekend"] = int(ts.dayofweek >= 5)
+    return out
+
+
+# Set LIVE_FEATURES_FAST=0 to force the original engineer_features() path for every request.
+USE_FAST_FEATURES = os.environ.get("LIVE_FEATURES_FAST", "1") != "0"
 
 
 class UndefinedFeatureError(Exception):
@@ -180,6 +257,11 @@ class CellHistoryStore:
 
         if len(buf) < MIN_HISTORY_ROWS:
             return None
+
+        if USE_FAST_FEATURES:
+            fast = fast_latest_features(buf, raw_row["timestamp"])
+            if fast is not None:
+                return fast
 
         df = pd.DataFrame(buf)
         df["cell_id"] = cell_id

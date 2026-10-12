@@ -18,3 +18,19 @@ def test_report_merges_status_tools_and_logs(tmp_path):
 
 def test_parse_load_log_ignores_missing_fields():
     assert parse_load_log("nothing useful") == {}
+
+
+def test_report_compares_original_and_optimised_api_paths(tmp_path):
+    job = tmp_path / "core"
+    (job / "logs").mkdir(parents=True)
+    (job / "status.json").write_text(json.dumps({"load": {"ok": True, "seconds": 1}}))
+    log = ("idle RSS 175 MiB\n1000 requests in 40.0s = {rps} req/s; CPU 41.0s = {cpu} ms per request\n"
+           "latency p50 90 ms, p95 190 ms; peak RSS 181 MiB\n")
+    (job / "logs" / "load_baseline.log").write_text(log.format(rps=25, cpu="41.0"))
+    (job / "logs" / "load.log").write_text(log.format(rps=300, cpu="3.1"))
+    (job / "stages.json").write_text(json.dumps({"features_pandas_ms": 18.2, "features_numpy_ms": 0.33}))
+    (job / "compact.json").write_text(json.dumps({"target": 0.945, "rows": {"depth4_trees150": {
+        "trees_used": 150, "recall": 0.95, "precision": 0.8, "f1": 0.87, "model_json_kib": 300, "predict_one_ms_median": 0.2}}}))
+    md = build(load(tmp_path))
+    assert "Optimisation: whole API under the same load" in md and "| original |" in md and "| optimised |" in md
+    assert "features_numpy_ms" in md and "depth4_trees150" in md

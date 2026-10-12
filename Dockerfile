@@ -1,4 +1,6 @@
-# Telecom Network Anomaly Detection System — API image
+# Telecom Network Anomaly Detection System
+#   docker build .                  -> `api` image (default, last stage): the FastAPI service
+#   docker build --target drift .   -> `drift` image: the same code plus Evidently, for the drift CronJob
 FROM python:3.12-slim AS base
 
 # Keep pip/python quiet and predictable
@@ -18,11 +20,20 @@ RUN pip install --upgrade pip && pip install -r requirements-serving.txt
 COPY api/ ./api
 COPY data/ ./data
 COPY models/ ./models
-# drift_check.py runs from this same image as a Kubernetes CronJob (k8s/monitoring/)
+# drift_check.py runs as a Kubernetes CronJob from the `drift` target below (k8s/monitoring/)
 COPY monitoring/ ./monitoring
 
 # Run as a non-root user
 RUN useradd --create-home --uid 1000 appuser
+
+# ── drift: base + Evidently (only the CronJob needs it; it is most of the API image's old weight) ──
+FROM base AS drift
+COPY requirements-drift.txt .
+RUN pip install -r requirements-drift.txt
+USER appuser
+
+# ── api: the default target ──
+FROM base AS api
 USER appuser
 
 EXPOSE 8000
