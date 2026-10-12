@@ -421,5 +421,5 @@ Smaller models, same data, threshold tuned on validation to the same 0.945 recal
 No smaller model beats the shipped one on F1, and single-row latency does not change (the cost is call overhead, not tree count),
 so the model is unchanged. Quantisation was not applied: it targets neural-network weight matrices, and a tree ensemble has none.
 
-Docker: the API image fell from 886 MiB to 481 MiB by moving Evidently (plotly, statsmodels, pyarrow, ...) into a separate
+Docker: the API image fell from 3,006 MiB (the full `requirements.txt`, rebuilt and measured in the same run) to 886 MiB (runtime dependencies only), then to 481 MiB by moving Evidently (plotly, statsmodels, pyarrow, ...) into a separate
 `drift` image target used only by the drift CronJob. The drift job itself peaked at 999m CPU and 284 MiB and finished in 22 s.
