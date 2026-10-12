@@ -10,7 +10,8 @@ t0=$(date +%s); dvc repro > /tmp/dvc1.log 2>&1; rc1=$?; t1=$(date +%s)
 cat /tmp/dvc1.log | tail -n 15
 cp models/metadata.json /tmp/meta_base.json 2>/dev/null
 dvc repro > /tmp/dvc2.log 2>&1; rc2=$?
-sed -i 's/validation_recall_target: 0.965/validation_recall_target: 0.96/' params.yaml
+sed -i 's/validation_recall_target: 0\.945/validation_recall_target: 0.94/' params.yaml
+grep -qE 'validation_recall_target: 0\.94$' params.yaml || { echo 'dvc_eval: param edit did not apply'; exit 1; }
 dvc params diff --json > "$EVAL_DIR/dvc_params_diff.json" 2>/dev/null
 t2=$(date +%s); dvc repro > /tmp/dvc3.log 2>&1; rc3=$?; t3=$(date +%s)
 cp models/metadata.json /tmp/meta_changed.json 2>/dev/null
@@ -26,7 +27,7 @@ def m(p):
 json.dump({
     "first_repro": {"exit": int(r1), "seconds": int(s1), "stages": st1.split()},
     "second_repro_no_changes": {"exit": int(r2), "stages": st2.split()},
-    "after_changing_validation_recall_target_0.965_to_0.96": {"exit": int(r3), "seconds": int(s3), "stages": st3.split(),
+    "after_changing_validation_recall_target_0.945_to_0.94": {"exit": int(r3), "seconds": int(s3), "stages": st3.split(),
         "metrics_before": m("/tmp/meta_base.json"), "metrics_after": m("/tmp/meta_changed.json")},
     "restore_params_repro": {"exit": int(r4), "stages": st4.split()},
 }, open(f"{d}/dvc.json", "w"), indent=2)

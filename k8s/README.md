@@ -17,8 +17,8 @@ k8s/
 # 1. Pin the images CI built (ghcr.io tags: :latest and :<commit sha>): the API image, and the
 #    drift-check image (the same code plus Evidently) used by the drift CronJob
 cd k8s/overlays/full && kustomize edit set image \
-  ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha> \
-  ghcr.io/mohamed-amin-ai/mlops-anomaly-drift=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:<sha>
+  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha> \
+  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift:<sha>
 
 # 2. Grafana's password is never in git
 GRAFANA_PASSWORD='<choose>' make k8s-secret
@@ -86,12 +86,12 @@ The HPA's 70% target applies to the 500m request. Under 24 closed-loop clients o
 be scheduled, so size the node pool for `maxReplicas x 500m`. **Finding:** the cost is dominated by recomputing features
 over the cell's history on every request, not by the model, so capacity scales by adding replicas rather than by a bigger
 model host. The HPA has an explicit `behavior` block (scale out up to 2 pods per 30 s with no stabilisation; scale in 1 pod per 60 s
-after a 180 s window). Measured: first scale-in 235 s after load ended, back at the 2-replica minimum after 402 s.
+after a 180 s window). Measured: first scale-in 205 s after load ended, back at the 2-replica minimum after 388 s.
 
 | Component | Measured peak (idle / under load) | Request / limit |
 |---|---|---|
-| Prometheus | 8m CPU, 35 MiB; 1.3k series, ~87 samples/s, ~160 MiB estimated for 15 d | 50m, 128 Mi / 500m, 512 Mi; PVC 2 Gi |
-| Grafana | 3m CPU, 68 MiB | 50m, 128 Mi / 300m, 256 Mi |
+| Prometheus | 5m CPU, 35 MiB; 1.3k series, ~87 samples/s, ~160 MiB estimated for 15 d | 50m, 128 Mi / 500m, 512 Mi; PVC 2 Gi |
+| Grafana | 3m CPU, 67 MiB | 50m, 128 Mi / 300m, 256 Mi |
 | Pushgateway | 1m CPU, 16 MiB | 20m, 32 Mi / 100m, 64 Mi |
 | Redis | 101m CPU, 91 MiB at 496 req/s (the 20k-row inference-log cap reached) | 100m, 128 Mi / 500m, 400 Mi |
 | Drift CronJob | 999m CPU, 284 MiB; finished in 22 s | 250m, 384 Mi / 1, 768 Mi |

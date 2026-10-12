@@ -18,9 +18,9 @@ set -euo pipefail
 NS=telecom-anomaly
 IMAGE=${IMAGE:-telecom-anomaly-api:ci}
 GRAFANA_PASSWORD=${GRAFANA_PASSWORD:-$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')}
-REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
+REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest
 DRIFT_IMAGE=${DRIFT_IMAGE:-telecom-anomaly-drift:ci}
-REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:latest
+REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift:latest
 PF_PIDS=()
 cleanup() { for p in "${PF_PIDS[@]:-}"; do kill "$p" 2>/dev/null || true; done; }
 trap cleanup EXIT
