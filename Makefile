@@ -10,7 +10,7 @@ lint:
 	ruff check .
 
 test:
-	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py tests/test_replay_mlflow.py tests/test_drift_demo.py tests/test_drift_check.py tests/test_eval_report.py -v
+	pytest tests/test_features.py tests/test_common.py tests/test_inference_log.py tests/test_promote.py tests/test_convert_to_onnx.py tests/test_query_triton.py tests/test_generate_data.py tests/test_repo_consistency.py tests/test_live_features.py tests/test_live_features_fast.py tests/test_scorer.py tests/test_alerting.py tests/test_study_common.py tests/test_k8s_manifests.py tests/test_shared_history.py tests/test_k8s_traffic.py tests/test_replay_mlflow.py tests/test_drift_demo.py tests/test_drift_check.py tests/test_eval_report.py -v
 
 test-api:
 	pytest tests/test_api.py -v
@@ -105,7 +105,7 @@ k8s-apply-base:
 k8s-delete:
 	kubectl delete -k k8s/overlays/full
 
-# Needs a cluster with the API image loaded (CI runs this on kind): IMAGE=telecom-anomaly-api:ci make k8s-e2e
+# Needs a cluster with the API image loaded (CI runs this on kind): IMAGE=telecom-anomaly-api:ci DRIFT_IMAGE=telecom-anomaly-drift:ci make k8s-e2e
 k8s-e2e:
 	scripts/k8s_e2e.sh
 

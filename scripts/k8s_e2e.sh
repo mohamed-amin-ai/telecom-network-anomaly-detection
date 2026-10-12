@@ -19,6 +19,8 @@ NS=telecom-anomaly
 IMAGE=${IMAGE:-telecom-anomaly-api:ci}
 GRAFANA_PASSWORD=${GRAFANA_PASSWORD:-$(python3 -c 'import secrets; print(secrets.token_urlsafe(12))')}
 REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
+DRIFT_IMAGE=${DRIFT_IMAGE:-telecom-anomaly-drift:ci}
+REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:latest
 PF_PIDS=()
 cleanup() { for p in "${PF_PIDS[@]:-}"; do kill "$p" 2>/dev/null || true; done; }
 trap cleanup EXIT
@@ -53,7 +55,7 @@ kubectl -n "$NS" create secret generic grafana-admin --from-literal=admin-passwo
 API_KEY=${API_KEY:-$(python3 -c 'import secrets; print(secrets.token_urlsafe(16))')}
 kubectl -n "$NS" create secret generic api-keys --from-literal=keys="$API_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
-kubectl kustomize k8s/overlays/full | sed "s#${REMOTE_IMAGE}#${IMAGE}#g" | kubectl apply -f -
+kubectl kustomize k8s/overlays/full | sed -e "s#${REMOTE_DRIFT_IMAGE}#${DRIFT_IMAGE}#g" -e "s#${REMOTE_IMAGE}#${IMAGE}#g" | kubectl apply -f -
 
 step "1. Workloads Ready"
 for d in redis anomaly-api pushgateway prometheus grafana; do

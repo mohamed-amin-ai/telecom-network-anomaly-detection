@@ -14,9 +14,11 @@ k8s/
 ## Run it
 
 ```bash
-# 1. Pin the image CI built (ghcr.io tags: :latest and :<commit sha>)
+# 1. Pin the images CI built (ghcr.io tags: :latest and :<commit sha>): the API image, and the
+#    drift-check image (the same code plus Evidently) used by the drift CronJob
 cd k8s/overlays/full && kustomize edit set image \
-  ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha>
+  ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha> \
+  ghcr.io/mohamed-amin-ai/mlops-anomaly-drift=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:<sha>
 
 # 2. Grafana's password is never in git
 GRAFANA_PASSWORD='<choose>' make k8s-secret
@@ -37,7 +39,7 @@ make k8s-grafana             # UI   -> http://localhost:3000  (user: admin)
 
 Only want the API? `make k8s-apply-base` (API + Redis, no monitoring).
 **Private GHCR package:** the image pulls anonymously only if the package is public; otherwise add an `imagePullSecret`.
-The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci make k8s-e2e` (needs the image loaded into the cluster).
+The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci DRIFT_IMAGE=telecom-anomaly-drift:ci make k8s-e2e` (needs both images loaded into the cluster).
 
 ## How it fits together
 
@@ -51,7 +53,7 @@ The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci make k8s-e2e` (need
   features, `/health` and `/metrics` are unaffected, so pods stay in rotation instead of crash-looping.
 - **Scraping:** Prometheus discovers API *pods* through a namespaced Role (not through the Service, which would
   load-balance each scrape to a random replica). Pushgateway holds the drift job's metrics; Grafana's datasource and dashboards are provisioned from ConfigMaps.
-- **Drift CronJob** (hourly) runs `monitoring/drift_check.py` from the API image: it compares the Redis inference log
+- **Drift CronJob** (hourly) runs `monitoring/drift_check.py` from the `drift` image (the API image plus Evidently, `docker build --target drift .`): it compares the Redis inference log
   to `models/reference_features.csv` (written by `train.py`, baked into the image) and pushes `data_drift_*` metrics.
 - The two Grafana dashboards under `k8s/monitoring/grafana/dashboards/` are copies of `grafana/dashboards/` (kustomize can't
   read outside its directory); `tests/test_k8s_manifests.py` fails if they diverge.
@@ -65,7 +67,7 @@ The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci make k8s-e2e` (need
 | 2 API processes + Redis + Prometheus + Pushgateway: cells warm up after exactly 20 readings while alternating replicas; every API-dashboard query returns data; `cells_tracked` is shared; Redis down -> 503 / precomputed 200 / `/health` 200; recovery | sandbox | real FastAPI app, real Prometheus 2.55.1, Pushgateway 1.9.0; model is a scikit-learn stand-in for XGBoost |
 | drift job -> Pushgateway -> Prometheus -> the drift dashboard's queries | sandbox, then CI on kind | stand-in in the sandbox; **real Evidently 0.4.33 in CI** (the CronJob completes, Pushgateway holds `data_drift_share`) |
 | Resource sizing (below) | CI on shared runners (`scripts/measure_resources.py`) | measured on **real XGBoost** |
-| HPA scale-out under sustained load (metrics-server, 24 closed-loop threads for 240 s, `scripts/eval/k8s_hpa_eval.sh`) | CI on kind | real: scale-out decided 30 s after load began, 6 desired replicas, 5 Ready, 1 Pending (the 4-vCPU runner ran out of CPU), peak 175% of the CPU request, 0 request errors |
+| HPA scale-out under sustained load (metrics-server, 24 closed-loop threads for 240 s, `scripts/eval/k8s_hpa_eval.sh`) | CI on kind | real: scale-out decided 30 s after load began, 6 desired replicas, 5 Ready, 1 Pending (the 4-vCPU runner ran out of CPU), peak 190% of the CPU request, 496 req/s at p95 91 ms, 0 request errors |
 | API-key auth: 401 without a key, either of two keys accepted, `/health` and `/metrics` open | sandbox (real FastAPI) | real |
 | Everything inside a cluster (probes, kube-proxy balancing, `kubernetes_sd`, RBAC, PVCs, the CronJob, Grafana provisioning, **real XGBoost and real Evidently**) | CI `kubernetes-manifests` job on kind (`scripts/k8s_e2e.sh`) | **passing** |
 
@@ -76,7 +78,7 @@ Measured with `scripts/measure_resources.py` (4 concurrent clients, warmed cells
 | | measured | set to |
 |---|---|---|
 | API memory | 233-234 MiB idle, 240 MiB peak RSS (`kubectl top` working set under the HPA test: 174 MiB per pod) | request 320 Mi, limit 512 Mi |
-| API CPU | **24-53 ms per scored request**; one process serves 23-50 req/s; p50 77-170 ms, p95 123-237 ms at that load (run-to-run spread ~2x on shared runners) | request 500m, limit 1 |
+| API CPU | **4.3 ms per scored request** after the NumPy feature path (51.5 ms before); one process serves 292 req/s, p50 13 ms, p95 19 ms at that load (run-to-run spread ~2x on shared runners) | request 500m, limit 1 |
 | Redis memory | 5.0 MiB per ~1.2k inference-log rows, so ~85 MiB at the 20k-row cap | request 128 Mi, limit 400 Mi (`maxmemory` 256 MB) |
 
 The HPA's 70% target applies to the 500m request. Under 24 closed-loop clients on kind the HPA decided to scale out
@@ -91,8 +93,8 @@ after a 180 s window). Measured: first scale-in 235 s after load ended, back at 
 | Prometheus | 8m CPU, 35 MiB; 1.3k series, ~87 samples/s, ~160 MiB estimated for 15 d | 50m, 128 Mi / 500m, 512 Mi; PVC 2 Gi |
 | Grafana | 3m CPU, 68 MiB | 50m, 128 Mi / 300m, 256 Mi |
 | Pushgateway | 1m CPU, 16 MiB | 20m, 32 Mi / 100m, 64 Mi |
-| Redis | 29m CPU, 50 MiB | 50m, 96 Mi / 500m, 400 Mi |
-| Drift CronJob | finished in 18 s without being OOM-killed; its pod was too short-lived for `kubectl top`, so peak memory is **not measured** and the 512 Mi / 2 Gi values stay as a generous guess | 250m, 512 Mi / 1, 2 Gi |
+| Redis | 101m CPU, 91 MiB at 496 req/s (the 20k-row inference-log cap reached) | 100m, 128 Mi / 500m, 400 Mi |
+| Drift CronJob | 999m CPU, 284 MiB; finished in 22 s | 250m, 384 Mi / 1, 768 Mi |
 
 These are one run on a shared 4-vCPU runner with a small synthetic log, so they are floors, not production sizing.
 

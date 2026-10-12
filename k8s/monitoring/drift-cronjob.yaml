@@ -37,7 +37,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: drift-check
-              image: ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
+              image: ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:latest
               command: ["python", "monitoring/drift_check.py", "--pushgateway-url", "http://pushgateway:9091"]
               env:
                 - name: REDIS_URL
@@ -49,8 +49,8 @@ spec:
                 - name: MPLCONFIGDIR
                   value: /tmp/mpl
               resources:
-                requests: {cpu: 250m, memory: 512Mi}
-                limits: {cpu: "1", memory: 2Gi}
+                requests: {cpu: 250m, memory: 384Mi}   # measured peak 999m CPU / 284 MiB, 22 s run
+                limits: {cpu: "1", memory: 768Mi}
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true

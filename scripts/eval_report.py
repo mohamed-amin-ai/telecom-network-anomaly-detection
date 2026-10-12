@@ -84,6 +84,19 @@ def build(data: dict) -> str:
                           ("501-snapshot batch status", a["batch_501_status"])], ["measure", "value"]), ""]
         if "load" in d["logs"]:
             md += ["## API under load (1 process, Redis-backed)", "", table(parse_load_log(d["logs"]["load"]).items(), ["measure", "value"]), ""]
+        loads = {n: parse_load_log(d["logs"][k]) for n, k in (("original", "load_baseline"), ("optimised", "load"), ("optimised + ONNX scorer", "load_onnx"))
+                 if k in d["logs"]}
+        if len(loads) > 1:
+            cols = ["idle_rss_mib", "peak_rss_mib", "req_per_s", "cpu_ms_per_request", "p50_ms", "p95_ms"]
+            md += ["## Optimisation: whole API under the same load", "", table([(n, *(v.get(c, "") for c in cols)) for n, v in loads.items()],
+                                                                               ["API path", *cols]), ""]
+        if "stages" in t:
+            md += ["## Optimisation: cost of each stage of one request (ms)", "", table(sorted(t["stages"].items()), ["stage", "ms"]), ""]
+        if "compact" in t:
+            c = t["compact"]
+            md += ["## Smaller models (same data, threshold tuned on validation to the same recall target)", "", table(
+                [(k, v["trees_used"], v["recall"], v["precision"], v["f1"], v["model_json_kib"], v["predict_one_ms_median"]) for k, v in c["rows"].items()],
+                ["model", "trees used", "test recall", "test precision", "test F1", "model.json KiB", "predict one row ms"]), ""]
         if "onnx" in t:
             o = t["onnx"]
             md += ["## ONNX Runtime vs XGBoost", "", table([

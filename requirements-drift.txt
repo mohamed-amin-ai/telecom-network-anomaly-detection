@@ -1,0 +1,3 @@
+# Added on top of requirements-serving.txt in the `drift` Docker target (the drift CronJob image).
+# A strict subset of requirements.txt; tests/test_repo_consistency.py enforces it.
+evidently==0.4.33

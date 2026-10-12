@@ -390,3 +390,36 @@ curve with thresholds tuned on validation only. Across 10 independent datasets a
 recall median 94.2% (92.3-95.2%), precision median 87.4% (80.1-94.9%), every incident detected, median 0.19 false
 alerts per cell per day. Seed 42 (the default dataset) is one of the harder draws (F1 0.871; the 10-seed median is 0.907).
 Two of the ten draws land below the 0.93 promotion floor on test recall (seeds 4 and 7), so the gate would decline those.
+
+## Serving optimisation (CI, real XGBoost)
+
+Measured by `.github/workflows/evaluation.yml`; the same load (4 clients, 300 requests each, Redis-backed) run against the
+original code path and the optimised one on the same runner. Run-to-run spread on shared runners is about 2x.
+
+| API path | req/s | CPU per request | p50 | p95 | peak RSS |
+|---|---|---|---|---|---|
+| original (pandas features, sklearn scaler) | 24 | 51.5 ms | 166 ms | 229 ms | 240 MiB |
+| optimised (NumPy features and scaler) | 292 | 4.3 ms | 13 ms | 19 ms | 237 MiB |
+| optimised + ONNX scorer (`SCORER=onnx`) | 330 | 3.5 ms | 12 ms | 17 ms | 251 MiB |
+
+Cost of one request by stage: features 23.8 ms (pandas) vs 0.64 ms (NumPy); scaler 0.102 ms (sklearn) vs 0.003 ms (NumPy);
+model 0.43 ms (XGBoost) vs 0.012 ms (ONNX Runtime). The NumPy feature path equals `engineer_features()` to 1e-9 on thousands of
+random histories (`tests/test_live_features_fast.py`); flat windows, a zero previous value, duplicate timestamps and any other
+undefined case fall back to the original code, so error behaviour is unchanged.
+
+Smaller models, same data, threshold tuned on validation to the same 0.945 recall target:
+
+| model | trees used | test recall | test precision | test F1 | model.json | predict one row |
+|---|---|---|---|---|---|---|
+| depth 6, up to 300 trees (shipped) | 189 | 0.950 | 0.804 | 0.871 | 1,127 KiB | 0.41 ms |
+| depth 6, up to 150 trees | 143 | 0.955 | 0.742 | 0.835 | 796 KiB | 0.40 ms |
+| depth 5, up to 300 trees | 189 | 0.950 | 0.773 | 0.853 | 734 KiB | 0.41 ms |
+| depth 4, up to 300 trees | 189 | 0.954 | 0.787 | 0.863 | 447 KiB | 0.40 ms |
+| depth 4, up to 150 trees | 143 | 0.952 | 0.776 | 0.855 | 308 KiB | 0.40 ms |
+| depth 3, up to 300 trees | 285 | 0.960 | 0.722 | 0.824 | 365 KiB | 0.41 ms |
+
+No smaller model beats the shipped one on F1, and single-row latency does not change (the cost is call overhead, not tree count),
+so the model is unchanged. Quantisation was not applied: it targets neural-network weight matrices, and a tree ensemble has none.
+
+Docker: the API image fell from 886 MiB to 481 MiB by moving Evidently (plotly, statsmodels, pyarrow, ...) into a separate
+`drift` image target used only by the drift CronJob. The drift job itself peaked at 999m CPU and 284 MiB and finished in 22 s.

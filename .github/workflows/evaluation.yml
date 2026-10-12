@@ -49,8 +49,16 @@ jobs:
           scripts/eval/ci_step.sh onnx python scripts/eval_tools.py onnx
       - name: FastAPI (endpoints, serving parity, auth)
         run: scripts/eval/ci_step.sh api python scripts/eval_tools.py api
-      - name: API under load
+      - name: API under load (optimised path, the default)
         run: scripts/eval/ci_step.sh load python scripts/measure_resources.py
+      - name: API under load (original path, for comparison)
+        run: scripts/eval/ci_step.sh load_baseline env LIVE_FEATURES_FAST=0 SCORER_NUMPY_SCALER=0 python scripts/measure_resources.py
+      - name: API under load (optimised path with the ONNX scorer)
+        run: scripts/eval/ci_step.sh load_onnx env SCORER=onnx python scripts/measure_resources.py
+      - name: Optimisation, per stage (original vs optimised)
+        run: scripts/eval/ci_step.sh stages python scripts/eval_tools.py stages
+      - name: Smaller models (fewer / shallower trees)
+        run: scripts/eval/ci_step.sh compact python scripts/eval_tools.py compact
       - name: Evidently drift detection
         run: |
           scripts/eval/ci_step.sh drift_demo python scripts/drift_demo.py
@@ -170,12 +178,13 @@ jobs:
         with:
           name: handoff
           path: .
-      - run: docker build -t eval-api:ci .
+      - run: docker build -t eval-api:ci . && docker build --target drift -t eval-drift:ci .
       - uses: helm/kind-action@v1
       - name: Load image, deploy the scaled overlay, drive load, record the HPA
         run: |
           kind load docker-image eval-api:ci --name "$(kind get clusters | head -n 1)"
-          scripts/eval/ci_step.sh k8s_hpa env IMAGE=eval-api:ci bash scripts/eval/k8s_hpa_eval.sh
+          kind load docker-image eval-drift:ci --name "$(kind get clusters | head -n 1)"
+          scripts/eval/ci_step.sh k8s_hpa env IMAGE=eval-api:ci DRIFT_IMAGE=eval-drift:ci bash scripts/eval/k8s_hpa_eval.sh
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4

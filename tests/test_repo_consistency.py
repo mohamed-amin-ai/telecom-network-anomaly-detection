@@ -258,10 +258,19 @@ def test_serving_requirements_are_an_exact_subset_of_the_full_requirements():
         {k: (v, full.get(k)) for k, v in serving.items() if full.get(k) != v}
     # what the API / drift job import at runtime must be installable from the serving file
     for needed in ("fastapi", "uvicorn", "xgboost", "scikit-learn", "joblib", "pandas", "numpy", "pyyaml",
-                   "pydantic", "redis", "prometheus-client", "prometheus-fastapi-instrumentator", "evidently"):
+                   "pydantic", "redis", "prometheus-client", "prometheus-fastapi-instrumentator"):
         assert needed in serving, f"{needed} missing from requirements-serving.txt"
-    for training_only in ("mlflow", "dvc", "onnxruntime", "onnxmltools"):
+    for training_only in ("mlflow", "dvc", "onnxruntime", "onnxmltools", "evidently"):
         assert training_only not in serving
+
+
+def test_drift_requirements_are_a_subset_of_the_full_requirements_and_in_the_drift_target():
+    full = {ln.split("#")[0].strip() for ln in (REPO / "requirements.txt").read_text().splitlines()}
+    drift = {ln.split("#")[0].strip() for ln in (REPO / "requirements-drift.txt").read_text().splitlines() if ln.split("#")[0].strip()}
+    assert drift == {"evidently==0.4.33"} and drift <= full
+    dockerfile = (REPO / "Dockerfile").read_text()
+    assert "AS drift" in dockerfile and "requirements-drift.txt" in dockerfile
+    assert dockerfile.rstrip().splitlines()[-1].startswith("CMD") and "FROM base AS api" in dockerfile  # api stays the default target
 
 
 def test_airflow_requirements_are_an_exact_subset_and_exclude_dvc_and_onnx():
