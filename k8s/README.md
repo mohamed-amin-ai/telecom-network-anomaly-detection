@@ -17,8 +17,8 @@ k8s/
 # 1. Pin the images CI built (ghcr.io tags: :latest and :<commit sha>): the API image, and the
 #    drift-check image (the same code plus Evidently) used by the drift CronJob
 cd k8s/overlays/full && kustomize edit set image \
-  ghcr.io/mohamed-amin-ai/mlops-anomaly=ghcr.io/mohamed-amin-ai/mlops-anomaly:<sha> \
-  ghcr.io/mohamed-amin-ai/mlops-anomaly-drift=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:<sha>
+  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:<sha> \
+  ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift:<sha>
 
 # 2. Grafana's password is never in git
 GRAFANA_PASSWORD='<choose>' make k8s-secret

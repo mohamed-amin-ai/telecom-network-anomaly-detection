@@ -7,9 +7,9 @@ set -u
 EVAL_DIR=${EVAL_DIR:-eval/k8s}
 IMAGE=${IMAGE:-eval-api:ci}
 NS=telecom-anomaly
-REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly:latest
+REMOTE_IMAGE=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection:latest
 DRIFT_IMAGE=${DRIFT_IMAGE:-eval-drift:ci}
-REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/mlops-anomaly-drift:latest
+REMOTE_DRIFT_IMAGE=ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift:latest
 mkdir -p "$EVAL_DIR"
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml > /dev/null
 kubectl -n kube-system patch deployment metrics-server --type=json \

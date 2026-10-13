@@ -18,5 +18,5 @@ configMapGenerator:
       - grafana/dashboards/telecom-anomaly-api.json
       - grafana/dashboards/drift-monitoring.json
 images:
-  - name: ghcr.io/mohamed-amin-ai/mlops-anomaly-drift
+  - name: ghcr.io/mohamed-amin-ai/telecom-network-anomaly-detection-drift
     newTag: latest

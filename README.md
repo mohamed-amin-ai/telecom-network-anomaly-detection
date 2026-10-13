@@ -1,7 +1,7 @@
 # Telecom Network Anomaly Detection System
 
-[![CI](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/ci.yml/badge.svg)](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/ci.yml)
-[![Full evaluation](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/evaluation.yml/badge.svg)](https://github.com/mohamed-amin-ai/mlops-anomaly/actions/workflows/evaluation.yml)
+[![CI](https://github.com/mohamed-amin-ai/telecom-network-anomaly-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/mohamed-amin-ai/telecom-network-anomaly-detection/actions/workflows/ci.yml)
+[![Full evaluation](https://github.com/mohamed-amin-ai/telecom-network-anomaly-detection/actions/workflows/evaluation.yml/badge.svg)](https://github.com/mohamed-amin-ai/telecom-network-anomaly-detection/actions/workflows/evaluation.yml)
 
 An end-to-end machine-learning system that detects faults in telecom network KPIs in real time. A gradient-boosted classifier is served through a FastAPI service and wrapped in a full MLOps layer: experiment tracking, data versioning, CI/CD, monitoring, drift detection, scheduled retraining and Kubernetes deployment.
 
