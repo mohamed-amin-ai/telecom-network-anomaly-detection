@@ -31,6 +31,9 @@ prometheus-client>=0.20
 # install/verify it (no network in the build sandbox). See the banner
 # at the top of monitoring/drift_check.py before upgrading this pin.
 evidently==0.4.33
+# Evidently 0.4.33 needs opentelemetry-exporter-otlp-proto-grpc 1.25, while recent FastAPI releases pull
+# in opentelemetry-api>=1.44, whose http exporter clashes with it. Keep the API on the 1.25-compatible line.
+opentelemetry-api<1.44
 
 # Phase 6 — ONNX conversion + runtime. See models/convert_to_onnx.py's
 # module docstring for the same "written without network access to
