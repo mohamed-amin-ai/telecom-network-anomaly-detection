@@ -60,20 +60,20 @@ The CI end-to-end run on kind: `IMAGE=telecom-anomaly-api:ci DRIFT_IMAGE=telecom
 
 ## What was verified, and how
 
-| Check | Where | Real or stand-in |
+| Check | Where | Tooling |
 |---|---|---|
-| All four kustomizations render; 23 objects in `full` pass `kubeconform --strict` against the Kubernetes 1.30 schemas | sandbox | real kustomize + kubeconform |
-| History/inference log against a live Redis (incl. two replicas sharing it, trimming, expiry) | sandbox + CI | real redis-server, real redis-py |
-| 2 API processes + Redis + Prometheus + Pushgateway: cells warm up after exactly 20 readings while alternating replicas; every API-dashboard query returns data; `cells_tracked` is shared; Redis down -> 503 / precomputed 200 / `/health` 200; recovery | sandbox | real FastAPI app, real Prometheus 2.55.1, Pushgateway 1.9.0; model is a scikit-learn stand-in for XGBoost |
-| drift job -> Pushgateway -> Prometheus -> the drift dashboard's queries | sandbox, then CI on kind | stand-in in the sandbox; **real Evidently 0.4.33 in CI** (the CronJob completes, Pushgateway holds `data_drift_share`) |
-| Resource sizing (below) | CI on shared runners (`scripts/measure_resources.py`) | measured on **real XGBoost** |
-| HPA scale-out under sustained load (metrics-server, 24 closed-loop threads for 240 s, `scripts/eval/k8s_hpa_eval.sh`) | CI on kind | real: scale-out decided 30 s after load began, 6 desired replicas, 5 Ready, 1 Pending (the 4-vCPU runner ran out of CPU), peak 190% of the CPU request, 496 req/s at p95 91 ms, 0 request errors |
-| API-key auth: 401 without a key, either of two keys accepted, `/health` and `/metrics` open | sandbox (real FastAPI) | real |
-| Everything inside a cluster (probes, kube-proxy balancing, `kubernetes_sd`, RBAC, PVCs, the CronJob, Grafana provisioning, **real XGBoost and real Evidently**) | CI `kubernetes-manifests` job on kind (`scripts/k8s_e2e.sh`) | **passing** |
+| All four kustomizations render; 23 objects in `full` pass `kubeconform --strict` against the Kubernetes 1.30 schemas | sandbox | kustomize + kubeconform |
+| History/inference log against a live Redis (incl. two replicas sharing it, trimming, expiry) | sandbox + CI | redis-server, redis-py |
+| 2 API processes + Redis + Prometheus + Pushgateway: cells warm up after exactly 20 readings while alternating replicas; every API-dashboard query returns data; `cells_tracked` is shared; Redis down -> 503 / precomputed 200 / `/health` 200; recovery | sandbox | FastAPI app, Prometheus 2.55.1, Pushgateway 1.9.0; model is a scikit-learn stand-in for XGBoost |
+| drift job -> Pushgateway -> Prometheus -> the drift dashboard's queries | sandbox, then CI on kind | stand-in in the sandbox; Evidently 0.4.33 in CI (the CronJob completes, Pushgateway holds `data_drift_share`) |
+| Resource sizing (below) | CI on shared runners (`scripts/measure_resources.py`) | measured |
+| HPA scale-out under sustained load (metrics-server, 24 closed-loop threads for 240 s, `scripts/eval/k8s_hpa_eval.sh`) | CI on kind | scale-out decided 30 s after load began, 6 desired replicas, 5 Ready, 1 Pending (the 4-vCPU runner ran out of CPU), peak 190% of the CPU request, 496 req/s at p95 91 ms, 0 request errors |
+| API-key auth: 401 without a key, either of two keys accepted, `/health` and `/metrics` open | sandbox (FastAPI) | FastAPI |
+| Everything inside a cluster (probes, kube-proxy balancing, `kubernetes_sd`, RBAC, PVCs, the CronJob, Grafana provisioning, XGBoost and Evidently) | CI `kubernetes-manifests` job on kind (`scripts/k8s_e2e.sh`) | **passing** |
 
 ## Resource sizing
 
-Measured with `scripts/measure_resources.py` (4 concurrent clients, warmed cells, **real XGBoost**, GitHub-hosted runner; three runs):
+Measured with `scripts/measure_resources.py` (4 concurrent clients, warmed cells, GitHub-hosted runner; three runs):
 
 | | measured | set to |
 |---|---|---|

@@ -8,7 +8,7 @@ resources:
   - drift-cronjob.yaml
 configMapGenerator:
   - name: prometheus-config
-    files: [prometheus.yml]
+    files: [prometheus.yml, alert_rules.yml]
   - name: grafana-datasources
     files: [grafana/datasources/prometheus.yml]
   - name: grafana-dashboard-provider

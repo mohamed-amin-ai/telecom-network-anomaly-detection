@@ -1,0 +1,127 @@
+# alert_rules.yml
+# ----------------
+# Prometheus alerting rules for the anomaly-detection service. Prometheus evaluates them every
+# `evaluation_interval` (see prometheus.yml) and exposes the result as the built-in `ALERTS` series,
+# which the Grafana dashboard "Telecom Anomaly Detection API" shows in its "Firing Alerts" table.
+#
+# Nothing here sends a notification: no Alertmanager is deployed. Firing alerts are visible in Prometheus
+# (/alerts) and in the "Firing Alerts" panel of the API dashboard in Grafana.
+#
+# k8s/monitoring/alert_rules.yml must stay identical to this file (kustomize cannot read files outside
+# its own directory); tests/test_alert_rules.py checks that.
+#
+# Thresholds are starting points, not measured limits. Tune the anomaly-rate threshold to the baseline
+# rate of your own traffic.
+
+groups:
+  - name: telecom-anomaly-api
+    rules:
+      - alert: AnomalyApiDown
+        expr: up{job="telecom-anomaly-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Anomaly API target {{ $labels.instance }} is down"
+          description: "Prometheus could not scrape {{ $labels.instance }} for 2 minutes, so predictions from it are not being served or measured."
+
+      - alert: AnomalyApiHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5xx|5.."}[5m]))
+            / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 5% of API requests are failing with 5xx"
+          description: "The 5xx share of requests over the last 5 minutes is {{ $value | humanizePercentage }}."
+
+      - alert: AnomalyApiHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{handler=~"/predict.*"}[5m])) by (le)) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 prediction latency is above 500 ms"
+          description: "p95 latency of the /predict routes over the last 5 minutes is {{ $value | humanizeDuration }}."
+
+      - alert: AnomalyHistoryStoreErrors
+        expr: increase(history_store_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The shared history store (Redis) is failing"
+          description: "Requests with raw readings are returning 503 because Redis could not be reached. Requests that carry precomputed features are not affected."
+
+  - name: telecom-anomaly-predictions
+    rules:
+      # One flagged reading is enough to alert. Each prediction already summarises its cell's recent past
+      # (lags back to 2 h, rolling mean/std over 1 h and 4 h on 15-minute KPIs), so a single detection is
+      # a real signal, not a one-off spike. anomaly_detections_total carries the cell_id, so each cell is
+      # its own alert and the grouped email lists them. increase() misses the first count of a series
+      # that has just appeared, hence the `unless ... offset` branch that catches a brand-new cell.
+      - alert: AnomalyDetectedCritical
+        expr: |
+          increase(anomaly_detections_total{severity="critical"}[5m]) > 0
+          or (anomaly_detections_total{severity="critical"} unless anomaly_detections_total{severity="critical"} offset 5m)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical anomaly on cell {{ $labels.cell_id }}"
+          description: "Cell {{ $labels.cell_id }} had a critical prediction in the last 5 minutes. Details (score, KPIs) are in the API response and the inference log."
+
+      - alert: AnomalyDetectedWarning
+        expr: |
+          increase(anomaly_detections_total{severity="warning"}[5m]) > 0
+          or (anomaly_detections_total{severity="warning"} unless anomaly_detections_total{severity="warning"} offset 5m)
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Anomaly on cell {{ $labels.cell_id }} (warning band)"
+          description: "Cell {{ $labels.cell_id }} had a warning-band prediction in the last 5 minutes: score above the tuned threshold but not critical."
+
+      - alert: AnomalyRateHigh
+        expr: |
+          sum(rate(anomaly_predictions_total{severity!="normal"}[15m]))
+            / sum(rate(anomaly_predictions_total[15m])) > 0.30
+          and sum(rate(anomaly_predictions_total[15m])) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "A high share of predictions are flagged as anomalies (fleet-wide incident)"
+          description: "{{ $value | humanizePercentage }} of predictions over the last 15 minutes were warning or critical. A sustained jump usually means a real network incident or an input problem. Compare it with the drift alerts."
+
+  - name: telecom-anomaly-drift
+    rules:
+      - alert: DataDriftDetected
+        expr: data_drift_detected{job="drift_check"} == 1
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Evidently flagged dataset-level drift"
+          description: "The latest drift check reports dataset-level drift (see data_drift_share for how many features drifted). The Airflow DAG retrains on this signal."
+
+      - alert: DataDriftSevere
+        expr: data_drift_share{job="drift_check"} > 0.75
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 75% of features have drifted"
+          description: "{{ $value | humanizePercentage }} of the monitored features drifted in the latest check."
+
+      - alert: DriftCheckStale
+        expr: time() - drift_check_last_run_timestamp{job="drift_check"} > 2 * 86400
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "The drift check has not run for 2 days"
+          description: "The last drift check finished {{ $value | humanizeDuration }} ago, so drift would go unnoticed. Check the CronJob or the Airflow DAG."

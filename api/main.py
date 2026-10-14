@@ -230,7 +230,8 @@ def run_inference(snapshot: KPISnapshot) -> PredictionResult:
     is_anomaly = prob >= THRESHOLD
     severity = score_to_severity(prob, THRESHOLD)
 
-    record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob)
+    record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob,
+                      cell_id=snapshot.cell_id)
     try:
         set_cells_tracked(history_store.tracked_cell_count())
     except HistoryStoreUnavailable:

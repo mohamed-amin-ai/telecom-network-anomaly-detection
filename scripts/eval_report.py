@@ -147,6 +147,9 @@ def build(data: dict) -> str:
                 ("output names", ", ".join(x["parity_vs_xgboost"]["output_names"])),
                 ("HTTP single row median / p95 ms", f"{x['http_latency']['single_row']['median_ms']} / {x['http_latency']['single_row']['p95_ms']}"),
                 ("HTTP 64-row batch median ms", x["http_latency"]["batch_64"]["median_ms"])], ["measure", "value"]), ""]
+        for name in ("batch_profile_memory", "batch_profile_redis", "batch_profile_onnx"):
+            if name in d["logs"]:
+                md += [f"## Batch endpoint profile: {name}", "", "```", d["logs"][name].rstrip(), "```", ""]
         for name in ("airflow_idle", "airflow_drift"):
             if name in d["logs"]:
                 text = d["logs"][name]
