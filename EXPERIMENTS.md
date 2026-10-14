@@ -1,6 +1,6 @@
 # Experiment Log
 
-Real experiments run against this repo's generated data — and, more importantly,
+Experiments run against this repo's generated data — and, more importantly,
 what they revealed about the repo's own claims. Read **Retractions**, **What the
 original headline was resting on**, and **Which number to quote** first.
 
@@ -11,8 +11,8 @@ The sandbox these experiments ran in had **no network access**, so `xgboost`,
 `sklearn.ensemble.HistGradientBoostingClassifier` (same algorithm family as
 XGBoost) as a stand-in, fitted the way `models/train.py` does: positives
 upweighted by neg/pos, boosting stopped by **validation** PR-AUC with patience 30
-(`scripts/study_common.py::fit_stand_in`). It is **not** the production model; real
-XGBoost numbers (logged to MLflow, uploaded by CI) will differ.
+(`scripts/study_common.py::fit_stand_in`). It is **not** the production model; XGBoost
+numbers (logged to MLflow, uploaded by CI) will differ.
 
 Protocol (identical in `models/train.py` and the scripts): chronological
 train / validation / test split; scaler fit on train only; early stopping and the
@@ -319,7 +319,7 @@ All configs are within a point or two of each other on PR-AUC, so no hyperparame
   - **The search used 8 dev seeds and a coarse grid**; no setting put most seeds inside both windows, so precision stays seed-dependent.
   - **Not modeled:** missing readings and stuck sensors, correlated multi-KPI outages, regime changes beyond smooth drift,
     delayed or partial label arrival, and real operator labeling behaviour.
-  - **Stand-in model**, not XGBoost. Real numbers come from CI (`model-artifacts`, `mlflow-tracking-store`), and will
+  - **Stand-in model**, not XGBoost. XGBoost numbers come from CI (`model-artifacts`, `mlflow-tracking-store`), and will
     differ from every table here.
   - **The operating-point rules are choices.** An alert budget — the threshold that keeps false alerts per cell-day under a
     limit — is how production usually sets it; the operating-point tables let you read that off.
@@ -369,14 +369,14 @@ difference 1.9e-11), i.e. the "no train/serve skew" claim in `live_features.py`
 holds for every row that is scoreable.
 
 
-## Real XGBoost measurements (CI) — supersede the stand-in headline numbers
+## XGBoost measurements — supersede the stand-in headline numbers
 
 Everything above this section was produced with a scikit-learn gradient-boosting stand-in because XGBoost could not
 be installed where those studies ran. The CI evaluation (`.github/workflows/evaluation.yml`, results on the
-`evaluation-results` branch) re-measured the project with the real model. The stand-in was **not** a faithful proxy
+`evaluation-results` branch) re-measured the project with the XGBoost model. The stand-in was **not** a faithful proxy
 for the precision/recall trade-off:
 
-| Recall target (validation) | Stand-in (previous default 0.965) | Real XGBoost, test: recall / precision |
+| Recall target (validation) | Stand-in (previous default 0.965) | XGBoost, test: recall / precision |
 |---|---|---|
 | 0.93 | — | 0.930 / 0.934 |
 | 0.945 | — | **0.950 / 0.804** (new default) |
@@ -384,14 +384,14 @@ for the precision/recall trade-off:
 | 0.965 | 0.970 / 0.795 | 0.973 / 0.428 |
 | 0.98 | — | 0.979 / 0.335 |
 
-The real model's precision-recall curve has a sharp knee near recall 0.94-0.95 that the stand-in's curve lacks, so a
-target calibrated on the stand-in (0.965) landed far past the knee. The default is now **0.945**, read off the real
-curve with thresholds tuned on validation only. Across 10 independent datasets at that target (real XGBoost):
+The XGBoost model's precision-recall curve has a sharp knee near recall 0.94-0.95 that the stand-in's curve lacks, so a
+target calibrated on the stand-in (0.965) landed far past the knee. The default is now **0.945**, read off the
+curve with thresholds tuned on validation only. Across 10 independent datasets at that target (XGBoost):
 recall median 94.2% (92.3-95.2%), precision median 87.4% (80.1-94.9%), every incident detected, median 0.19 false
 alerts per cell per day. Seed 42 (the default dataset) is one of the harder draws (F1 0.871; the 10-seed median is 0.907).
 Two of the ten draws land below the 0.93 promotion floor on test recall (seeds 4 and 7), so the gate would decline those.
 
-## Serving optimisation (CI, real XGBoost)
+## Serving optimisation
 
 Measured by `.github/workflows/evaluation.yml`; the same load (4 clients, 300 requests each, Redis-backed) run against the
 original code path and the optimised one on the same runner. Run-to-run spread on shared runners is about 2x.

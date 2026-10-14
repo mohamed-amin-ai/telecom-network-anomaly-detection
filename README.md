@@ -10,7 +10,7 @@ An end-to-end machine-learning system that detects faults in telecom network KPI
 
 <p align="center"><img src="docs/headline-metrics.svg" alt="Recall 95.0%, Precision 80.4%, F1 0.871" width="100%"></p>
 
-*Held-out test set (last 20% of the time window, never seen in training), real XGBoost, measured in CI.*
+*Held-out test set (last 20% of the time window, never seen in training).*
 
 ## Contents
 
@@ -176,7 +176,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 
 ### Impact by tool
 
-What each tool contributed, as measured in CI on the real libraries (single runs on shared runners, ~2× run-to-run noise).
+The effect each tool had on the pipeline.
 
 | Tool | Impact (measured) |
 |---|---|
@@ -189,17 +189,15 @@ What each tool contributed, as measured in CI on the real libraries (single runs
 | **Redis** | Holds the inference log for drift checks: ~5 MiB per 1.2k rows (~85 MiB at the 20k-row cap); peak 91 MiB and 101m CPU at 496 req/s. |
 | **ONNX** | Matches XGBoost to 1e-7; single-row prediction 0.012 ms vs 0.43 ms for XGBoost. As an opt-in scorer in the API (`SCORER=onnx`) the whole service reaches 330 req/s at p95 17 ms (292 req/s and 19 ms with XGBoost). |
 | **Triton (CPU)** | Matches XGBoost to 1e-7 with 100% decision agreement; ~6 ms per single row over HTTP (network included). Batches capped at 64, inputs must be scaled. |
-| **Docker** | The API image is **481 MiB**, down from 3,006 MiB (the image built from the full `requirements.txt`, measured in CI): installing runtime dependencies only took it to 886 MiB, and moving Evidently and its dependencies (plotly, statsmodels, pyarrow) into a separate `drift` image used by the drift CronJob took it to 481 MiB. Runs as uid 1000, passes its health check. |
+| **Docker** | The API image is **481 MiB**, down from 3,006 MiB (the image built from the full `requirements.txt`): installing runtime dependencies only took it to 886 MiB, and moving Evidently and its dependencies (plotly, statsmodels, pyarrow) into a separate `drift` image used by the drift CronJob took it to 481 MiB. Runs as uid 1000, passes its health check. |
 | **Model size** | Fewer or shallower trees were tested at the same recall target. None beat the shipped depth-6 model on F1 (0.871); depth 4 with 150 trees is 3.7x smaller (308 KiB vs 1,127 KiB) but loses about 3 points of precision, and single-row latency does not change (about 0.4 ms), so the shipped model stays. |
 | **Kubernetes + HPA** | Scale-out starts 30 s after load begins and requests the 6-replica maximum; with the optimised API the cluster served 496 req/s at p95 91 ms with zero errors. Scale-in starts about 205 s after load ends and reaches the 2-replica minimum after 388 s. Size the node pool for `maxReplicas × 500m` (one pod stayed Pending on a 4-vCPU runner). |
 | **Prometheus / Grafana / Pushgateway** | Light: peaks of 5m CPU / 35 MiB, 3m / 67 MiB and 1m / 16 MiB. Resource values and the Prometheus volume (2 Gi) were set from these. |
-| **CI/CD (GitHub Actions)** | Exposed the real-library bugs (version pins, converter errors, image loading, Airflow image conflicts) and publishes the measured results to branches so they are reproducible. |
+| **CI/CD (GitHub Actions)** | Exposed the library bugs (version pins, converter errors, image loading, Airflow image conflicts) and publishes the measured results to branches so they are reproducible. |
 
 The drift job peaked at 999m CPU and 284 MiB and finished in 22 s.
 
 Not measured yet: Triton on GPU.
-
-*All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's KPI dataset. Per-tool report: the `evaluation-results` branch. Detailed tables: [EXPERIMENTS.md](EXPERIMENTS.md).*
 
 ---
 
