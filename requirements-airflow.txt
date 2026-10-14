@@ -5,7 +5,7 @@
 # (see `pip check` in the evaluation-results branch). Same pins as requirements.txt; test-enforced subset.
 
 numpy>=1.26
-pandas>=2.1
+pandas>=2.1,<3   # Evidently 0.4.33 cannot import with pandas 3 (infer_dtype_from_object was removed)
 scikit-learn==1.6.1
 xgboost>=2.0,<3
 fastapi>=0.110

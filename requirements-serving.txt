@@ -5,7 +5,7 @@
 # Measured (scripts/eval/docker_eval.sh): an image built from the full requirements.txt is 3,006 MiB; the API image is 481 MiB.
 
 numpy>=1.26
-pandas>=2.1
+pandas>=2.1,<3   # Evidently 0.4.33 cannot import with pandas 3 (infer_dtype_from_object was removed)
 scikit-learn==1.6.1
 xgboost-cpu>=2.1,<3  # same xgboost releases, without the bundled GPU/NCCL libraries (~300 MB smaller)
 fastapi>=0.110
