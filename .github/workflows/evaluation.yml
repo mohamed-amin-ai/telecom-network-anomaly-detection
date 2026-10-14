@@ -55,6 +55,12 @@ jobs:
         run: scripts/eval/ci_step.sh load_baseline env LIVE_FEATURES_FAST=0 SCORER_NUMPY_SCALER=0 python scripts/measure_resources.py
       - name: API under load (optimised path with the ONNX scorer)
         run: scripts/eval/ci_step.sh load_onnx env SCORER=onnx python scripts/measure_resources.py
+      - name: Batch endpoint profile (history in memory)
+        run: scripts/eval/ci_step.sh batch_profile_memory env -u REDIS_URL python scripts/profile_batch.py
+      - name: Batch endpoint profile (history in Redis)
+        run: scripts/eval/ci_step.sh batch_profile_redis python scripts/profile_batch.py
+      - name: Batch endpoint profile (Redis, ONNX scorer)
+        run: scripts/eval/ci_step.sh batch_profile_onnx env SCORER=onnx python scripts/profile_batch.py
       - name: Optimisation, per stage (original vs optimised)
         run: scripts/eval/ci_step.sh stages python scripts/eval_tools.py stages
       - name: Smaller models (fewer / shallower trees)

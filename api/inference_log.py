@@ -66,19 +66,29 @@ def log_inference(
 ) -> None:
     """Best-effort append. Never raises — a logging failure must not
     break the actual prediction response."""
+    log_inferences([(cell_id, feature_source, anomaly_score, features)], feature_cols)
+
+
+def log_inferences(entries: Sequence[tuple], feature_cols: Sequence[str]) -> None:
+    """Best-effort append of several (cell_id, feature_source, anomaly_score, features) entries.
+    With Redis this is one round trip for the whole list. Never raises."""
     try:
-        row = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+        if not entries:
+            return
+        now = datetime.now(timezone.utc).isoformat()
+        rows = [{
+            "timestamp": now,
             "cell_id": cell_id,
             "feature_source": feature_source,
             "anomaly_score": anomaly_score,
             **{col: features.get(col) for col in feature_cols},
-        }
+        } for cell_id, feature_source, anomaly_score, features in entries]
 
         client = _redis()
         if client is not None:
             pipe = client.pipeline(transaction=True)
-            pipe.lpush(REDIS_LOG_KEY, json.dumps(row))
+            for row in rows:
+                pipe.lpush(REDIS_LOG_KEY, json.dumps(row))
             pipe.ltrim(REDIS_LOG_KEY, 0, shared_store.inference_log_max_rows() - 1)
             pipe.execute()
             return
@@ -92,7 +102,7 @@ def log_inference(
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 if is_new_file:
                     writer.writeheader()
-                writer.writerow(row)
+                writer.writerows(rows)
     except Exception:
         # Deliberately swallowed. Observability must never take down
         # the thing it's observing. If you need to debug why logging

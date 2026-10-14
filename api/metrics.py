@@ -29,6 +29,8 @@ hasn't been wired up (e.g. during unit tests that import api.main without
 a real ASGI server) — they just update in-process counters, never raise.
 """
 
+import re
+
 from prometheus_client import Counter, Histogram, Gauge
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -39,6 +41,33 @@ ANOMALY_PREDICTIONS_TOTAL = Counter(
     "Total predictions made, by severity band.",
     labelnames=["severity"],
 )
+# Create every severity series at 0 so Prometheus' increase() also sees the very first anomaly.
+for _severity in ("normal", "warning", "critical"):
+    ANOMALY_PREDICTIONS_TOTAL.labels(severity=_severity)
+
+# Flagged readings only (warning or critical), per cell, so an alert and its email can name the cell.
+# A cell_id label is unbounded cardinality in general, so it is limited twice: only flagged readings
+# are counted, and cell_id values are checked for shape and capped (see _cell_label).
+ANOMALY_DETECTIONS_TOTAL = Counter(
+    "anomaly_detections_total",
+    "Readings flagged as an anomaly (warning or critical), by cell and severity band.",
+    labelnames=["cell_id", "severity"],
+)
+MAX_CELL_LABELS = 1000
+_CELL_ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+_labelled_cells: set = set()
+
+
+def _cell_label(cell_id: str) -> str:
+    """The cell_id label value: the id itself while it looks like one and the cap is not reached,
+    else "other", so a client sending random ids cannot grow Prometheus' memory without limit."""
+    if cell_id in _labelled_cells:
+        return cell_id
+    if _CELL_ID_RE.match(cell_id) and len(_labelled_cells) < MAX_CELL_LABELS:
+        _labelled_cells.add(cell_id)
+        return cell_id
+    return "other"
+
 
 FEATURE_SOURCE_TOTAL = Counter(
     "feature_source_total",
@@ -95,8 +124,10 @@ def set_model_info(threshold: float) -> None:
     MODEL_THRESHOLD_INFO.set(threshold)
 
 
-def record_prediction(severity: str, feature_source: str, anomaly_score: float) -> None:
+def record_prediction(severity: str, feature_source: str, anomaly_score: float, cell_id: str = "") -> None:
     ANOMALY_PREDICTIONS_TOTAL.labels(severity=severity).inc()
+    if severity != "normal" and cell_id:
+        ANOMALY_DETECTIONS_TOTAL.labels(cell_id=_cell_label(cell_id), severity=severity).inc()
     FEATURE_SOURCE_TOTAL.labels(source=feature_source).inc()
     ANOMALY_SCORE.observe(anomaly_score)
 

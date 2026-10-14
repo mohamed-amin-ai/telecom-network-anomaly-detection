@@ -151,6 +151,9 @@ class MemoryHistoryBackend:
         buf.append(row)
         return list(buf)
 
+    def append_many(self, items: list[tuple[str, dict]]) -> list[list[dict]]:
+        return [self.append(cell_id, row) for cell_id, row in items]
+
     def length(self, cell_id: str) -> int:
         return len(self._history.get(cell_id, ()))
 
@@ -191,23 +194,39 @@ class RedisHistoryBackend:
     def _cells_key(self) -> str:
         return f"{self._prefix}:cells"
 
+    def _queue_append(self, pipe, cell_id: str, row: dict, now: float) -> None:
+        import json
+        key = self._key(cell_id)
+        pipe.rpush(key, json.dumps(row))
+        pipe.ltrim(key, -MAX_HISTORY_ROWS, -1)
+        pipe.lrange(key, 0, -1)
+        pipe.expire(key, self._ttl)
+        pipe.zadd(self._cells_key, {cell_id: now})
+        pipe.zremrangebyscore(self._cells_key, "-inf", now - self._ttl)
+
+    _CMDS_PER_APPEND = 6
+
     def append(self, cell_id: str, row: dict) -> list[dict]:
+        return self.append_many([(cell_id, row)])[0]
+
+    def append_many(self, items: list[tuple[str, dict]]) -> list[list[dict]]:
+        """Append one reading per item in ONE round trip (one MULTI/EXEC for the whole list).
+        Commands run in order, so a cell that appears twice sees its own earlier reading,
+        exactly as two sequential append() calls would."""
         import json
         import time
+        if not items:
+            return []
         now = time.time()
-        key = self._key(cell_id)
         try:
             pipe = self._client.pipeline(transaction=True)
-            pipe.rpush(key, json.dumps(row))
-            pipe.ltrim(key, -MAX_HISTORY_ROWS, -1)
-            pipe.lrange(key, 0, -1)
-            pipe.expire(key, self._ttl)
-            pipe.zadd(self._cells_key, {cell_id: now})
-            pipe.zremrangebyscore(self._cells_key, "-inf", now - self._ttl)
+            for cell_id, row in items:
+                self._queue_append(pipe, cell_id, row, now)
             results = pipe.execute()
         except self._errors as e:
             raise HistoryStoreUnavailable(f"history store unavailable: {e}") from e
-        return [json.loads(x) for x in results[2]]
+        n = self._CMDS_PER_APPEND
+        return [[json.loads(x) for x in results[i * n + 2]] for i in range(len(items))]
 
     def length(self, cell_id: str) -> int:
         try:
@@ -243,7 +262,12 @@ class CellHistoryStore:
         Used for the cells_tracked Prometheus gauge — see api/metrics.py."""
         return self._backend.cell_count()
 
-    def add_and_compute(self, cell_id: str, raw_row: dict) -> dict | None:
+    def append_many(self, items: list[tuple[str, dict]]) -> list[list[dict]]:
+        """Append several readings at once (one backend round trip); returns each cell's
+        buffer after its own append. Pass a buffer to add_and_compute(..., buf=...)."""
+        return self._backend.append_many(items)
+
+    def add_and_compute(self, cell_id: str, raw_row: dict, buf: list[dict] | None = None) -> dict | None:
         """
         Append a new raw reading for this cell and compute its feature
         vector using the exact training-time logic.
@@ -253,7 +277,8 @@ class CellHistoryStore:
         (cold start — caller should backfill more readings first).
         Raises HistoryStoreUnavailable if a shared backend is down.
         """
-        buf = self._backend.append(cell_id, raw_row)
+        if buf is None:
+            buf = self._backend.append(cell_id, raw_row)
 
         if len(buf) < MIN_HISTORY_ROWS:
             return None
