@@ -166,6 +166,19 @@
       ],
       "options": { "calculate": false, "color": { "mode": "scheme", "scheme": "Turbo" } },
       "description": "Shows how model output probabilities are actually distributed in production — a healthy model should show most mass near 0, with a thin tail near 1 (the rare real anomalies)."
+    },
+    {
+      "id": 10,
+      "title": "Firing Alerts",
+      "type": "table",
+      "description": "Alerts currently firing, from the Prometheus rules in prometheus/alert_rules.yml. Empty means nothing is firing.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true }
     }
   ]
 }
