@@ -33,6 +33,31 @@ services:
     depends_on:
       - anomaly-api
       - pushgateway
+      - alertmanager
+    networks:
+      - anomaly-net
+
+  # Routes firing alerts to email. The SMTP server is Mailpit (below), so the demo sends no real mail.
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: telecom-anomaly-alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+    depends_on:
+      - mailpit
+    networks:
+      - anomaly-net
+
+  # Local SMTP catcher: receives the alert emails and shows them in a web inbox at :8025.
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    container_name: telecom-anomaly-mailpit
+    ports:
+      - "8025:8025"
+    restart: unless-stopped
     networks:
       - anomaly-net
 

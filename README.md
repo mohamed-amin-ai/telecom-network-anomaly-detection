@@ -40,6 +40,7 @@ flowchart LR
     T --> M[(MLflow)]
     G --> A[FastAPI service<br/>+ Redis cell history]
     A --> P[Prometheus] --> GR[Grafana]
+    P --> AM[Alertmanager] --> MP[Email]
     A --> L[(Inference log)] --> E[Evidently drift check] --> PG[Pushgateway]
     E --> AF[Airflow DAG] -->|drift detected| T
     G -.-> O[ONNX] -.-> TR[Triton]
@@ -77,7 +78,7 @@ Common commands are in the `Makefile` (`make test`, `make pipeline`, `make serve
 ## Running with Docker
 
 ```bash
-docker compose up --build          # API + Prometheus + Pushgateway + Grafana
+docker compose up --build          # API + Prometheus + Pushgateway + Grafana + Alertmanager + Mailpit
 ```
 
 or the API alone:
@@ -86,6 +87,8 @@ or the API alone:
 docker build -t telecom-anomaly-detection .
 docker run -p 8000:8000 telecom-anomaly-detection
 ```
+
+Alerting demo: `scripts/send_test_alert.sh` fires a test alert into Alertmanager, and the email appears in the Mailpit inbox at http://localhost:8025. Mailpit is a local SMTP catcher and the addresses are placeholders, so no real mail is sent; swapping in a real SMTP relay is a change to `alertmanager/alertmanager.yml` only.
 
 The image runs as a non-root user with a `HEALTHCHECK` on `/health`. Model artifacts are baked in at build time, so rebuild after retraining. Kubernetes deployment (kustomize, HPA, monitoring) is documented in [k8s/README.md](k8s/README.md).
 
@@ -157,7 +160,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 | Experiment tracking and model registry | **MLflow** |
 | Data, model and pipeline versioning | **DVC** |
 | CI/CD (lint, tests, pipeline run, image build and push) | **GitHub Actions** to GHCR |
-| Metrics, dashboards and alerting | **Prometheus**, **Grafana** (2 dashboards), 8 Prometheus alert rules (API health, anomaly rate, data drift) |
+| Metrics, dashboards and alerting | **Prometheus**, **Grafana** (2 dashboards), 8 alert rules (API health, anomaly rate, data drift) routed to email by **Alertmanager** (demo SMTP: Mailpit, no real mail) |
 | Data and prediction drift detection | **Evidently** with Pushgateway |
 | Scheduled drift check, retrain and promote | **Airflow** |
 | Portable, high-throughput serving | **ONNX**, **Triton** |
@@ -167,7 +170,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 
 | Area | Result |
 |---|---|
-| Automated tests | **163** passing |
+| Automated tests | **168** passing |
 | Serving (one process, with Redis) | **292 req/s**, p95 latency **19 ms**, **237 MiB** peak memory after optimisation, against 24 req/s and 229 ms before (same load, same CI runner; run-to-run spread about 2x) |
 | Horizontal scaling | 2-6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
 | Resilience | Redis outage: raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without a restart |
@@ -216,7 +219,7 @@ Not measured yet: Triton on GPU.
 ├── triton_model_repository/   Triton config for the ONNX model
 ├── prometheus/ grafana/       docker-compose monitoring configuration
 ├── scripts/         measurement and study scripts used by CI
-├── tests/           163 tests
+├── tests/           168 tests
 ├── .github/workflows/         ci.yml, evaluation.yml
 ├── params.yaml  dvc.yaml  Makefile
 └── Dockerfile  Dockerfile.airflow  docker-compose*.yml  requirements*.txt

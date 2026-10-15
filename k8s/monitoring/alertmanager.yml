@@ -1,0 +1,51 @@
+# Alertmanager: turns firing Prometheus alerts (prometheus/alert_rules.yml) into email.
+#
+# DEMO SETUP: mail goes to Mailpit, a local SMTP catcher with a web inbox (http://localhost:8025),
+# and every address below is on the reserved example.com domain. Nothing here can reach a real
+# mailbox. To send real email, change `smarthost` to a real SMTP server, add auth_username and
+# auth_password (from a secret, never from this file) and replace the addresses.
+
+global:
+  smtp_smarthost: "mailpit:1025"
+  smtp_from: "alerts@telecom-anomaly.example"
+  smtp_require_tls: false        # Mailpit speaks plain SMTP; a real relay needs true
+  resolve_timeout: 5m
+
+route:
+  receiver: oncall-warning
+  group_by: ["alertname"]
+  group_wait: 10s                # short for the demo; 30s-1m is typical in production
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: oncall-critical
+      repeat_interval: 1h
+
+# While the API is down, its 5xx and latency alerts are noise: send only the root cause.
+inhibit_rules:
+  - source_matchers: ['alertname="AnomalyApiDown"']
+    target_matchers: ['alertname=~"AnomalyApiHighErrorRate|AnomalyApiHighLatency"']
+  - source_matchers: ['alertname="DataDriftSevere"']
+    target_matchers: ['alertname="DataDriftDetected"']
+
+receivers:
+  - name: oncall-critical
+    email_configs:
+      - to: "network-oncall@telecom-anomaly.example"
+        send_resolved: true
+        headers:
+          subject: '[{{ .Status | toUpper }}] CRITICAL {{ .GroupLabels.alertname }}'
+        text: &body |
+          {{ range .Alerts }}{{ .Annotations.summary }}
+
+          {{ .Annotations.description }}
+          Started: {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
+          {{ end }}
+  - name: oncall-warning
+    email_configs:
+      - to: "network-team@telecom-anomaly.example"
+        send_resolved: true
+        headers:
+          subject: '[{{ .Status | toUpper }}] WARNING {{ .GroupLabels.alertname }}'
+        text: *body

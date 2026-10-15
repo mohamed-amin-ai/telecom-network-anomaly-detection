@@ -4,11 +4,15 @@ namespace: telecom-anomaly
 resources:
   - prometheus.yaml
   - pushgateway.yaml
+  - alertmanager.yaml
+  - mailpit.yaml
   - grafana.yaml
   - drift-cronjob.yaml
 configMapGenerator:
   - name: prometheus-config
     files: [prometheus.yml, alert_rules.yml]
+  - name: alertmanager-config
+    files: [alertmanager.yml]
   - name: grafana-datasources
     files: [grafana/datasources/prometheus.yml]
   - name: grafana-dashboard-provider

@@ -4,9 +4,10 @@
 # `evaluation_interval` (see prometheus.yml) and exposes the result as the built-in `ALERTS` series,
 # which the Grafana dashboard "Telecom Anomaly Detection API" shows in its "Firing Alerts" table.
 #
-# Prometheus only evaluates and records alerts. Sending a notification (email, Slack, pager) needs an
-# Alertmanager, which this repository does not deploy: add one and point `alerting:` in prometheus.yml
-# at it. Until then, alerts are visible in Prometheus (/alerts) and in Grafana.
+# Prometheus only evaluates the rules. Alertmanager (alertmanager/alertmanager.yml) routes firing alerts
+# to email: critical to the on-call address, warning to the team address. In this demo the SMTP server is
+# Mailpit, a local catcher with a web inbox on :8025, and all addresses are on example.com, so no real
+# mail is sent. Alerts are also visible in Prometheus (/alerts) and in Grafana.
 #
 # k8s/monitoring/alert_rules.yml must stay identical to this file (kustomize cannot read files outside
 # its own directory); tests/test_alert_rules.py checks that.

@@ -120,3 +120,75 @@ def test_the_api_dashboard_shows_firing_alerts():
         panels = json.loads((path / "telecom-anomaly-api.json").read_text())["panels"]
         exprs = [t["expr"] for p in panels for t in p.get("targets", [])]
         assert any('ALERTS{alertstate="firing"}' in e for e in exprs), path
+
+
+# ── Alertmanager: routing alerts to email ───────────────────────────────────
+
+AM = REPO / "alertmanager" / "alertmanager.yml"
+
+
+def _am():
+    return yaml.safe_load(AM.read_text())
+
+
+def _all_routes(route):
+    yield route
+    for child in route.get("routes", []):
+        yield from _all_routes(child)
+
+
+def test_alertmanager_routes_every_severity_to_an_email_receiver():
+    cfg = _am()
+    receivers = {r["name"]: r for r in cfg["receivers"]}
+    used = {r["receiver"] for r in _all_routes(cfg["route"])}
+    assert used <= set(receivers), f"routes point at undefined receivers: {used - set(receivers)}"
+    assert used == set(receivers), "every receiver should be routed to"
+    for r in receivers.values():
+        assert r["email_configs"] and r["email_configs"][0]["to"]
+    # a critical route exists, so criticals are not only handled by the default
+    assert any("severity=\"critical\"" in " ".join(r.get("matchers", [])) for r in cfg["route"]["routes"])
+
+
+def test_alertmanager_demo_never_targets_a_real_mailbox():
+    cfg = _am()
+    assert cfg["global"]["smtp_smarthost"].startswith("mailpit:")
+    assert cfg["global"]["smtp_from"].endswith(".example")
+    for r in cfg["receivers"]:
+        for e in r["email_configs"]:
+            assert e["to"].endswith(".example"), "demo addresses must stay on a reserved domain"
+            assert "auth_password" not in e
+    assert "auth_password" not in cfg["global"]
+
+
+def test_inhibit_rules_name_alerts_that_exist():
+    names = {r["alert"] for _, r in _rules()}
+    cfg = _am()
+    for rule in cfg["inhibit_rules"]:
+        for m in rule["source_matchers"] + rule["target_matchers"]:
+            for n in re.findall(r"[A-Za-z]+", m.split("=", 1)[1].replace("~", "")):
+                if n not in {"alertname"} and n[0].isupper():
+                    assert n in names, f"inhibit rule references unknown alert {n}"
+
+
+def test_prometheus_sends_alerts_to_the_alertmanager_each_deployment_runs():
+    for cfg in (REPO / "prometheus" / "prometheus.yml", REPO / "k8s" / "monitoring" / "prometheus.yml"):
+        targets = yaml.safe_load(cfg.read_text())["alerting"]["alertmanagers"][0]["static_configs"][0]["targets"]
+        assert targets == ["alertmanager:9093"], cfg
+
+    compose = yaml.safe_load((REPO / "docker-compose.yml").read_text())["services"]
+    assert "alertmanager" in compose and "mailpit" in compose
+    assert "./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" in compose["alertmanager"]["volumes"]
+    assert "alertmanager" in compose["prometheus"]["depends_on"]
+
+    k8s = REPO / "k8s" / "monitoring"
+    kust = yaml.safe_load((k8s / "kustomization.yaml").read_text())
+    assert {"alertmanager.yaml", "mailpit.yaml"} <= set(kust["resources"])
+    assert "alertmanager.yml" in {g["name"]: g["files"] for g in kust["configMapGenerator"]}["alertmanager-config"]
+    services = {d["metadata"]["name"]: d for f in ("alertmanager.yaml", "mailpit.yaml")
+                for d in yaml.safe_load_all((k8s / f).read_text()) if d["kind"] == "Service"}
+    assert services["alertmanager"]["spec"]["ports"][0]["port"] == 9093
+    assert 1025 in {p["port"] for p in services["mailpit"]["spec"]["ports"]}
+
+
+def test_kubernetes_alertmanager_config_matches_the_compose_one():
+    assert (REPO / "k8s" / "monitoring" / "alertmanager.yml").read_text() == AM.read_text()
