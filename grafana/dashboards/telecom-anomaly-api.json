@@ -166,6 +166,95 @@
       ],
       "options": { "calculate": false, "color": { "mode": "scheme", "scheme": "Turbo" } },
       "description": "Shows how model output probabilities are actually distributed in production — a healthy model should show most mass near 0, with a thin tail near 1 (the rare real anomalies)."
+    },
+    {
+      "id": 12,
+      "title": "Live: right now (last hour)",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "title": "Firing Alerts",
+      "type": "table",
+      "description": "Alerts currently firing, from the Prometheus rules in prometheus/alert_rules.yml. Empty means nothing is firing.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 29 },
+      "targets": [
+        { "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 11,
+      "title": "Cells With Anomalies (last hour)",
+      "type": "table",
+      "description": "Cells flagged in the last hour, with how often each was flagged in the last 7 and 15 days (red from 20, yellow from 5), so a repeat offender stands out from a one-off. Counts of flagged 15-minute readings, not separate incidents, and approximate at window edges. Prometheus keeps about 15 days. Empty means no cell was flagged in the last hour. Source: anomaly_detections_total (warning and critical only; cell ids beyond the first 1000 are grouped as other).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 35 },
+      "targets": [
+        { "expr": "sort_desc(sum by (cell_id) (increase(anomaly_detections_total[1h])) > 0)", "format": "table", "instant": true, "refId": "A" },
+        { "expr": "sum by (cell_id) (increase(anomaly_detections_total{severity=\"critical\"}[1h])) and on (cell_id) (sum by (cell_id) (increase(anomaly_detections_total[1h])) > 0)", "format": "table", "instant": true, "refId": "B" },
+        { "expr": "sum by (cell_id) (increase(anomaly_detections_total[7d])) and on (cell_id) (sum by (cell_id) (increase(anomaly_detections_total[1h])) > 0)", "format": "table", "instant": true, "refId": "C" },
+        { "expr": "sum by (cell_id) (increase(anomaly_detections_total[15d])) and on (cell_id) (sum by (cell_id) (increase(anomaly_detections_total[1h])) > 0)", "format": "table", "instant": true, "refId": "D" }
+      ],
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "cell_id", "mode": "outer" } },
+        { "id": "organize", "options": { "excludeByName": { "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time": true }, "renameByName": { "cell_id": "Cell", "Value #A": "Flagged (last hour)", "Value #B": "of which critical (1h)", "Value #C": "Flagged (7 days)", "Value #D": "Flagged (15 days)" }, "indexByName": { "cell_id": 0, "Value #A": 1, "Value #B": 2, "Value #C": 3, "Value #D": 4 } } }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "Flagged \\((7|15) days\\)" }, "properties": [
+            { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+            { "id": "color", "value": { "mode": "thresholds" } },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 } ] } },
+            { "id": "decimals", "value": 0 }
+          ] },
+          { "matcher": { "id": "byRegexp", "options": "Flagged \\(last hour\\)|of which critical \\(1h\\)" }, "properties": [ { "id": "decimals", "value": 0 } ] }
+        ]
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 13,
+      "title": "History: use the time picker (Prometheus keeps about 15 days)",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "panels": []
+    },
+    {
+      "id": 14,
+      "title": "Most-Flagged Cells (selected time range)",
+      "type": "table",
+      "description": "Cells ranked by flagged readings (warning and critical) over the time range chosen in the picker at the top right. Use it to spot cells that keep having problems: set 7 days or 15 days (Prometheus keeps about 15). Counts, not rates: a cell that reports more readings can rank higher.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 44 },
+      "targets": [
+        { "expr": "sort_desc(sum by (cell_id, severity) (increase(anomaly_detections_total[$__range])) > 0)", "format": "table", "instant": true, "refId": "A" }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true }, "renameByName": { "cell_id": "Cell", "severity": "Severity", "Value": "Flagged readings (range)" } } }
+      ],
+      "fieldConfig": { "defaults": { "decimals": 0 }, "overrides": [] },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 15,
+      "title": "Flagged Readings (trailing hour), Top 10 Cells",
+      "type": "timeseries",
+      "description": "How many readings of each of the 10 most-flagged cells were flagged in the hour up to each point in time, over the selected time range. A line that stays high means a persistent problem; a short rise means a burst.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 44 },
+      "targets": [
+        { "expr": "topk(10, sum by (cell_id) (increase(anomaly_detections_total[1h])))", "legendFormat": "{{cell_id}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "min": 0, "decimals": 0, "custom": { "drawStyle": "line", "fillOpacity": 10, "stacking": { "mode": "none" } } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
     }
   ]
 }
