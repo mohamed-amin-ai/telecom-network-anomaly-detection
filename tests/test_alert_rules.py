@@ -28,7 +28,7 @@ BUILT_IN_METRICS = {
     "http_request_duration_seconds_bucket",
 }
 # PromQL words that appear outside braces and brackets: functions, operators, grouping keywords.
-PROMQL_WORDS = {"sum", "rate", "increase", "histogram_quantile", "time", "by", "and", "or", "unless", "le"}
+PROMQL_WORDS = {"sum", "rate", "increase", "histogram_quantile", "time", "by", "and", "or", "unless", "le", "offset"}
 
 
 def _rules():
@@ -51,6 +51,7 @@ def _metrics_the_project_emits() -> set[str]:
 def _metric_names_in(expr: str) -> set[str]:
     expr = re.sub(r"\{[^}]*\}", "", expr)       # label matchers
     expr = re.sub(r"\[[^\]]*\]", "", expr)      # range selectors
+    expr = re.sub(r"offset\s+\w+", "offset", expr)  # offset 5m
     words = set(re.findall(r"[A-Za-z_:][A-Za-z0-9_:]*", expr))
     return words - PROMQL_WORDS
 
@@ -194,12 +195,41 @@ def test_kubernetes_alertmanager_config_matches_the_compose_one():
     assert (REPO / "k8s" / "monitoring" / "alertmanager.yml").read_text() == AM.read_text()
 
 
-def test_every_detected_anomaly_alerts_and_the_severity_series_exist_from_start():
+def test_every_detected_anomaly_alerts_per_cell_and_catches_a_new_cells_first_count():
     by_name = {r["alert"]: r for _, r in _rules()}
     for name, sev in (("AnomalyDetectedCritical", "critical"), ("AnomalyDetectedWarning", "warning")):
-        assert f'severity="{sev}"' in by_name[name]["expr"] and by_name[name]["for"] == "0m"
-    metrics_src = (REPO / "api" / "metrics.py").read_text()
-    api_src = (REPO / "api" / "main.py").read_text()
-    for sev in ("normal", "warning", "critical"):
-        assert f'"{sev}"' in metrics_src.split("for _severity in", 1)[1].split("\n")[0], sev   # pre-created at 0
-        assert f'"{sev}"' in api_src                                                          # and really emitted
+        rule = by_name[name]
+        assert f'anomaly_detections_total{{severity="{sev}"}}' in rule["expr"] and rule["for"] == "0m"
+        assert "increase(" in rule["expr"] and " unless " in rule["expr"] and " offset " in rule["expr"]
+        assert "$labels.cell_id" in rule["annotations"]["summary"]
+    for sev in ("normal", "warning", "critical"):   # severities the API emits are the ones the rules match
+        assert f'"{sev}"' in (REPO / "api" / "main.py").read_text()
+
+
+def test_cell_label_is_bounded_so_clients_cannot_grow_prometheus_memory():
+    from api import metrics
+
+    metrics._labelled_cells.clear()
+    assert metrics._cell_label("CELL_001") == "CELL_001"
+    assert metrics._cell_label("not a valid id!") == "other"
+    assert metrics._cell_label("x" * 65) == "other"
+    for i in range(metrics.MAX_CELL_LABELS + 50):
+        metrics._cell_label(f"C{i}")
+    assert len(metrics._labelled_cells) == metrics.MAX_CELL_LABELS
+    assert metrics._cell_label("brand-new-after-cap") == "other"
+    assert metrics._cell_label("CELL_001") == "CELL_001"     # already-known cells keep their label
+    metrics._labelled_cells.clear()
+
+
+def test_only_flagged_readings_are_counted_per_cell():
+    from api import metrics
+
+    metrics._labelled_cells.clear()
+    before = lambda c, s: metrics.ANOMALY_DETECTIONS_TOTAL.labels(cell_id=c, severity=s)._value.get()
+    base = before("T_CELL", "critical")
+    metrics.record_prediction("critical", "live", 0.99, cell_id="T_CELL")
+    metrics.record_prediction("normal", "live", 0.01, cell_id="T_CELL_NORMAL")
+    assert before("T_CELL", "critical") == base + 1
+    assert "T_CELL_NORMAL" not in metrics._labelled_cells      # normal readings never get a per-cell series
+    metrics._labelled_cells.clear()
+

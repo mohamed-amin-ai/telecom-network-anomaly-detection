@@ -35,17 +35,17 @@ receivers:
       - to: "network-oncall@telecom-anomaly.example"
         send_resolved: true
         headers:
-          subject: '[{{ .Status | toUpper }}] CRITICAL {{ .GroupLabels.alertname }}'
+          subject: '[{{ .Status | toUpper }}] CRITICAL {{ .GroupLabels.alertname }} ({{ .Alerts | len }} cell(s))'
         text: &body |
           {{ range .Alerts }}{{ .Annotations.summary }}
-
           {{ .Annotations.description }}
           Started: {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
+
           {{ end }}
   - name: oncall-warning
     email_configs:
       - to: "network-team@telecom-anomaly.example"
         send_resolved: true
         headers:
-          subject: '[{{ .Status | toUpper }}] WARNING {{ .GroupLabels.alertname }}'
+          subject: '[{{ .Status | toUpper }}] WARNING {{ .GroupLabels.alertname }} ({{ .Alerts | len }} cell(s))'
         text: *body

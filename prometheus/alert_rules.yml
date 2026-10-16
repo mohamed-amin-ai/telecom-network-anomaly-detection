@@ -62,27 +62,30 @@ groups:
     rules:
       # One flagged reading is enough to alert. Each prediction already summarises its cell's recent past
       # (lags back to 2 h, rolling mean/std over 1 h and 4 h on 15-minute KPIs), so a single detection is
-      # a real signal, not a one-off spike. The counter has no cell label (that would be unbounded
-      # cardinality), so the alert says how many were flagged; which cell is in the API response and the
-      # inference log. api/metrics.py creates the severity series at 0 on start-up so increase() sees the
-      # first anomaly too.
+      # a real signal, not a one-off spike. anomaly_detections_total carries the cell_id, so each cell is
+      # its own alert and the grouped email lists them. increase() misses the first count of a series
+      # that has just appeared, hence the `unless ... offset` branch that catches a brand-new cell.
       - alert: AnomalyDetectedCritical
-        expr: increase(anomaly_predictions_total{severity="critical"}[5m]) > 0
+        expr: |
+          increase(anomaly_detections_total{severity="critical"}[5m]) > 0
+          or (anomaly_detections_total{severity="critical"} unless anomaly_detections_total{severity="critical"} offset 5m)
         for: 0m
         labels:
           severity: critical
         annotations:
-          summary: "Critical anomaly detected on at least one cell"
-          description: "About {{ $value | printf \"%.0f\" }} critical prediction(s) in the last 5 minutes. Look up the cell in the API response or the inference log."
+          summary: "Critical anomaly on cell {{ $labels.cell_id }}"
+          description: "Cell {{ $labels.cell_id }} had a critical prediction in the last 5 minutes. Details (score, KPIs) are in the API response and the inference log."
 
       - alert: AnomalyDetectedWarning
-        expr: increase(anomaly_predictions_total{severity="warning"}[5m]) > 0
+        expr: |
+          increase(anomaly_detections_total{severity="warning"}[5m]) > 0
+          or (anomaly_detections_total{severity="warning"} unless anomaly_detections_total{severity="warning"} offset 5m)
         for: 0m
         labels:
           severity: warning
         annotations:
-          summary: "Anomaly detected on at least one cell (warning band)"
-          description: "About {{ $value | printf \"%.0f\" }} warning-band prediction(s) in the last 5 minutes: score above the tuned threshold but not critical."
+          summary: "Anomaly on cell {{ $labels.cell_id }} (warning band)"
+          description: "Cell {{ $labels.cell_id }} had a warning-band prediction in the last 5 minutes: score above the tuned threshold but not critical."
 
       - alert: AnomalyRateHigh
         expr: |
