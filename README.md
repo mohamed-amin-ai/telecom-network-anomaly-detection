@@ -160,7 +160,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 | Experiment tracking and model registry | **MLflow** |
 | Data, model and pipeline versioning | **DVC** |
 | CI/CD (lint, tests, pipeline run, image build and push) | **GitHub Actions** to GHCR |
-| Metrics, dashboards and alerting | **Prometheus**, **Grafana** (2 dashboards), 8 alert rules (API health, anomaly rate, data drift) routed to email by **Alertmanager** (demo SMTP: Mailpit, no real mail) |
+| Metrics, dashboards and alerting | **Prometheus**, **Grafana** (2 dashboards), 10 alert rules (API health, every detected anomaly, anomaly rate, data drift) routed to email by **Alertmanager** (demo SMTP: Mailpit, no real mail) |
 | Data and prediction drift detection | **Evidently** with Pushgateway |
 | Scheduled drift check, retrain and promote | **Airflow** |
 | Portable, high-throughput serving | **ONNX**, **Triton** |
@@ -170,7 +170,7 @@ Authentication is optional: set `API_KEYS="key1,key2"` and the prediction routes
 
 | Area | Result |
 |---|---|
-| Automated tests | **168** passing |
+| Automated tests | **169** passing |
 | Serving (one process, with Redis) | **292 req/s**, p95 latency **19 ms**, **237 MiB** peak memory after optimisation, against 24 req/s and 229 ms before (same load, same CI runner; run-to-run spread about 2x) |
 | Horizontal scaling | 2-6 API replicas share per-cell history; a cell is ready after exactly **20** readings regardless of which replica receives them; the autoscaler (70% CPU target) decided to scale out within **30 s** and asked for the 6-replica maximum (measured on kind) |
 | Resilience | Redis outage: raw readings return `503`, pre-computed requests, `/health` and `/metrics` keep serving; recovers without a restart |
@@ -219,7 +219,7 @@ Not measured yet: Triton on GPU.
 ├── triton_model_repository/   Triton config for the ONNX model
 ├── prometheus/ grafana/       docker-compose monitoring configuration
 ├── scripts/         measurement and study scripts used by CI
-├── tests/           168 tests
+├── tests/           169 tests
 ├── .github/workflows/         ci.yml, evaluation.yml
 ├── params.yaml  dvc.yaml  Makefile
 └── Dockerfile  Dockerfile.airflow  docker-compose*.yml  requirements*.txt

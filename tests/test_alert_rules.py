@@ -57,7 +57,7 @@ def _metric_names_in(expr: str) -> set[str]:
 
 def test_every_rule_has_the_fields_an_on_call_person_needs():
     rules = _rules()
-    assert len(rules) >= 8
+    assert len(rules) >= 10
     names = [r["alert"] for _, r in rules]
     assert len(names) == len(set(names)), "alert names must be unique"
     for group, rule in rules:
@@ -192,3 +192,14 @@ def test_prometheus_sends_alerts_to_the_alertmanager_each_deployment_runs():
 
 def test_kubernetes_alertmanager_config_matches_the_compose_one():
     assert (REPO / "k8s" / "monitoring" / "alertmanager.yml").read_text() == AM.read_text()
+
+
+def test_every_detected_anomaly_alerts_and_the_severity_series_exist_from_start():
+    by_name = {r["alert"]: r for _, r in _rules()}
+    for name, sev in (("AnomalyDetectedCritical", "critical"), ("AnomalyDetectedWarning", "warning")):
+        assert f'severity="{sev}"' in by_name[name]["expr"] and by_name[name]["for"] == "0m"
+    metrics_src = (REPO / "api" / "metrics.py").read_text()
+    api_src = (REPO / "api" / "main.py").read_text()
+    for sev in ("normal", "warning", "critical"):
+        assert f'"{sev}"' in metrics_src.split("for _severity in", 1)[1].split("\n")[0], sev   # pre-created at 0
+        assert f'"{sev}"' in api_src                                                          # and really emitted

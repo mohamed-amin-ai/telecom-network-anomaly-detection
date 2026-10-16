@@ -39,6 +39,9 @@ ANOMALY_PREDICTIONS_TOTAL = Counter(
     "Total predictions made, by severity band.",
     labelnames=["severity"],
 )
+# Create every severity series at 0 so Prometheus' increase() also sees the very first anomaly.
+for _severity in ("normal", "warning", "critical"):
+    ANOMALY_PREDICTIONS_TOTAL.labels(severity=_severity)
 
 FEATURE_SOURCE_TOTAL = Counter(
     "feature_source_total",

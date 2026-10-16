@@ -60,6 +60,30 @@ groups:
 
   - name: telecom-anomaly-predictions
     rules:
+      # One flagged reading is enough to alert. Each prediction already summarises its cell's recent past
+      # (lags back to 2 h, rolling mean/std over 1 h and 4 h on 15-minute KPIs), so a single detection is
+      # a real signal, not a one-off spike. The counter has no cell label (that would be unbounded
+      # cardinality), so the alert says how many were flagged; which cell is in the API response and the
+      # inference log. api/metrics.py creates the severity series at 0 on start-up so increase() sees the
+      # first anomaly too.
+      - alert: AnomalyDetectedCritical
+        expr: increase(anomaly_predictions_total{severity="critical"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical anomaly detected on at least one cell"
+          description: "About {{ $value | printf \"%.0f\" }} critical prediction(s) in the last 5 minutes. Look up the cell in the API response or the inference log."
+
+      - alert: AnomalyDetectedWarning
+        expr: increase(anomaly_predictions_total{severity="warning"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Anomaly detected on at least one cell (warning band)"
+          description: "About {{ $value | printf \"%.0f\" }} warning-band prediction(s) in the last 5 minutes: score above the tuned threshold but not critical."
+
       - alert: AnomalyRateHigh
         expr: |
           sum(rate(anomaly_predictions_total{severity!="normal"}[15m]))
@@ -69,7 +93,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "A high share of predictions are flagged as anomalies"
+          summary: "A high share of predictions are flagged as anomalies (fleet-wide incident)"
           description: "{{ $value | humanizePercentage }} of predictions over the last 15 minutes were warning or critical. A sustained jump usually means a real network incident or an input problem. Compare it with the drift alerts."
 
   - name: telecom-anomaly-drift
