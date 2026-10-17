@@ -14,7 +14,7 @@ An end-to-end machine-learning system that detects faults in telecom network KPI
 
 ## Contents
 
-[Problem](#problem) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Docker](#running-with-docker) · [Features](#feature-engineering) · [Model](#model-details) · [API](#api) · [Results](#results) · [MLOps](#mlops) · [Repository layout](#repository-layout) · [Tech stack](#tech-stack)
+[Problem](#problem) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Docker](#running-with-docker) · [Features](#feature-engineering) · [Model](#model-details) · [API](#api) · [Results](#results) · [MLOps](#mlops) · [Screenshots](#monitoring-screenshots) · [Repository layout](#repository-layout) · [Tech stack](#tech-stack)
 
 ---
 
@@ -202,6 +202,26 @@ Not measured yet: Triton on GPU.
 *All figures were measured in CI on the real libraries (XGBoost 2.1.4, MLflow, DVC, Evidently 0.4.33, Airflow, ONNX Runtime, Triton) on the project's KPI dataset. Per-tool report: the `evaluation-results` branch. Detailed tables: [EXPERIMENTS.md](EXPERIMENTS.md).*
 
 ---
+
+## Monitoring screenshots
+
+Captured from the local Docker Compose stack while demo traffic was sent to three cells (`DEMO_CELL_000` to `DEMO_CELL_002`).
+
+**Prometheus: a critical-anomaly alert firing for each flagged cell**
+
+![AnomalyDetectedCritical firing for three cells in Prometheus](docs/alerts-firing-per-cell.png)
+
+**Grafana, live view: cells flagged in the last hour, with 7-day and 15-day counts**
+
+![Cells With Anomalies table in Grafana](docs/cells-with-anomalies.png)
+
+**Grafana, history view: most-flagged cells over the selected time range**
+
+![Most-flagged cells and flagged readings per hour in Grafana](docs/flagged-cells-history.png)
+
+**Grafana, overview: cells tracked, model threshold, request rate and latency**
+
+![API overview panels in Grafana](docs/dashboard-overview.png)
 
 ## Repository layout
 
