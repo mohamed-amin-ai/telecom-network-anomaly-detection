@@ -1,0 +1,119 @@
+Unable to find image 'nvcr.io/nvidia/tritonserver:24.09-py3' locally
+24.09-py3: Pulling from nvidia/tritonserver
+857cc8cb19c0: Pulling fs layer
+809d41c35b5b: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+62198de3266e: Pulling fs layer
+f95d019b1ab0: Pulling fs layer
+93ea9003a8ce: Pulling fs layer
+5d51f9ab7272: Pulling fs layer
+696a93c85021: Pulling fs layer
+8fef8a0e97e3: Pulling fs layer
+19fb60fd03e7: Pulling fs layer
+b8a41e13dfdf: Pulling fs layer
+720ce94231f2: Pulling fs layer
+690875466ef2: Pulling fs layer
+7008501aa4ca: Pulling fs layer
+e89f6af8755d: Pulling fs layer
+87dd2909557f: Pulling fs layer
+a2cf199e2fde: Pulling fs layer
+2fdf71fc5c21: Pulling fs layer
+2ba1957306ee: Pulling fs layer
+119a0fc22518: Pulling fs layer
+cd36f8bded7b: Pulling fs layer
+51a7e7c0b97e: Pulling fs layer
+19fb60fd03e7: Waiting
+690875466ef2: Waiting
+7008501aa4ca: Waiting
+b8a41e13dfdf: Waiting
+b9d0ec650a17: Pulling fs layer
+4143371e54c7: Pulling fs layer
+e89f6af8755d: Waiting
+720ce94231f2: Waiting
+cd36f8bded7b: Waiting
+87dd2909557f: Waiting
+51a7e7c0b97e: Waiting
+a2cf199e2fde: Waiting
+2fdf71fc5c21: Waiting
+b9d0ec650a17: Waiting
+2ba1957306ee: Waiting
+4143371e54c7: Waiting
+119a0fc22518: Waiting
+f95d019b1ab0: Waiting
+93ea9003a8ce: Waiting
+5d51f9ab7272: Waiting
+696a93c85021: Waiting
+8fef8a0e97e3: Waiting
+62198de3266e: Waiting
+4f4fb700ef54: Download complete
+857cc8cb19c0: Verifying Checksum
+857cc8cb19c0: Download complete
+f95d019b1ab0: Verifying Checksum
+f95d019b1ab0: Download complete
+809d41c35b5b: Verifying Checksum
+809d41c35b5b: Download complete
+5d51f9ab7272: Download complete
+62198de3266e: Verifying Checksum
+62198de3266e: Download complete
+696a93c85021: Verifying Checksum
+696a93c85021: Download complete
+8fef8a0e97e3: Download complete
+19fb60fd03e7: Verifying Checksum
+19fb60fd03e7: Download complete
+857cc8cb19c0: Pull complete
+b8a41e13dfdf: Download complete
+690875466ef2: Verifying Checksum
+690875466ef2: Download complete
+720ce94231f2: Verifying Checksum
+720ce94231f2: Download complete
+e89f6af8755d: Verifying Checksum
+e89f6af8755d: Download complete
+87dd2909557f: Verifying Checksum
+87dd2909557f: Download complete
+7008501aa4ca: Verifying Checksum
+7008501aa4ca: Download complete
+2fdf71fc5c21: Verifying Checksum
+2fdf71fc5c21: Download complete
+2ba1957306ee: Verifying Checksum
+2ba1957306ee: Download complete
+119a0fc22518: Verifying Checksum
+119a0fc22518: Download complete
+cd36f8bded7b: Verifying Checksum
+cd36f8bded7b: Download complete
+a2cf199e2fde: Verifying Checksum
+a2cf199e2fde: Download complete
+b9d0ec650a17: Verifying Checksum
+b9d0ec650a17: Download complete
+4143371e54c7: Verifying Checksum
+4143371e54c7: Download complete
+51a7e7c0b97e: Verifying Checksum
+51a7e7c0b97e: Download complete
+93ea9003a8ce: Verifying Checksum
+93ea9003a8ce: Download complete
+809d41c35b5b: Pull complete
+4f4fb700ef54: Pull complete
+62198de3266e: Pull complete
+f95d019b1ab0: Pull complete
+93ea9003a8ce: Pull complete
+5d51f9ab7272: Pull complete
+696a93c85021: Pull complete
+8fef8a0e97e3: Pull complete
+19fb60fd03e7: Pull complete
+b8a41e13dfdf: Pull complete
+720ce94231f2: Pull complete
+690875466ef2: Pull complete
+7008501aa4ca: Pull complete
+e89f6af8755d: Pull complete
+87dd2909557f: Pull complete
+a2cf199e2fde: Pull complete
+2fdf71fc5c21: Pull complete
+2ba1957306ee: Pull complete
+119a0fc22518: Pull complete
+cd36f8bded7b: Pull complete
+51a7e7c0b97e: Pull complete
+b9d0ec650a17: Pull complete
+4143371e54c7: Pull complete
+Digest: sha256:70db67008ce8c1eb5739380df6e86af9c267a0f6ae1645ed1d24ab43e4687461
+Status: Downloaded newer image for nvcr.io/nvidia/tritonserver:24.09-py3
+e5eb6c03d73f84f1d1df07d647bc236e4d0a782e7a1d5145522594908ed2e695
+ready

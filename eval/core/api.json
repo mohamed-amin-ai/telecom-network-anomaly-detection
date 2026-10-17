@@ -1,0 +1,89 @@
+{
+  "batch_501_status": 400,
+  "checks": {
+    "/model/info threshold == metadata threshold": true,
+    "API scores every held-out row": true,
+    "API scores match offline model (max diff < 1e-3)": true,
+    "GET /health -> 200": true,
+    "GET /metrics -> 200 (Prometheus text)": true,
+    "after warm-up raw readings -> 200 with live features": true,
+    "auth: /health stays open": true,
+    "auth: /metrics stays open": true,
+    "auth: first key -> 200": true,
+    "auth: no key -> 401": true,
+    "auth: second (rotation) key -> 200": true,
+    "auth: wrong key -> 401": true,
+    "first raw reading for a new cell -> 425 (no guessing)": true,
+    "invalid reading (negative latency) -> 422": true
+  },
+  "metric_families_exposed": [
+    "anomaly_detections_created",
+    "anomaly_detections_total",
+    "anomaly_predictions_created",
+    "anomaly_predictions_total",
+    "anomaly_score",
+    "anomaly_score_created",
+    "cells_tracked",
+    "cold_start_responses_created",
+    "cold_start_responses_total",
+    "feature_source_created",
+    "feature_source_total",
+    "history_store_errors_created",
+    "history_store_errors_total",
+    "http_request_duration_highr_seconds",
+    "http_request_duration_highr_seconds_created",
+    "http_request_duration_seconds",
+    "http_request_duration_seconds_created",
+    "http_request_size_bytes",
+    "http_request_size_bytes_created",
+    "http_requests_created",
+    "http_requests_total",
+    "http_response_size_bytes",
+    "http_response_size_bytes_created",
+    "model_threshold_info",
+    "process_cpu_seconds_total",
+    "process_max_fds",
+    "process_open_fds",
+    "process_resident_memory_bytes",
+    "process_start_time_seconds",
+    "process_virtual_memory_bytes",
+    "python_gc_collections_total",
+    "python_gc_objects_collected_total",
+    "python_gc_objects_uncollectable_total",
+    "python_info",
+    "undefined_feature_responses_created",
+    "undefined_feature_responses_total"
+  ],
+  "parity": {
+    "api_metrics": {
+      "f1": 0.871,
+      "fn": 31,
+      "fp": 145,
+      "precision": 0.8038,
+      "recall": 0.9504,
+      "tp": 594
+    },
+    "batch_http_statuses": [
+      200
+    ],
+    "decision_agreement": 1.0,
+    "max_abs_score_diff": 4.999880082905291e-05,
+    "metadata_metrics": {
+      "f1": 0.871,
+      "precision": 0.8038,
+      "recall": 0.9504
+    },
+    "offline_metrics": {
+      "f1": 0.871,
+      "fn": 31,
+      "fp": 145,
+      "precision": 0.8038,
+      "recall": 0.9504,
+      "tp": 594
+    },
+    "rows": 42021,
+    "rows_per_second": 1139.0,
+    "rows_scored_by_api": 42021,
+    "seconds_for_all_rows": 36.9
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "experiments": {
+    "Default": 0,
+    "telecom-anomaly-detection": 3
+  },
+  "latest_run": {
+    "artifacts": [
+      "feature_importance.csv",
+      "metadata.json",
+      "model",
+      "scaler.pkl"
+    ],
+    "id": "ba35143a1c4e44b89dc6d5805b58d96d",
+    "metrics": {
+      "best_iteration": 188.0,
+      "f1": 0.871,
+      "false_negatives": 31.0,
+      "false_positives": 145.0,
+      "precision": 0.8038,
+      "recall": 0.9504,
+      "test_pr_auc": 0.967,
+      "threshold": 0.2277,
+      "true_negatives": 41251.0,
+      "true_positives": 594.0,
+      "val_f1": 0.8317,
+      "val_pr_auc": 0.9585,
+      "val_precision": 0.7414,
+      "val_recall": 0.9471
+    },
+    "params_logged": 19,
+    "status": "FINISHED"
+  },
+  "production_versions_after_gate": [
+    3
+  ],
+  "promotion_gate": {
+    "promoted": true,
+    "recall": 0.9504,
+    "version": 3
+  },
+  "registered_versions": [
+    1,
+    2,
+    3
+  ],
+  "registry_roundtrip_max_prob_diff": 0.0,
+  "tracking_uri": "file:///home/runner/work/telecom-network-anomaly-detection/telecom-network-anomaly-detection/mlruns",
+  "training_runs": 3
+}

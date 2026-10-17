@@ -1,0 +1,66 @@
+{
+  "dvc": {
+    "ok": true,
+    "seconds": 59
+  },
+  "mlflow": {
+    "ok": true,
+    "seconds": 2
+  },
+  "mlflow_replay": {
+    "ok": true,
+    "seconds": 2
+  },
+  "events": {
+    "ok": true,
+    "seconds": 3
+  },
+  "curve": {
+    "ok": true,
+    "seconds": 5
+  },
+  "spread": {
+    "ok": true,
+    "seconds": 73
+  },
+  "onnx_convert": {
+    "ok": true,
+    "seconds": 4
+  },
+  "onnx": {
+    "ok": true,
+    "seconds": 3
+  },
+  "api": {
+    "ok": true,
+    "seconds": 45
+  },
+  "load": {
+    "ok": true,
+    "seconds": 6
+  },
+  "load_baseline": {
+    "ok": true,
+    "seconds": 54
+  },
+  "load_onnx": {
+    "ok": true,
+    "seconds": 6
+  },
+  "stages": {
+    "ok": true,
+    "seconds": 15
+  },
+  "compact": {
+    "ok": true,
+    "seconds": 38
+  },
+  "drift_demo": {
+    "ok": true,
+    "seconds": 9
+  },
+  "docker": {
+    "ok": true,
+    "seconds": 151
+  }
+}

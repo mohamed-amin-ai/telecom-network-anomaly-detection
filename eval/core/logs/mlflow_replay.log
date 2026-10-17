@@ -1,0 +1,12 @@
+/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mlflow/utils/requirements_utils.py:20: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources  # noqa: TID251
+2026/10/17 10:18:50 INFO mlflow.tracking.fluent: Experiment with name 'telecom-anomaly-detection-sweep' does not exist. Creating a new experiment.
+Logged run: baseline
+Logged run: shallow_trees
+Logged run: deep_trees
+Logged run: high_lr
+Logged run: low_lr
+Logged run: fewer_rounds
+
+Done. 6 real sweep runs now in MLflow experiment 'telecom-anomaly-detection-sweep'.
+Run `mlflow ui` to view them alongside real XGBoost runs from train.py.

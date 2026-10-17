@@ -1,0 +1,11 @@
+
+DB: sqlite:////opt/project/airflow_eval.db
+Performing upgrade to the metadata database sqlite:////opt/project/airflow_eval.db
+[2026-10-17T10:27:23.936+0000] {migration.py:207} INFO - Context impl SQLiteImpl.
+[2026-10-17T10:27:23.937+0000] {migration.py:210} INFO - Will assume non-transactional DDL.
+[2026-10-17T10:27:23.938+0000] {migration.py:207} INFO - Context impl SQLiteImpl.
+[2026-10-17T10:27:23.938+0000] {migration.py:210} INFO - Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running stamp_revision  -> 5f2621c13b39
+Database migrating done!

@@ -1,0 +1,28 @@
+{
+  "build_seconds_cold": 26,
+  "image_mib": 481.1,
+  "drift_image_mib": 886.1,
+  "full_requirements_image_mib": 3007.7,
+  "layers": 12,
+  "healthcheck_status": "healthy",
+  "seconds_to_healthy": 6,
+  "runs_as_uid": 1000,
+  "health_http": 200,
+  "container_memory_idle": "120.4MiB / 15.61GiB",
+  "largest_site_packages_mib": [
+    "109 /usr/local/lib/python3.12/site-packages/scipy",
+    "72 /usr/local/lib/python3.12/site-packages/pandas",
+    "57 /usr/local/lib/python3.12/site-packages/sklearn",
+    "43 /usr/local/lib/python3.12/site-packages/numpy",
+    "30 /usr/local/lib/python3.12/site-packages/scipy.libs",
+    "27 /usr/local/lib/python3.12/site-packages/numpy.libs",
+    "15 /usr/local/lib/python3.12/site-packages/xgboost",
+    "13 /usr/local/lib/python3.12/site-packages/pip",
+    "6 /usr/local/lib/python3.12/site-packages/pydantic_core",
+    "5 /usr/local/lib/python3.12/site-packages/pydantic",
+    "4 /usr/local/lib/python3.12/site-packages/yaml",
+    "3 /usr/local/lib/python3.12/site-packages/redis",
+    "3 /usr/local/lib/python3.12/site-packages/joblib",
+    "2 /usr/local/lib/python3.12/site-packages/fastapi"
+  ]
+}

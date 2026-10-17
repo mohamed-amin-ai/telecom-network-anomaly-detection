@@ -1,0 +1,77 @@
+
+=============================
+== Triton Inference Server ==
+=============================
+
+NVIDIA Release 24.09 (build 112408254)
+Triton Server Version 2.50.0
+
+Copyright (c) 2018-2024, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+
+Various files include modifications (c) NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
+   Use the NVIDIA Container Toolkit to start this container with GPU support; see
+   https://docs.nvidia.com/datacenter/cloud-native/ .
+
+Warning: '--strict-model-config' has been deprecated! Please use '--disable-auto-complete-config' instead.
+W1017 10:30:33.180630 1 pinned_memory_manager.cc:273] "Unable to allocate pinned system memory, pinned memory pool will not be available: CUDA driver version is insufficient for CUDA runtime version"
+I1017 10:30:33.180928 1 cuda_memory_manager.cc:117] "CUDA memory pool disabled"
+E1017 10:30:33.181109 1 server.cc:241] "CudaDriverHelper has not been initialized."
+I1017 10:30:33.182727 1 model_lifecycle.cc:472] "loading: telecom_anomaly_xgb:1"
+I1017 10:30:33.185049 1 onnxruntime.cc:2875] "TRITONBACKEND_Initialize: onnxruntime"
+I1017 10:30:33.185070 1 onnxruntime.cc:2885] "Triton TRITONBACKEND API version: 1.19"
+I1017 10:30:33.185079 1 onnxruntime.cc:2891] "'onnxruntime' TRITONBACKEND API version: 1.19"
+I1017 10:30:33.185086 1 onnxruntime.cc:2921] "backend configuration:\n{\"cmdline\":{\"auto-complete-config\":\"true\",\"backend-directory\":\"/opt/tritonserver/backends\",\"min-compute-capability\":\"6.000000\",\"default-max-batch-size\":\"4\"}}"
+I1017 10:30:33.199795 1 onnxruntime.cc:2986] "TRITONBACKEND_ModelInitialize: telecom_anomaly_xgb (version 1)"
+I1017 10:30:33.200753 1 onnxruntime.cc:984] "skipping model configuration auto-complete for 'telecom_anomaly_xgb': inputs and outputs already specified"
+I1017 10:30:33.201395 1 onnxruntime.cc:3051] "TRITONBACKEND_ModelInstanceInitialize: telecom_anomaly_xgb_0_0 (CPU device 0)"
+I1017 10:30:33.220761 1 model_lifecycle.cc:839] "successfully loaded 'telecom_anomaly_xgb'"
+I1017 10:30:33.222049 1 server.cc:604] 
++------------------+------+
+| Repository Agent | Path |
++------------------+------+
++------------------+------+
+
+I1017 10:30:33.222081 1 server.cc:631] 
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Backend     | Path                                                            | Config                                                                                                                                                        |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| onnxruntime | /opt/tritonserver/backends/onnxruntime/libtriton_onnxruntime.so | {"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}} |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+I1017 10:30:33.222132 1 server.cc:674] 
++---------------------+---------+--------+
+| Model               | Version | Status |
++---------------------+---------+--------+
+| telecom_anomaly_xgb | 1       | READY  |
++---------------------+---------+--------+
+
+I1017 10:30:33.222303 1 metrics.cc:770] "Collecting CPU metrics"
+I1017 10:30:33.222934 1 tritonserver.cc:2598] 
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Option                           | Value                                                                                                                                                                                                           |
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| server_id                        | triton                                                                                                                                                                                                          |
+| server_version                   | 2.50.0                                                                                                                                                                                                          |
+| server_extensions                | classification sequence model_repository model_repository(unload_dependents) schedule_policy model_configuration system_shared_memory cuda_shared_memory binary_tensor_data parameters statistics trace logging |
+| model_repository_path[0]         | /models                                                                                                                                                                                                         |
+| model_control_mode               | MODE_EXPLICIT                                                                                                                                                                                                   |
+| startup_models_0                 | telecom_anomaly_xgb                                                                                                                                                                                             |
+| strict_model_config              | 0                                                                                                                                                                                                               |
+| model_config_name                |                                                                                                                                                                                                                 |
+| rate_limit                       | OFF                                                                                                                                                                                                             |
+| pinned_memory_pool_byte_size     | 268435456                                                                                                                                                                                                       |
+| min_supported_compute_capability | 6.0                                                                                                                                                                                                             |
+| strict_readiness                 | 1                                                                                                                                                                                                               |
+| exit_timeout                     | 30                                                                                                                                                                                                              |
+| cache_enabled                    | 0                                                                                                                                                                                                               |
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+I1017 10:30:33.226759 1 grpc_server.cc:2558] "Started GRPCInferenceService at 0.0.0.0:8001"
+I1017 10:30:33.227123 1 http_server.cc:4704] "Started HTTPService at 0.0.0.0:8000"
+I1017 10:30:33.268349 1 http_server.cc:362] "Started Metrics Service at 0.0.0.0:8002"

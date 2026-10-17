@@ -1,0 +1,61 @@
+Saved → /home/runner/work/telecom-network-anomaly-detection/telecom-network-anomaly-detection/models/scaler.pkl
+Saved → /home/runner/work/telecom-network-anomaly-detection/telecom-network-anomaly-detection/models/metadata.json
+Logged to MLflow run fb96749e13f848d9a0259d3061e0220a (registered as 'telecom-anomaly-xgb')
+
+Training complete.
+Updating lock file 'dvc.lock'
+
+To track the changes with git, run:
+
+	git add dvc.lock
+
+To enable auto staging, run:
+
+	dvc config core.autostage true
+Use `dvc push` to send your updates to remote storage.
+{
+  "first_repro": {
+    "exit": 0,
+    "seconds": 27,
+    "stages": [
+      "ran:generate_data",
+      "ran:features",
+      "ran:train"
+    ]
+  },
+  "second_repro_no_changes": {
+    "exit": 0,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "skipped:train"
+    ]
+  },
+  "after_changing_validation_recall_target_0.945_to_0.94": {
+    "exit": 0,
+    "seconds": 14,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "ran:train"
+    ],
+    "metrics_before": {
+      "recall": 0.9504,
+      "precision": 0.8038,
+      "f1": 0.871
+    },
+    "metrics_after": {
+      "recall": 0.944,
+      "precision": 0.8806,
+      "f1": 0.9112
+    }
+  },
+  "restore_params_repro": {
+    "exit": 0,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "ran:train"
+    ]
+  }
+}

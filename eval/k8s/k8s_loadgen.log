@@ -1,0 +1,3 @@
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+LOADTEST requests=124225 ok=124225 errors=0 rps=517.5 p50_ms=43 p95_ms=87
