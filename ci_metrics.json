@@ -1,0 +1,23 @@
+{
+  "commit": "bfc59bb43996e8c474c823be05a35bfa32905635",
+  "library_versions": {
+    "python": "3.12.15",
+    "scikit-learn": "1.6.1",
+    "xgboost": "2.1.4"
+  },
+  "metrics": {
+    "f1": 0.871,
+    "precision": 0.8038,
+    "recall": 0.9504
+  },
+  "mlflow_run_id": "4f40e5fed78a4f629c4d3ea5efcbde39",
+  "test_rows": 42021,
+  "threshold": 0.22772695124149323,
+  "train_rows": 134467,
+  "val_metrics": {
+    "f1": 0.8317,
+    "precision": 0.7414,
+    "recall": 0.9471
+  },
+  "val_rows": 33617
+}
