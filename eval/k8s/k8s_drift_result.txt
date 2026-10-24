@@ -1,0 +1,6 @@
+drift job: succeeded=1 failed=0 after 15 s
+Saved → /app/monitoring/reports/drift_report_20261024T134231Z.html
+Saved → /app/monitoring/reports/latest_drift_status.json
+
+dataset_drift=True  drift_share=0.971  drifted_columns=66/68
+Pushed metrics to http://pushgateway:9091 (job=drift_check)

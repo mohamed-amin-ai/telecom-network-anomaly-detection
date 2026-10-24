@@ -1,0 +1,51 @@
+
+[2026-10-24T13:25:43.885+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/project/airflow/dags
+[2026-10-24T13:25:43.970+0000] {dag.py:4435} INFO - dagrun id: telecom_anomaly_pipeline
+[2026-10-24T13:25:43.978+0000] {dag.py:4451} INFO - created dagrun <DagRun telecom_anomaly_pipeline @ 2024-06-01 00:00:00+00:00: manual__2024-06-01T00:00:00+00:00, state:running, queued_at: None. externally triggered: False>
+[2026-10-24T13:25:44.002+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=run_drift_check map_index=-1
+[2026-10-24T13:25:44.003+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.run_drift_check manual__2024-06-01T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:25:44,533] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='run_drift_check' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:44.533+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='run_drift_check' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:44.537+0000] {taskinstance.py:731} INFO - ::endgroup::
+Reference (training) rows: 3,000
+Current (production) rows: 400
+Running Evidently DataDriftPreset...
+Saved → /opt/project/monitoring/reports/drift_report_20261024T132549Z.html
+Saved → /opt/project/monitoring/reports/latest_drift_status.json
+
+dataset_drift=False  drift_share=0.044  drifted_columns=3/68
+Pushed metrics to http://pushgateway:9091 (job=drift_check)
+
+[2026-10-24 13:25:52,122] {python.py:240} INFO - Done. Returned value was: False
+[2026-10-24T13:25:52.122+0000] {python.py:240} INFO - Done. Returned value was: False
+[2026-10-24T13:25:52.132+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:25:52.132+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=run_drift_check, run_id=manual__2024-06-01T00:00:00+00:00, execution_date=20240601T000000, start_date=, end_date=20261024T132552
+[2026-10-24T13:25:52.139+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=run_drift_check map_index=-1
+[2026-10-24T13:25:52.153+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=decide_whether_to_retrain map_index=-1
+[2026-10-24T13:25:52.154+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.decide_whether_to_retrain manual__2024-06-01T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:25:52,172] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='decide_whether_to_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:52.172+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='decide_whether_to_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:52.172+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-10-24 13:25:52,172] {python.py:240} INFO - Done. Returned value was: skip_retrain
+[2026-10-24T13:25:52.172+0000] {python.py:240} INFO - Done. Returned value was: skip_retrain
+[2026-10-24 13:25:52,173] {branch.py:38} INFO - Branch into skip_retrain
+[2026-10-24T13:25:52.173+0000] {branch.py:38} INFO - Branch into skip_retrain
+[2026-10-24T13:25:52.173+0000] {skipmixin.py:230} INFO - Following branch {'skip_retrain'}
+[2026-10-24T13:25:52.178+0000] {skipmixin.py:278} INFO - Skipping tasks [('generate_data', -1)]
+[2026-10-24T13:25:52.187+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:25:52.188+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=decide_whether_to_retrain, run_id=manual__2024-06-01T00:00:00+00:00, execution_date=20240601T000000, start_date=, end_date=20261024T132552
+[2026-10-24T13:25:52.191+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=decide_whether_to_retrain map_index=-1
+[2026-10-24T13:25:52.202+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=skip_retrain map_index=-1
+[2026-10-24T13:25:52.202+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.skip_retrain manual__2024-06-01T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:25:52,216] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='skip_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:52.216+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='skip_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-01T00:00:00+00:00'
+[2026-10-24T13:25:52.216+0000] {taskinstance.py:731} INFO - ::endgroup::
+No drift detected — leaving the current model as-is.
+[2026-10-24 13:25:52,217] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:25:52.217+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:25:52.219+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:25:52.219+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=skip_retrain, run_id=manual__2024-06-01T00:00:00+00:00, execution_date=20240601T000000, start_date=, end_date=20261024T132552
+[2026-10-24T13:25:52.223+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=skip_retrain map_index=-1
+[2026-10-24T13:25:52.232+0000] {dag.py:3061} WARNING - No tasks to run. unrunnable tasks: {<TaskInstance: telecom_anomaly_pipeline.promote_model manual__2024-06-01T00:00:00+00:00 [None]>}
+[2026-10-24T13:25:53.246+0000] {dagrun.py:854} INFO - Marking run <DagRun telecom_anomaly_pipeline @ 2024-06-01 00:00:00+00:00: manual__2024-06-01T00:00:00+00:00, state:running, queued_at: None. externally triggered: False> successful
+[2026-10-24T13:25:53.246+0000] {dagrun.py:905} INFO - DagRun Finished: dag_id=telecom_anomaly_pipeline, execution_date=2024-06-01 00:00:00+00:00, run_id=manual__2024-06-01T00:00:00+00:00, run_start_date=2024-06-01 00:00:00+00:00, run_end_date=2026-10-24 13:25:53.246656+00:00, run_duration=75648353.246656, state=success, external_trigger=False, run_type=manual, data_interval_start=2024-05-31 00:00:00+00:00, data_interval_end=2024-06-01 00:00:00+00:00, dag_hash=None

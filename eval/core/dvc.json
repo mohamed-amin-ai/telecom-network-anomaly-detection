@@ -1,0 +1,46 @@
+{
+  "first_repro": {
+    "exit": 0,
+    "seconds": 27,
+    "stages": [
+      "ran:generate_data",
+      "ran:features",
+      "ran:train"
+    ]
+  },
+  "second_repro_no_changes": {
+    "exit": 0,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "skipped:train"
+    ]
+  },
+  "after_changing_validation_recall_target_0.945_to_0.94": {
+    "exit": 0,
+    "seconds": 14,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "ran:train"
+    ],
+    "metrics_before": {
+      "recall": 0.9504,
+      "precision": 0.8038,
+      "f1": 0.871
+    },
+    "metrics_after": {
+      "recall": 0.944,
+      "precision": 0.8806,
+      "f1": 0.9112
+    }
+  },
+  "restore_params_repro": {
+    "exit": 0,
+    "stages": [
+      "skipped:generate_data",
+      "skipped:features",
+      "ran:train"
+    ]
+  }
+}

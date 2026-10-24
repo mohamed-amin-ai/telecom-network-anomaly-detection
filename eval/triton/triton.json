@@ -1,0 +1,48 @@
+{
+  "http_latency": {
+    "batch_64": {
+      "median_ms": 6.38,
+      "p95_ms": 6.67
+    },
+    "single_row": {
+      "median_ms": 6.2,
+      "p95_ms": 6.51
+    }
+  },
+  "model_metadata": {
+    "inputs": [
+      {
+        "datatype": "FP32",
+        "name": "input",
+        "shape": [
+          -1,
+          68
+        ]
+      }
+    ],
+    "name": "telecom_anomaly_xgb",
+    "outputs": [
+      {
+        "datatype": "FP32",
+        "name": "probabilities",
+        "shape": [
+          -1,
+          2
+        ]
+      }
+    ],
+    "platform": "onnxruntime_onnx",
+    "versions": [
+      "1"
+    ]
+  },
+  "parity_vs_xgboost": {
+    "decision_agreement": 1.0,
+    "max_abs_prob_diff": 1.1362135410308838e-07,
+    "output_names": [
+      "probabilities"
+    ],
+    "rows": 2000
+  },
+  "triton_metrics_lines": 48
+}

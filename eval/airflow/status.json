@@ -1,0 +1,18 @@
+{
+  "airflow_image": {
+    "ok": true,
+    "seconds": 75
+  },
+  "airflow_db_migrate": {
+    "ok": true,
+    "seconds": 11
+  },
+  "airflow_idle": {
+    "ok": true,
+    "seconds": 20
+  },
+  "airflow_drift": {
+    "ok": true,
+    "seconds": 44
+  }
+}

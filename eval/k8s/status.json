@@ -1,0 +1,6 @@
+{
+  "k8s_hpa": {
+    "ok": true,
+    "seconds": 978
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "triton_up": {
+    "ok": true,
+    "seconds": 140
+  },
+  "triton": {
+    "ok": true,
+    "seconds": 6
+  }
+}

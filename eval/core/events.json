@@ -1,0 +1,59 @@
+{
+  "incident_level": {
+    "alert_precision": 0.2819,
+    "detection_rate": 1.0,
+    "false_alerts_per_cell_day": 0.3084,
+    "median_delay_intervals": 0.0,
+    "n_alerts": 188,
+    "n_detected": 53,
+    "n_events": 53,
+    "n_false_alerts": 135,
+    "n_intervals": 42021
+  },
+  "interval_level": {
+    "f1": 0.871,
+    "fn": 31,
+    "fp": 145,
+    "precision": 0.8038,
+    "recall": 0.9504,
+    "tp": 594
+  },
+  "positive_rate_test": 0.0149,
+  "pr_auc": 0.967,
+  "roc_auc": 0.9966,
+  "threshold": 0.22772695124149323,
+  "top_features": [
+    [
+      "packet_loss_pct",
+      0.1644
+    ],
+    [
+      "throughput_mbps",
+      0.1441
+    ],
+    [
+      "latency_ms",
+      0.1168
+    ],
+    [
+      "throughput_mbps_roll_mean_1h",
+      0.0983
+    ],
+    [
+      "throughput_mbps_roll_max_1h",
+      0.0584
+    ],
+    [
+      "latency_ms_roll_max_1h",
+      0.0322
+    ],
+    [
+      "hour",
+      0.0292
+    ],
+    [
+      "throughput_mbps_zscore",
+      0.0244
+    ]
+  ]
+}

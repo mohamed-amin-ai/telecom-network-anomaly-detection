@@ -1,0 +1,14 @@
+/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/onnxmltools/proto/__init__.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+Loaded 200 real held-out rows across 68 features for parity checking.
+Converting to ONNX...
+Validating parity against the native model on real data...
+  rows checked      : 200
+  max |prob diff|   : 0.000000  (tolerance: 0.0001)
+  mean |prob diff|  : 0.000000
+  decisions match   : True
+  ONNX input name   : input
+  ONNX output(s)    : [('label', [None]), ('probabilities', [None, 2])]
+  → if triton_model_repository/telecom_anomaly_xgb/config.pbtxt's input/output names don't match the above, update it to match (see that file's own comments).
+
+Parity check passed. Saved → /home/runner/work/telecom-network-anomaly-detection/telecom-network-anomaly-detection/models/model.onnx

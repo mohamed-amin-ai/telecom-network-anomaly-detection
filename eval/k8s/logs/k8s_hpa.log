@@ -1,0 +1,136 @@
+Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
+deployment "metrics-server" successfully rolled out
+Waiting for deployment "redis" rollout to finish: 0 of 1 updated replicas are available...
+deployment "redis" successfully rolled out
+deployment "anomaly-api" successfully rolled out
+deployment "pushgateway" successfully rolled out
+Waiting for deployment "prometheus" rollout to finish: 0 of 1 updated replicas are available...
+deployment "prometheus" successfully rolled out
+Waiting for deployment "grafana" rollout to finish: 0 of 1 updated replicas are available...
+deployment "grafana" successfully rolled out
+idle for 90 s so metrics-server and Prometheus have data
+{
+ "hpa": {
+  "min": 2,
+  "max": 6,
+  "target_cpu_pct": 70
+ },
+ "loadtest": {
+  "requests": 142500,
+  "ok": 142500,
+  "errors": 0,
+  "rps": 593.7,
+  "p50_ms": 37,
+  "p95_ms": 76
+ },
+ "seconds_from_load_start_to_first_scale_decision": 45,
+ "max_desired_replicas": 6,
+ "max_ready_replicas": 5,
+ "peak_cpu_util_pct": 192,
+ "max_pending_pods": 1,
+ "peak_memory_mi_per_api_pod": 136,
+ "seconds_from_load_end_to_first_scale_in": 234,
+ "seconds_from_load_end_to_back_at_min": 401,
+ "components_cpu_m_mem_mi": {
+  "anomaly-api": {
+   "idle": {
+    "cpu_m_max": 2,
+    "mem_mi_max": 122
+   },
+   "under_load": {
+    "cpu_m_max": 964,
+    "mem_mi_max": 136
+   },
+   "after_load": {
+    "cpu_m_max": 536,
+    "mem_mi_max": 136
+   }
+  },
+  "grafana": {
+   "idle": {
+    "cpu_m_max": 1,
+    "mem_mi_max": 68
+   },
+   "under_load": {
+    "cpu_m_max": 3,
+    "mem_mi_max": 68
+   },
+   "after_load": {
+    "cpu_m_max": 3,
+    "mem_mi_max": 72
+   }
+  },
+  "prometheus": {
+   "idle": {
+    "cpu_m_max": 2,
+    "mem_mi_max": 30
+   },
+   "under_load": {
+    "cpu_m_max": 7,
+    "mem_mi_max": 46
+   },
+   "after_load": {
+    "cpu_m_max": 7,
+    "mem_mi_max": 50
+   }
+  },
+  "pushgateway": {
+   "idle": {
+    "cpu_m_max": 1,
+    "mem_mi_max": 12
+   },
+   "under_load": {
+    "cpu_m_max": 1,
+    "mem_mi_max": 14
+   },
+   "after_load": {
+    "cpu_m_max": 1,
+    "mem_mi_max": 16
+   }
+  },
+  "redis": {
+   "idle": {
+    "cpu_m_max": 5,
+    "mem_mi_max": 7
+   },
+   "under_load": {
+    "cpu_m_max": 110,
+    "mem_mi_max": 68
+   },
+   "after_load": {
+    "cpu_m_max": 106,
+    "mem_mi_max": 68
+   }
+  },
+  "loadgen": {
+   "idle": {
+    "cpu_m_max": null,
+    "mem_mi_max": null
+   },
+   "under_load": {
+    "cpu_m_max": 1167,
+    "mem_mi_max": 33
+   },
+   "after_load": {
+    "cpu_m_max": null,
+    "mem_mi_max": null
+   }
+  }
+ },
+ "prometheus": {
+  "head_series": 2300.0,
+  "samples_per_second": 153.3260320937098,
+  "disk_kib": 316,
+  "estimated_disk_mib_for_15d": 284
+ },
+ "drift_job": {
+  "result": [
+   "drift job: succeeded=1 failed=0 after 15 s"
+  ],
+  "cpu_m_max": null,
+  "mem_mi_max": null,
+  "samples": 0
+ }
+}

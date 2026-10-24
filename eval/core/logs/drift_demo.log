@@ -1,0 +1,9 @@
+healthy_holdout        dataset_drift=False drifted 0/68 (share 0.0)
+latency_x2_only        dataset_drift=False drifted 11/68 (share 0.162)
+congestion_incident    dataset_drift=True  drifted 55/68 (share 0.809)
+PASS healthy holdout is not flagged as dataset drift
+PASS congestion incident IS flagged as dataset drift
+PASS incident drifts more columns than the healthy control
+PASS measured drift share equals drifted/total columns (not Evidently's 0.5 threshold)
+PASS latency-only shift flags latency features
+PASS latency-only shift leaves sinr features alone

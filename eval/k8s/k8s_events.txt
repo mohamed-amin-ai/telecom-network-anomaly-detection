@@ -1,0 +1,13 @@
+15m         Warning   Unhealthy                      pod/grafana-7877448fbd-nmrlt            Readiness probe failed: Get "http://10.244.0.12:3000/api/health": dial tcp 10.244.0.12:3000: connect: connection refused
+15m         Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 2; reason: Current number of replicas below Spec.MinReplicas
+13m         Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 4; reason: cpu resource utilization (percentage of request) above target
+13m         Warning   Unhealthy                      pod/anomaly-api-5c79f6f8b5-ngc2l        Startup probe failed: Get "http://10.244.0.16:8000/health": dial tcp 10.244.0.16:8000: connect: connection refused
+13m         Warning   Unhealthy                      pod/anomaly-api-5c79f6f8b5-77qn4        Startup probe failed: Get "http://10.244.0.17:8000/health": dial tcp 10.244.0.17:8000: connect: connection refused
+12m         Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 5; reason: cpu resource utilization (percentage of request) above target
+12m         Warning   Unhealthy                      pod/anomaly-api-5c79f6f8b5-ss49g        Startup probe failed: Get "http://10.244.0.18:8000/health": dial tcp 10.244.0.18:8000: connect: connection refused
+12m         Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 6; reason: cpu resource utilization (percentage of request) above target
+9m57s       Warning   FailedScheduling               pod/anomaly-api-5c79f6f8b5-lvhnh        0/1 nodes are available: 1 Insufficient cpu. no new claims to deallocate, preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.
+6m34s       Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 5; reason: All metrics below target
+5m34s       Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 4; reason: All metrics below target
+4m34s       Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 3; reason: All metrics below target
+3m34s       Normal    SuccessfulRescale              horizontalpodautoscaler/anomaly-api     New size: 2; reason: All metrics below target

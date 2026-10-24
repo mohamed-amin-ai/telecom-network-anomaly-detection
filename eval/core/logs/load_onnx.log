@@ -1,0 +1,5 @@
+idle RSS 250 MiB
+status counts {200: 1200}  (all 200 expected; anything else means the numbers below are not scored requests)
+1200 requests in 3.6s = 329 req/s; CPU 4.2s = 3.5 ms per request
+latency p50 12 ms, p95 17 ms; peak RSS 252 MiB
+redis used_memory 5.1 MiB with 1204 inference-log rows

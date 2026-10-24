@@ -1,0 +1,177 @@
+
+[2026-10-24T13:26:15.056+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/project/airflow/dags
+[2026-10-24T13:26:15.139+0000] {dag.py:4435} INFO - dagrun id: telecom_anomaly_pipeline
+[2026-10-24T13:26:15.147+0000] {dag.py:4451} INFO - created dagrun <DagRun telecom_anomaly_pipeline @ 2024-06-02 00:00:00+00:00: manual__2024-06-02T00:00:00+00:00, state:running, queued_at: None. externally triggered: False>
+[2026-10-24T13:26:15.170+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=run_drift_check map_index=-1
+[2026-10-24T13:26:15.170+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.run_drift_check manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:15,697] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='run_drift_check' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:15.697+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='run_drift_check' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:15.701+0000] {taskinstance.py:731} INFO - ::endgroup::
+Reference (training) rows: 3,000
+Current (production) rows: 400
+Running Evidently DataDriftPreset...
+Saved → /opt/project/monitoring/reports/drift_report_20261024T132620Z.html
+Saved → /opt/project/monitoring/reports/latest_drift_status.json
+
+dataset_drift=True  drift_share=0.824  drifted_columns=56/68
+Pushed metrics to http://pushgateway:9091 (job=drift_check)
+
+[2026-10-24 13:26:23,522] {python.py:240} INFO - Done. Returned value was: True
+[2026-10-24T13:26:23.522+0000] {python.py:240} INFO - Done. Returned value was: True
+[2026-10-24T13:26:23.532+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:23.532+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=run_drift_check, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132623
+[2026-10-24T13:26:23.537+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=run_drift_check map_index=-1
+[2026-10-24T13:26:23.547+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=decide_whether_to_retrain map_index=-1
+[2026-10-24T13:26:23.548+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.decide_whether_to_retrain manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:23,567] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='decide_whether_to_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:23.567+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='decide_whether_to_retrain' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:23.567+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-10-24 13:26:23,567] {python.py:240} INFO - Done. Returned value was: generate_data
+[2026-10-24T13:26:23.567+0000] {python.py:240} INFO - Done. Returned value was: generate_data
+[2026-10-24 13:26:23,568] {branch.py:38} INFO - Branch into generate_data
+[2026-10-24T13:26:23.568+0000] {branch.py:38} INFO - Branch into generate_data
+[2026-10-24T13:26:23.568+0000] {skipmixin.py:230} INFO - Following branch {'generate_data'}
+[2026-10-24T13:26:23.571+0000] {skipmixin.py:278} INFO - Skipping tasks [('skip_retrain', -1)]
+[2026-10-24T13:26:23.581+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:23.581+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=decide_whether_to_retrain, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132623
+[2026-10-24T13:26:23.585+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=decide_whether_to_retrain map_index=-1
+[2026-10-24T13:26:23.595+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=generate_data map_index=-1
+[2026-10-24T13:26:23.595+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.generate_data manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:23,611] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='generate_data' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:23.611+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='generate_data' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:23.611+0000] {taskinstance.py:731} INFO - ::endgroup::
+Profile: realistic
+Generated 210,240 rows across 3 cells
+Anomaly rate: 2969/210240 = 1.41%
+Events: 267 faults (0 unlabeled), 0 benign surges
+Saved → /opt/project/data/raw_kpis.csv
+[2026-10-24 13:26:24,841] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:24.841+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:24.844+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:24.845+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=generate_data, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132624
+[2026-10-24T13:26:24.849+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=generate_data map_index=-1
+[2026-10-24T13:26:24.857+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=engineer_features map_index=-1
+[2026-10-24T13:26:24.857+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.engineer_features manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:24,872] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='engineer_features' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:24.872+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='engineer_features' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:24.873+0000] {taskinstance.py:731} INFO - ::endgroup::
+Feature engineering complete. Dropped 135 NaN rows, 210,105 rows remaining.
+[2026-10-24 13:26:34,546] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:34.546+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:34.549+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:34.549+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=engineer_features, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132634
+[2026-10-24T13:26:34.553+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=engineer_features map_index=-1
+[2026-10-24T13:26:34.561+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=train_model map_index=-1
+[2026-10-24T13:26:34.561+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.train_model manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:34,575] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='train_model' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:34.575+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='train_model' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:34.575+0000] {taskinstance.py:731} INFO - ::endgroup::
+2026/10/24 13:26:36 INFO mlflow.tracking.fluent: Experiment with name 'telecom-anomaly-detection' does not exist. Creating a new experiment.
+2026/10/24 13:26:36 WARNING mlflow.utils.git_utils: Failed to import Git (the Git executable is probably not on your PATH), so Git SHA is not available. Error: Failed to initialize: Bad git executable.
+The git executable must be specified in one of the following ways:
+    - be included in your $PATH
+    - be set via $GIT_PYTHON_GIT_EXECUTABLE
+    - explicitly set via git.refresh(<full-path-to-git-executable>)
+
+All git commands will error until this is rectified.
+
+This initial message can be silenced or aggravated in the future by setting the
+$GIT_PYTHON_REFRESH environment variable. Use one of the following values:
+    - quiet|q|silence|s|silent|none|n|0: for no message or exception
+    - warn|w|warning|log|l|1: for a warning message (logging level CRITICAL, displayed by default)
+    - error|e|exception|raise|r|2: for a raised exception
+
+Example:
+    export GIT_PYTHON_REFRESH=quiet
+
+/home/airflow/.local/lib/python3.12/site-packages/xgboost/core.py:158 UserWarning: [13:26:38] WARNING: /workspace/src/learner.cc:740:
+Parameters: { "use_label_encoder" } are not used.
+
+============================================================
+  Telecom Anomaly Detection — Model Training
+============================================================
+
+MLflow run ID: ef317206209d4e1ca54adaa312df21ee
+
+Loaded 210,105 rows | 68 features
+Train: 134,467 rows | Val: 33,617 rows | Test: 42,021 rows
+
+Train anomaly rate: 1.40%
+Val   anomaly rate: 1.35%
+Test  anomaly rate: 1.49%
+
+Class ratio (neg/pos): 70.2x → used as scale_pos_weight
+
+Training XGBoost model...
+[0]	validation_0-aucpr:0.87887
+[50]	validation_0-aucpr:0.94605
+[100]	validation_0-aucpr:0.95371
+[150]	validation_0-aucpr:0.95688
+[200]	validation_0-aucpr:0.95793
+[218]	validation_0-aucpr:0.95832
+/home/airflow/.local/lib/python3.12/site-packages/xgboost/core.py:158 UserWarning: [13:26:44] WARNING: /workspace/src/c_api/c_api.cc:1374: Saving model in the UBJSON format as default.  You can use file extension: `json`, `ubj` or `deprecated` to choose between formats.
+Successfully registered model 'telecom-anomaly-xgb'.
+Created version '1' of model 'telecom-anomaly-xgb'.
+
+Threshold tuned on VALIDATION for recall >= 0.945:
+  Threshold        : 0.2277
+  Val recall       : 0.947
+  Val precision    : 0.741
+  Val PR-AUC       : 0.959  (base rate 0.014)
+
+── Classification Report (TEST, validation-tuned threshold) ──
+              precision    recall  f1-score   support
+
+      Normal       1.00      1.00      1.00     41396
+     Anomaly       0.80      0.95      0.87       625
+
+    accuracy                           1.00     42021
+   macro avg       0.90      0.97      0.93     42021
+weighted avg       1.00      1.00      1.00     42021
+
+Confusion Matrix:
+[[41251   145]
+ [   31   594]]
+
+Test recall    : 0.950  <- measured, NOT tuned to hit the floor
+Test precision : 0.804
+Test PR-AUC    : 0.967  (base rate 0.015)
+
+── Top 10 Features ────────────────────────────────────────
+packet_loss_pct                 0.164397
+throughput_mbps                 0.144080
+latency_ms                      0.116788
+throughput_mbps_roll_mean_1h    0.098288
+throughput_mbps_roll_max_1h     0.058377
+latency_ms_roll_max_1h          0.032162
+hour                            0.029202
+throughput_mbps_zscore          0.024424
+packet_loss_pct_lag1            0.020572
+throughput_mbps_lag1            0.015402
+
+Saved → /opt/project/models/model.json
+Saved → /opt/project/models/scaler.pkl
+Saved → /opt/project/models/metadata.json
+Logged to MLflow run ef317206209d4e1ca54adaa312df21ee (registered as 'telecom-anomaly-xgb')
+
+Training complete.
+[2026-10-24 13:26:48,729] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:48.729+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-10-24T13:26:48.732+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:48.732+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=train_model, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132648
+[2026-10-24T13:26:48.736+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=train_model map_index=-1
+[2026-10-24T13:26:48.743+0000] {dag.py:4396} INFO - [DAG TEST] starting task_id=promote_model map_index=-1
+[2026-10-24T13:26:48.743+0000] {dag.py:4399} INFO - [DAG TEST] running task <TaskInstance: telecom_anomaly_pipeline.promote_model manual__2024-06-02T00:00:00+00:00 [scheduled]>
+[2026-10-24 13:26:48,757] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='promote_model' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:48.757+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops' AIRFLOW_CTX_DAG_ID='telecom_anomaly_pipeline' AIRFLOW_CTX_TASK_ID='promote_model' AIRFLOW_CTX_EXECUTION_DATE='2024-06-02T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2024-06-02T00:00:00+00:00'
+[2026-10-24T13:26:48.757+0000] {taskinstance.py:731} INFO - ::endgroup::
+/opt/project/models/promote.py:71 FutureWarning: ``mlflow.tracking.client.MlflowClient.get_latest_versions`` is deprecated since 2.9.0. Model registry stages will be removed in a future major release. To learn more about the deprecation of model registry stages, see our migration guide here: https://mlflow.org/docs/latest/model-registry.html#migrating-from-stages
+/opt/project/models/promote.py:88 FutureWarning: ``mlflow.tracking.client.MlflowClient.transition_model_version_stage`` is deprecated since 2.9.0. Model registry stages will be removed in a future major release. To learn more about the deprecation of model registry stages, see our migration guide here: https://mlflow.org/docs/latest/model-registry.html#migrating-from-stages
+Promotion outcome: {'promoted': True, 'version': 1, 'recall': 0.9504}
+[2026-10-24 13:26:48,771] {python.py:240} INFO - Done. Returned value was: {'promoted': True, 'version': 1, 'recall': 0.9504}
+[2026-10-24T13:26:48.771+0000] {python.py:240} INFO - Done. Returned value was: {'promoted': True, 'version': 1, 'recall': 0.9504}
+[2026-10-24T13:26:48.776+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-10-24T13:26:48.777+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=telecom_anomaly_pipeline, task_id=promote_model, run_id=manual__2024-06-02T00:00:00+00:00, execution_date=20240602T000000, start_date=, end_date=20261024T132648
+[2026-10-24T13:26:48.780+0000] {dag.py:4410} INFO - [DAG TEST] end task task_id=promote_model map_index=-1
+[2026-10-24T13:26:48.783+0000] {dagrun.py:854} INFO - Marking run <DagRun telecom_anomaly_pipeline @ 2024-06-02 00:00:00+00:00: manual__2024-06-02T00:00:00+00:00, state:running, queued_at: None. externally triggered: False> successful
+[2026-10-24T13:26:48.783+0000] {dagrun.py:905} INFO - DagRun Finished: dag_id=telecom_anomaly_pipeline, execution_date=2024-06-02 00:00:00+00:00, run_id=manual__2024-06-02T00:00:00+00:00, run_start_date=2024-06-02 00:00:00+00:00, run_end_date=2026-10-24 13:26:48.783761+00:00, run_duration=75562008.783761, state=success, external_trigger=False, run_type=manual, data_interval_start=2024-06-01 00:00:00+00:00, data_interval_end=2024-06-02 00:00:00+00:00, dag_hash=None
