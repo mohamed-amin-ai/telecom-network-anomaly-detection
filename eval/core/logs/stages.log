@@ -1,0 +1,8 @@
+{
+  "features_numpy_ms": 0.6494,
+  "features_pandas_ms": 25.0638,
+  "onnx_predict_ms": 0.014,
+  "scaler_numpy_ms": 0.0027,
+  "scaler_sklearn_ms": 0.1038,
+  "xgboost_predict_ms": 0.4237
+}

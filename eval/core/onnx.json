@@ -1,0 +1,31 @@
+{
+  "batch_500_latency": {
+    "onnxruntime": {
+      "median_ms": 0.978,
+      "p95_ms": 4.106
+    },
+    "xgboost": {
+      "median_ms": 1.215,
+      "p95_ms": 11.956
+    }
+  },
+  "decision_agreement": 1.0,
+  "max_abs_prob_diff": 1.30385160446167e-07,
+  "model_json_kib": 1127.3,
+  "model_onnx_kib": 481.4,
+  "onnx_outputs": [
+    "label",
+    "probabilities"
+  ],
+  "rows_compared": 5000,
+  "single_row_latency": {
+    "onnxruntime": {
+      "median_ms": 0.02,
+      "p95_ms": 0.027
+    },
+    "xgboost": {
+      "median_ms": 0.415,
+      "p95_ms": 0.484
+    }
+  }
+}

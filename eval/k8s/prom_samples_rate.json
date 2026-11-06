@@ -1,0 +1,1 @@
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"instance":"localhost:9090","job":"prometheus","type":"float"},"value":[1793965242.808,"153.33625402388617"]},{"metric":{"instance":"localhost:9090","job":"prometheus","type":"histogram"},"value":[1793965242.808,"0"]}]}}

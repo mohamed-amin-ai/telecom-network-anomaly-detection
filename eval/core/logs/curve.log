@@ -1,0 +1,139 @@
+{
+  "by_validation_target": {
+    "0.9": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.037,
+      "test": {
+        "f1": 0.9449,
+        "precision": 0.9729,
+        "recall": 0.9184
+      },
+      "threshold": 0.76227,
+      "val": {
+        "f1": 0.9359,
+        "precision": 0.9738,
+        "recall": 0.9009
+      }
+    },
+    "0.93": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.089,
+      "test": {
+        "f1": 0.9318,
+        "precision": 0.9341,
+        "recall": 0.9296
+      },
+      "threshold": 0.48828,
+      "val": {
+        "f1": 0.9286,
+        "precision": 0.9256,
+        "recall": 0.9317
+      }
+    },
+    "0.935": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.133,
+      "test": {
+        "f1": 0.9213,
+        "precision": 0.907,
+        "recall": 0.936
+      },
+      "threshold": 0.39953,
+      "val": {
+        "f1": 0.914,
+        "precision": 0.8929,
+        "recall": 0.9361
+      }
+    },
+    "0.94": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.176,
+      "test": {
+        "f1": 0.9112,
+        "precision": 0.8806,
+        "recall": 0.944
+      },
+      "threshold": 0.34316,
+      "val": {
+        "f1": 0.8914,
+        "precision": 0.8472,
+        "recall": 0.9405
+      }
+    },
+    "0.945": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.308,
+      "test": {
+        "f1": 0.871,
+        "precision": 0.8038,
+        "recall": 0.9504
+      },
+      "threshold": 0.22773,
+      "val": {
+        "f1": 0.8317,
+        "precision": 0.7414,
+        "recall": 0.9471
+      }
+    },
+    "0.95": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 0.777,
+      "test": {
+        "f1": 0.755,
+        "precision": 0.6215,
+        "recall": 0.9616
+      },
+      "threshold": 0.10856,
+      "val": {
+        "f1": 0.717,
+        "precision": 0.5752,
+        "recall": 0.9515
+      }
+    },
+    "0.955": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 1.003,
+      "test": {
+        "f1": 0.7091,
+        "precision": 0.561,
+        "recall": 0.9632
+      },
+      "threshold": 0.0849,
+      "val": {
+        "f1": 0.6703,
+        "precision": 0.5161,
+        "recall": 0.9559
+      }
+    },
+    "0.96": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 1.284,
+      "test": {
+        "f1": 0.6555,
+        "precision": 0.4959,
+        "recall": 0.9664
+      },
+      "threshold": 0.06414,
+      "val": {
+        "f1": 0.615,
+        "precision": 0.4523,
+        "recall": 0.9604
+      }
+    },
+    "0.965": {
+      "event_detection_rate": 1.0,
+      "false_alerts_per_cell_day": 1.675,
+      "test": {
+        "f1": 0.594,
+        "precision": 0.4276,
+        "recall": 0.9728
+      },
+      "threshold": 0.04746,
+      "val": {
+        "f1": 0.5589,
+        "precision": 0.393,
+        "recall": 0.967
+      }
+    },
+    "0.98": {
+      "event_detection_rate": 1.

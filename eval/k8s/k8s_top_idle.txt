@@ -1,0 +1,6 @@
+anomaly-api-5c79f6f8b5-82sjd   2m    122Mi   
+anomaly-api-5c79f6f8b5-ngxvd   2m    122Mi   
+grafana-7877448fbd-4mdhn       1m    62Mi    
+prometheus-799bcd94f8-kpvft    1m    24Mi    
+pushgateway-77948f479d-b8flg   1m    8Mi     
+redis-549545cff9-dfxkq         7m    3Mi     
