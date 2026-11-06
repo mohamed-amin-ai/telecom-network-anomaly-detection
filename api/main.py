@@ -43,7 +43,7 @@ from api.metrics import (
     record_undefined_features,
     set_cells_tracked,
 )
-from api.inference_log import log_inference
+from api.inference_log import log_inference, log_inferences
 
 # ── Load model artifacts ───────────────────────────────────────────────────
 
@@ -153,18 +153,8 @@ class BatchResult(BaseModel):
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
-    if snapshot.features:
-        try:
-            vec = [snapshot.features[col] for col in FEATURE_COLS]
-            return np.array(vec, dtype=float).reshape(1, -1), "precomputed"
-        except KeyError as e:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Missing feature: {e}. Provide all {len(FEATURE_COLS)} features."
-            )
-
-    raw_row = make_raw_row(
+def _raw_row(snapshot: KPISnapshot) -> dict:
+    return make_raw_row(
         timestamp=snapshot.timestamp or now_iso(),
         cell_id=snapshot.cell_id,
         kpis={
@@ -175,8 +165,29 @@ def build_feature_vector(snapshot: KPISnapshot) -> tuple[np.ndarray, str]:
             "connected_users": snapshot.connected_users,
         },
     )
+
+
+def build_feature_vector(snapshot: KPISnapshot, prepared=None) -> tuple[np.ndarray, str]:
+    """`prepared` is set by /predict/batch, which appends all readings to the history store in one
+    round trip first: either (raw_row, buffer) or the HistoryStoreUnavailable that append raised."""
+    if snapshot.features:
+        try:
+            vec = [snapshot.features[col] for col in FEATURE_COLS]
+            return np.array(vec, dtype=float).reshape(1, -1), "precomputed"
+        except KeyError as e:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Missing feature: {e}. Provide all {len(FEATURE_COLS)} features."
+            )
+
     try:
-        computed = history_store.add_and_compute(snapshot.cell_id, raw_row)
+        if isinstance(prepared, HistoryStoreUnavailable):
+            raise prepared
+        if prepared is not None:
+            raw_row, buf = prepared
+        else:
+            raw_row, buf = _raw_row(snapshot), None
+        computed = history_store.add_and_compute(snapshot.cell_id, raw_row, buf=buf)
     except UndefinedFeatureError as e:
         record_undefined_features()
         raise HTTPException(status_code=422, detail=str(e))
@@ -224,31 +235,38 @@ def score_to_severity(score: float, threshold: float) -> str:
         return "critical"
 
 
-def run_inference(snapshot: KPISnapshot) -> PredictionResult:
-    X, feature_source = build_feature_vector(snapshot)
+def run_inference(snapshot: KPISnapshot, prepared=None, log_sink: Optional[list] = None) -> PredictionResult:
+    """`prepared` and `log_sink` are used by /predict/batch to share round trips: the sink collects
+    inference-log entries and the caller writes them, and updates the cells gauge, once per batch."""
+    X, feature_source = build_feature_vector(snapshot, prepared)
     prob = scorer.probability(X)
     is_anomaly = prob >= THRESHOLD
     severity = score_to_severity(prob, THRESHOLD)
 
     record_prediction(severity=severity, feature_source=feature_source, anomaly_score=prob,
                       cell_id=snapshot.cell_id)
-    try:
-        set_cells_tracked(history_store.tracked_cell_count())
-    except HistoryStoreUnavailable:
-        pass   # gauge keeps its last value; a metrics read must not fail a scored request
+    if log_sink is None:
+        try:
+            set_cells_tracked(history_store.tracked_cell_count())
+        except HistoryStoreUnavailable:
+            pass   # gauge keeps its last value; a metrics read must not fail a scored request
 
     # Best-effort log of the exact (unscaled) feature vector the model saw
     # — this is what monitoring/drift_check.py compares against training
     # data. Reconstructed from X rather than threaded through
     # build_feature_vector's return signature, to keep that function's
     # contract unchanged for existing callers/tests.
-    log_inference(
-        cell_id=snapshot.cell_id,
-        feature_source=feature_source,
-        anomaly_score=prob,
-        features=dict(zip(FEATURE_COLS, X.flatten().tolist())),
-        feature_cols=FEATURE_COLS,
-    )
+    features = dict(zip(FEATURE_COLS, X.flatten().tolist()))
+    if log_sink is not None:
+        log_sink.append((snapshot.cell_id, feature_source, prob, features))
+    else:
+        log_inference(
+            cell_id=snapshot.cell_id,
+            feature_source=feature_source,
+            anomaly_score=prob,
+            features=features,
+            feature_cols=FEATURE_COLS,
+        )
 
     return PredictionResult(
         cell_id=snapshot.cell_id,
@@ -297,13 +315,32 @@ def predict_batch(request: BatchRequest):
     if len(request.snapshots) > 500:
         raise HTTPException(status_code=400, detail="Max batch size is 500.")
 
-    items: list[BatchItemResult] = []
-    for snapshot in request.snapshots:
+    # Raw readings go to the history store in one round trip, scored readings are logged in one,
+    # and the cells gauge is read once: ~3 Redis calls per reading become 3 per batch.
+    live = [i for i, snap in enumerate(request.snapshots) if not snap.features]
+    prepared: dict[int, Any] = {}
+    if live:
+        rows = [_raw_row(request.snapshots[i]) for i in live]
         try:
-            result = run_inference(snapshot)
+            bufs = history_store.append_many([(request.snapshots[i].cell_id, r) for i, r in zip(live, rows)])
+            prepared = {i: (r, b) for i, r, b in zip(live, rows, bufs)}
+        except HistoryStoreUnavailable as e:
+            prepared = {i: e for i in live}
+
+    items: list[BatchItemResult] = []
+    log_sink: list = []
+    for i, snapshot in enumerate(request.snapshots):
+        try:
+            result = run_inference(snapshot, prepared.get(i), log_sink)
             items.append(BatchItemResult(cell_id=snapshot.cell_id, ok=True, result=result))
         except HTTPException as e:
             items.append(BatchItemResult(cell_id=snapshot.cell_id, ok=False, error=e.detail))
+
+    log_inferences(log_sink, FEATURE_COLS)
+    try:
+        set_cells_tracked(history_store.tracked_cell_count())
+    except HistoryStoreUnavailable:
+        pass
 
     anomaly_count = sum(1 for it in items if it.ok and it.result.anomaly)
     error_count   = sum(1 for it in items if not it.ok)
